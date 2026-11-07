@@ -29,7 +29,7 @@ const PHISHING_KEYWORDS = [
 function showWindowsSecurityAlert(filename, reason) {
   chrome.notifications.create({
     type: "basic",
-    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ef4444'><path d='M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 15c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm1-4h-2V7h2v6z'/></svg>",
+    iconUrl: "icons/icon128.png",
     title: "🚨 CogniGuard AI: Threat Intercepted!",
     message: `Payload: ${filename}\nReason: ${reason}\nQuarantined in Cloud Airlock (0 Bytes Leaked) → STATUS: OK`,
     priority: 2

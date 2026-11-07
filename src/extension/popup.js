@@ -27,9 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const gain = audioCtx.createGain();
 
       osc.type = "sine";
-      // Dual-tone futuristic radar alert frequency
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-      osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.25); // Drop to A4
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.25);
 
       gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
@@ -48,16 +47,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function speakAIVoiceAlert(filename) {
     if (!("speechSynthesis" in window)) return;
 
-    window.speechSynthesis.cancel(); // Stop any previous speech
+    window.speechSynthesis.cancel();
 
     const voiceText = `Warning. Threat detected. The file ${filename} contains a malicious hacked payload. The download has been quarantined in the cloud airlock. Zero bytes leaked. Your system is secure.`;
     
     const utterance = new SpeechSynthesisUtterance(voiceText);
-    utterance.rate = 1.05; // Slightly crisp, professional speed
-    utterance.pitch = 0.95; // Confident, authoritative AI voice
+    utterance.rate = 1.05;
+    utterance.pitch = 0.95;
     utterance.volume = 1.0;
 
-    // Pick a natural English voice if available
     const voices = window.speechSynthesis.getVoices();
     const naturalVoice = voices.find(v => v.lang.includes("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("David") || v.name.includes("Zira")));
     if (naturalVoice) utterance.voice = naturalVoice;
@@ -80,10 +78,10 @@ document.addEventListener("DOMContentLoaded", () => {
     statusPill.style.color = "#ef4444";
     statusPill.innerHTML = "<span>THREAT CONTAINED</span>";
 
-    // Play High-Tech Audio Chime first
+    // Play Audio Chime
     playCyberChime();
 
-    // Trigger Autonomous AI Voice Alert
+    // Trigger AI Voice
     setTimeout(() => {
       speakAIVoiceAlert("Lazarus Infostealer");
     }, 150);
@@ -94,10 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
       statusPill.innerHTML = '<div class="pulse"></div><span>STATUS: OK</span>';
     }, 2800);
 
-    // Native Windows Desktop Notification
+    // Native Windows Desktop Notification with real PNG icon
     chrome.notifications.create({
       type: "basic",
-      iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ef4444'><path d='M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 15c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm1-4h-2V7h2v6z'/></svg>",
+      iconUrl: "icons/icon128.png",
       title: "🚨 CogniGuard AI: Threat Intercepted!",
       message: "Lazarus_Infostealer.pdf.exe was contained in Cloud Airlock.\n0 Bytes Leaked → SYSTEM STATUS: OK",
       priority: 2
