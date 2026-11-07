@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogniGuard AI - Security Operations Dashboard</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --accent: #3b82f6;
+      --green: #10b981;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 24px; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .logo-box { display: flex; align-items: center; gap: 12px; }
+    .logo-badge { background: linear-gradient(135deg, #2563eb, #1d4ed8); width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .title h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .title p { font-size: 13px; color: var(--text-muted); }
+    .status-pill { display: flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.12); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
+    .pulse-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .card-title { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .card-value { font-size: 28px; font-weight: 700; }
+    .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .alert-panel { display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red); border-radius: 12px; padding: 20px; margin-bottom: 24px; animation: slideDown 0.3s ease; }
+    .alert-header { display: flex; justify-content: space-between; align-items: center; color: var(--red); font-weight: 700; font-size: 16px; margin-bottom: 12px; }
+    .alert-body { font-size: 14px; line-height: 1.6; color: #fca5a5; }
+    .action-row { display: flex; gap: 12px; margin-bottom: 24px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover { background: #2563eb; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+    .log-table-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 12px 20px; background: rgba(255,255,255,0.02); color: var(--text-muted); font-weight: 500; }
+    td { padding: 14px 20px; border-top: 1px solid var(--border); }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .badge-ok { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+    .badge-blocked { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo-box">
+      <div class="logo-badge">🛡️</div>
+      <div class="title">
+        <h1>CogniGuard AI</h1>
+        <p>Autonomous Zero-Entry Endpoint & Vault Defense</p>
+      </div>
+    </div>
+    <div class="status-pill" id="global-status">
+      <div class="pulse-dot"></div>
+      <span>SYSTEM STATUS: OK</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">Protected Vaults</div>
+      <div class="card-value">4 Vaults</div>
+      <div class="card-sub">Chrome Cookies, SSH, AWS, .env</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Threats Intercepted</div>
+      <div class="card-value" id="blocked-count" style="color: var(--green);">2</div>
+      <div class="card-sub">All contained before execution</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Zero-Entry Rate</div>
+      <div class="card-value">100.0%</div>
+      <div class="card-sub">0 Bytes credential data leaked</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Detection Latency</div>
+      <div class="card-value">0.04s</div>
+      <div class="card-sub">Pre-execution cloud sandbox</div>
+    </div>
+  </div>
+
+  <div class="alert-panel" id="alert-banner">
+    <div class="alert-header">
+      <span>🚨 [CRITICAL ALERT] INTRUSION INTERCEPTED & CONTAINED</span>
+      <span style="font-size: 12px; color: var(--text-muted);" id="alert-time">Just now</span>
+    </div>
+    <div class="alert-body" id="alert-text">
+      <strong>Suspicious Payload:</strong> Job_Contract_Offer.pdf.exe (PID: 9942)<br>
+      <strong>Target:</strong> Google Chrome Session Cookies (Credential Dump Attempt)<br>
+      <strong>Action Taken:</strong> Process Terminated, Memory Purged, Outbound C2 Socket Blocked (0.04s).<br>
+      <strong>Result:</strong> Zero credentials exfiltrated. System returned to <strong>STATUS: OK</strong>.
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn btn-danger" onclick="triggerIntrusionSim()">⚡ Test Hacker Intrusion (Simulate Infostealer)</button>
+    <button class="btn" onclick="addDevLog()">💻 Simulate Normal Dev Workflow (VS Code)</button>
+  </div>
+
+  <div class="log-table-container">
+    <div class="table-header">
+      <span>Real-Time Security Event Audit Log</span>
+      <span style="font-size: 12px; color: var(--text-muted);">Auto-updating every event</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Process / Source</th>
+          <th>Target Vault</th>
+          <th>Threat Score</th>
+          <th>Action Taken</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="log-body">
+        <tr>
+          <td>Today 11:20:10</td>
+          <td>powershell_payload.vbs (PID 8110)</td>
+          <td>AWS_CREDENTIALS</td>
+          <td style="color: var(--red); font-weight: 600;">98.5% (High)</td>
+          <td><span class="badge badge-blocked">QUARANTINE_AND_KILL</span></td>
+          <td><span class="badge badge-ok">OK</span></td>
+        </tr>
+        <tr>
+          <td>Today 11:19:42</td>
+          <td>Job_Contract_Offer.pdf.exe (PID 9942)</td>
+          <td>BROWSER_COOKIES</td>
+          <td style="color: var(--red); font-weight: 600;">99.1% (Critical)</td>
+          <td><span class="badge badge-blocked">INTERCEPTED</span></td>
+          <td><span class="badge badge-ok">OK</span></td>
+        </tr>
+        <tr>
+          <td>Today 11:15:02</td>
+          <td>code.exe (VS Code)</td>
+          <td>ENV_SECRETS</td>
+          <td style="color: var(--green); font-weight: 600;">4.0% (Safe)</td>
+          <td><span class="badge badge-ok">ALLOWED</span></td>
+          <td><span class="badge badge-ok">OK</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let blockedCount = 2;
+
+    function triggerIntrusionSim() {
+      const banner = document.getElementById('alert-banner');
+      banner.style.display = 'block';
+      blockedCount++;
+      document.getElementById('blocked-count').innerText = blockedCount;
+
+      const now = new Date().toLocaleTimeString();
+      const tbody = document.getElementById('log-body');
+      const row = tbody.insertRow(0);
+      row.innerHTML = `
+        <td>${now}</td>
+        <td>malicious_recruiter_link.exe (PID 7731)</td>
+        <td>SSH_KEYS (~/.ssh/id_rsa)</td>
+        <td style="color: var(--red); font-weight: 600;">99.8% (Critical)</td>
+        <td><span class="badge badge-blocked">TERMINATED (0.03s)</span></td>
+        <td><span class="badge badge-ok">OK</span></td>
+      `;
+
+      // Flash status pill
+      const pill = document.getElementById('global-status');
+      pill.style.background = 'rgba(239, 68, 68, 0.2)';
+      pill.style.color = '#ef4444';
+      pill.style.borderColor = '#ef4444';
+      pill.innerHTML = '<div class="pulse-dot" style="background:#ef4444; box-shadow:0 0 8px #ef4444;"></div><span>THREAT CONTAINED → OK</span>';
+
+      setTimeout(() => {
+        pill.style.background = 'rgba(16, 185, 129, 0.12)';
+        pill.style.color = '#10b981';
+        pill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        pill.innerHTML = '<div class="pulse-dot"></div><span>SYSTEM STATUS: OK</span>';
+      }, 3000);
+    }
+
+    function addDevLog() {
+      const now = new Date().toLocaleTimeString();
+      const tbody = document.getElementById('log-body');
+      const row = tbody.insertRow(0);
+      row.innerHTML = `
+        <td>${now}</td>
+        <td>git.exe (Git CLI)</td>
+        <td>ENV_SECRETS</td>
+        <td style="color: var(--green); font-weight: 600;">2.1% (Safe)</td>
+        <td><span class="badge badge-ok">ALLOWED</span></td>
+        <td><span class="badge badge-ok">OK</span></td>
+      `;
+    }
+  </script>
+</body>
+</html>

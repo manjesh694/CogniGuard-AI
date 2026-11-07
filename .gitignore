@@ -1,0 +1,34 @@
+# ==========================================
+# CogniGuard AI - Security & Secret Protections
+# ==========================================
+
+# NEVER COMMIT SECRETS OR KEYS
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+secrets.json
+
+# Local Session Tokens & Cookie Dumps
+cookies.sqlite
+tokens.json
+credentials.db
+*.session
+
+# Python Runtime & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Build & OS Artifacts
+dist/
+build/
+*.egg-info/
+.DS_Store
+Thumbs.db
+*.log
