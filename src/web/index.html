@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogniGuard AI — Zero-Entry Autonomous Cyber Defense</title>
+  <style>
+    :root {
+      --bg: #060911;
+      --card-bg: #0d1527;
+      --border: #1e293b;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.35);
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    
+    /* Navigation */
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 8%; border-bottom: 1px solid var(--border); background: rgba(6, 9, 17, 0.8); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; }
+    .logo-badge { background: linear-gradient(135deg, #2563eb, #1d4ed8); width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 16px var(--accent-glow); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn-nav { background: var(--accent); color: white; padding: 8px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; text-decoration: none; }
+
+    /* Hero Section */
+    .hero { text-align: center; padding: 90px 8% 60px; max-width: 900px; margin: 0 auto; }
+    .badge-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 24px; }
+    .hero h1 { font-size: 52px; font-weight: 800; line-height: 1.15; letter-spacing: -1.5px; margin-bottom: 20px; background: linear-gradient(180deg, #ffffff 40%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 18px; color: var(--text-muted); margin-bottom: 36px; max-width: 680px; margin-left: auto; margin-right: auto; }
+    .hero-cta { display: flex; justify-content: center; gap: 16px; margin-bottom: 60px; }
+    .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 0 24px var(--accent-glow); transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(59, 130, 246, 0.6); }
+    .btn-secondary { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px; text-decoration: none; }
+
+    /* Live Product Showcase */
+    .showcase { max-width: 720px; margin: 0 auto 100px; background: #0c1424; border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+    .mock-popup { background: #090d16; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; width: 100%; max-width: 380px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #1f2937; padding-bottom: 12px; }
+    .status-ok { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+    .stats-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .stat-item { background: #111827; border: 1px solid #1f2937; padding: 12px; border-radius: 8px; text-align: center; }
+    .alert-tag { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); color: #fca5a5; padding: 10px; border-radius: 8px; font-size: 11px; margin-bottom: 14px; text-align: left; }
+    .alert-tag strong { color: var(--red); display: block; margin-bottom: 2px; }
+
+    /* Feature Grid */
+    .features { padding: 60px 8%; max-width: 1100px; margin: 0 auto 100px; }
+    .section-title { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+    .section-sub { text-align: center; color: var(--text-muted); margin-bottom: 48px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+    .f-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 28px; transition: 0.2s; }
+    .f-card:hover { border-color: #3b82f6; transform: translateY(-3px); }
+    .f-icon { font-size: 32px; margin-bottom: 16px; }
+    .f-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .f-card p { font-size: 14px; color: var(--text-muted); }
+
+    /* Pricing Section */
+    .pricing { padding: 60px 8% 100px; max-width: 1000px; margin: 0 auto; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .p-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 32px; position: relative; }
+    .p-card.featured { border-color: #3b82f6; box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
+    .p-badge { position: absolute; top: -12px; right: 24px; background: #3b82f6; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+    .p-price { font-size: 36px; font-weight: 800; margin: 16px 0; }
+    .p-price span { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+    .p-list { list-style: none; margin: 24px 0; font-size: 14px; color: var(--text-muted); }
+    .p-list li { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .p-list li::before { content: "✓"; color: var(--green); font-weight: 800; }
+    .btn-block { display: block; text-align: center; width: 100%; padding: 12px; border-radius: 6px; font-weight: 700; text-decoration: none; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 40px 8%; text-align: center; color: var(--text-muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="brand">
+      <div class="logo-badge">🛡️</div>
+      <span>CogniGuard AI</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="dashboard.html" class="btn-nav">Open SOC Console</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge-pill">
+      <span>●</span> Defending Against the $10.5T Hacking Crisis
+    </div>
+    <h1>Zero Entry. Zero Breaches.<br>Autonomous Pre-Execution Defense.</h1>
+    <p>
+      Hackers don't break code anymore—they compromise employee laptops, fake job offer PDFs, and session cookies. CogniGuard AI catches and neutralizes threats in the cloud before they ever touch your machine.
+    </p>
+    <div class="hero-cta">
+      <a href="#pricing" class="btn-primary">Add to Chrome — Free</a>
+      <a href="dashboard.html" class="btn-secondary">View Live SOC Dashboard</a>
+    </div>
+  </section>
+
+  <!-- Live Product Showcase -->
+  <div class="showcase">
+    <div class="mock-popup">
+      <div class="popup-header">
+        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px;">
+          <span>🛡️ CogniGuard AI</span>
+        </div>
+        <div class="status-ok">● STATUS: OK</div>
+      </div>
+      <div class="stats-box">
+        <div class="stat-item">
+          <div style="font-size: 20px; font-weight: 700;">12</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Downloads Scanned</div>
+        </div>
+        <div class="stat-item">
+          <div style="font-size: 20px; font-weight: 700; color: var(--green);">9</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Threats Blocked</div>
+        </div>
+      </div>
+      <div class="alert-tag">
+        <strong>🚨 Latest Intercepted Threat:</strong>
+        Antigravity-arm64.exe (Executable Payload Disguised as Document) — Quarantined in Cloud Airlock (0 Bytes Leaked)
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 8px 12px; background: #111827; border-radius: 6px; margin-bottom: 8px;">
+        <span>Zero-Entry Download Shield</span>
+        <span style="color: var(--green); font-weight: 600;">ACTIVE</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 8px 12px; background: #111827; border-radius: 6px;">
+        <span>Credential Vault Guard</span>
+        <span style="color: var(--green); font-weight: 600;">LOCKED</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="section-title">Engineered to Stop Modern Attackers</div>
+    <div class="section-sub">Traditional antivirus scans after infection. CogniGuard stops entry completely.</div>
+    <div class="grid">
+      <div class="f-card">
+        <div class="f-icon">☁️</div>
+        <h3>Pre-Execution Cloud Airlock</h3>
+        <p>Untrusted downloads detonate in a disposable cloud micro-sandbox. If malware tries to execute, it is destroyed before writing 1 byte to your laptop.</p>
+      </div>
+      <div class="f-card">
+        <div class="f-icon">🔒</div>
+        <h3>Credential & Cookie Vault</h3>
+        <p>Locks your Google Chrome session cookies, AWS keys, and SSH credentials with real-time tripwires against infostealer extraction.</p>
+      </div>
+      <div class="f-card">
+        <div class="f-icon">⚡</div>
+        <h3>0.04s Autonomous Containment</h3>
+        <p>No waiting for slow human reviews. Malicious processes are killed, outbound C2 connections severed, and system returned to Status: OK instantly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <div class="section-title">Simple, Transparent Pricing</div>
+    <div class="section-sub">Protection for individual developers, consumers, and enterprise teams.</div>
+    <div class="pricing-grid">
+      <div class="p-card">
+        <h3>Consumer Free</h3>
+        <p style="color: var(--text-muted); font-size: 13px;">For everyday browsing & students</p>
+        <div class="p-price">$0 <span>/ forever</span></div>
+        <ul class="p-list">
+          <li>Real-time download gatekeeper</li>
+          <li>Basic phishing link protection</li>
+          <li>Windows desktop notifications</li>
+          <li>Community support</li>
+        </ul>
+        <a href="#" class="btn-block btn-secondary">Get Free Shield</a>
+      </div>
+
+      <div class="p-card featured">
+        <div class="p-badge">MOST POPULAR</div>
+        <h3>Pro Developer</h3>
+        <p style="color: var(--text-muted); font-size: 13px;">For remote engineers & crypto traders</p>
+        <div class="p-price">$5.99 <span>/ month</span></div>
+        <ul class="p-list">
+          <li>Everything in Free</li>
+          <li>Unlimited Cloud Sandbox Detonation</li>
+          <li>Chrome & Edge Cookie Vault Lock</li>
+          <li>SSH & AWS Token Tripwires</li>
+          <li>Sub-second C2 connection blocking</li>
+        </ul>
+        <a href="#" class="btn-block btn-primary">Start 14-Day Trial</a>
+      </div>
+
+      <div class="p-card">
+        <h3>Enterprise IT</h3>
+        <p style="color: var(--text-muted); font-size: 13px;">For software teams & IT firms</p>
+        <div class="p-price">$15 <span>/ seat / mo</span></div>
+        <ul class="p-list">
+          <li>Everything in Pro</li>
+          <li>Centralized IT Fleet Management</li>
+          <li>Real-time human risk scoring</li>
+          <li>SOC2 & ISO compliance audit export</li>
+          <li>Dedicated cloud sandbox cluster</li>
+        </ul>
+        <a href="#" class="btn-block btn-secondary">Contact Enterprise Sales</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 CogniGuard AI Inc. All rights reserved. Zero Entry. Zero Breaches.</p>
+  </footer>
+
+</body>
+</html>
