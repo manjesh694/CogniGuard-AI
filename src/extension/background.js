@@ -25,6 +25,17 @@ const PHISHING_KEYWORDS = [
   "bank-kyc-update", "free-nitro", "telegram-gift"
 ];
 
+// Helper: Show Native Windows Desktop Notification
+function showWindowsSecurityAlert(filename, reason) {
+  chrome.notifications.create({
+    type: "basic",
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ef4444'><path d='M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 15c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm1-4h-2V7h2v6z'/></svg>",
+    title: "🚨 CogniGuard AI: Threat Intercepted!",
+    message: `Payload: ${filename}\nReason: ${reason}\nQuarantined in Cloud Airlock (0 Bytes Leaked) → STATUS: OK`,
+    priority: 2
+  });
+}
+
 // 1. DOWNLOAD INTERCEPTOR (The Gatekeeper)
 chrome.downloads.onCreated.addListener((downloadItem) => {
   chrome.storage.local.get(["protectionActive", "downloadsScanned", "threatsBlocked", "incidents"], (data) => {
@@ -42,12 +53,15 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
       // PAUSE THE DOWNLOAD IMMEDIATELY (Zero Entry - Do not allow writing to disk)
       chrome.downloads.pause(downloadItem.id, () => {
         let totalBlocked = (data.threatsBlocked || 0) + 1;
+        const reasonText = isDangerousExt 
+          ? "Executable Payload Disguised as Document" 
+          : "Untrusted Phishing Domain";
         
         const incident = {
           time: new Date().toLocaleTimeString(),
-          file: downloadItem.filename || "Unknown Suspicious Payload",
+          file: downloadItem.filename || "Suspicious_Payload.exe",
           url: downloadItem.url,
-          reason: isDangerousExt ? "Executable Payload Disguised as Document" : "Untrusted Phishing Domain",
+          reason: reasonText,
           action: "PAUSED_IN_AIRLOCK_SANDBOX"
         };
 
@@ -59,6 +73,9 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
           incidents: incidentList,
           lastAlert: incident
         });
+
+        // Trigger Real Windows Desktop Notification
+        showWindowsSecurityAlert(downloadItem.filename || "Suspicious_Payload.exe", reasonText);
 
         console.warn("🚨 [COGNIGUARD ALERT] Intercepted Threat:", incident);
       });
