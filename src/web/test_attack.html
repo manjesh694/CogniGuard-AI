@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CogniGuard AI — Threat Testing Laboratory</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: #111827;
+      --border: #1f2937;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 40px 20px; text-align: center; }
+    .container { max-width: 600px; margin: 0 auto; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+    .test-box { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+    .test-info h3 { font-size: 15px; margin-bottom: 4px; }
+    .test-info span { font-size: 12px; color: var(--muted); }
+    .btn { padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none; border: none; transition: 0.2s; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-safe { background: #10b981; color: white; }
+    .btn-safe:hover { background: #059669; }
+    .notice { font-size: 12px; color: #60a5fa; margin-top: 24px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 12px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div style="font-size: 36px; margin-bottom: 12px;">🧪 🛡️</div>
+    <h1>CogniGuard AI Testing Lab</h1>
+    <p>Test how CogniGuard intercepts fake disguised files trying to enter your laptop.</p>
+
+    <!-- Test 1: Disguised PDF Executable -->
+    <div class="test-box">
+      <div class="test-info">
+        <h3 style="color: #f87171;">1. Fake Recruiter PDF Payload</h3>
+        <span>Simulates North Korean infostealer: <code>Job_Offer.pdf.exe</code></span>
+      </div>
+      <button class="btn btn-danger" onclick="triggerDownload('Job_Offer_Contract.pdf.exe', 'FAKE_EXE')">Test Attack</button>
+    </div>
+
+    <!-- Test 2: Disguised VBS Script -->
+    <div class="test-box">
+      <div class="test-info">
+        <h3 style="color: #f87171;">2. Malicious Invoice Script</h3>
+        <span>Disguised macro payload: <code>Overdue_Invoice.vbs</code></span>
+      </div>
+      <button class="btn btn-danger" onclick="triggerDownload('Overdue_Invoice.vbs', 'MALICIOUS_SCRIPT')">Test Attack</button>
+    </div>
+
+    <!-- Test 3: Safe PDF Document -->
+    <div class="test-box">
+      <div class="test-info">
+        <h3 style="color: #34d399;">3. Safe Clean Document</h3>
+        <span>Legitimate standard document: <code>Company_Annual_Report.pdf</code></span>
+      </div>
+      <button class="btn btn-safe" onclick="triggerDownload('Company_Annual_Report.pdf', 'SAFE')">Download Safe</button>
+    </div>
+
+    <div class="notice">
+      ℹ️ <strong>Safe Testing Guarantee:</strong> These are 100% harmless dummy test files created to verify that CogniGuard's Zero-Entry interceptor pauses dangerous extensions before they hit your disk.
+    </div>
+  </div>
+
+  <script>
+    function triggerDownload(filename, type) {
+      const dummyContent = "CogniGuard AI Safe Test File. Zero malicious code.";
+      const blob = new Blob([dummyContent], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
