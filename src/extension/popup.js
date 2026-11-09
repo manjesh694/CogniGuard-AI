@@ -1,4 +1,4 @@
-// CogniGuard AI - Popup Script with AI Voice & Cyber Audio Alert
+// CogniGuard AI - Popup Script with AI Voice, Audio Alert & Allow/Resume
 
 document.addEventListener("DOMContentLoaded", () => {
   const scannedEl = document.getElementById("scanned-count");
@@ -6,16 +6,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const threatBox = document.getElementById("threat-box");
   const threatDesc = document.getElementById("threat-desc");
   const btnTest = document.getElementById("btn-test");
+  const btnResume = document.getElementById("btn-resume");
   const statusPill = document.getElementById("status-pill");
 
+  let activeDownloadId = null;
+
   // Load live counts from chrome.storage
-  chrome.storage.local.get(["downloadsScanned", "threatsBlocked", "lastAlert"], (data) => {
+  chrome.storage.local.get(["downloadsScanned", "threatsBlocked", "lastAlert", "lastPausedDownloadId"], (data) => {
     if (data.downloadsScanned !== undefined) scannedEl.innerText = data.downloadsScanned;
     if (data.threatsBlocked !== undefined) blockedEl.innerText = data.threatsBlocked;
 
     if (data.lastAlert) {
       threatBox.style.display = "block";
       threatDesc.innerText = `${data.lastAlert.file} (${data.lastAlert.reason})`;
+    }
+
+    if (data.lastPausedDownloadId) {
+      activeDownloadId = data.lastPausedDownloadId;
+      btnResume.style.display = "block";
+    }
+  });
+
+  // Handle "Allow & Resume Download" click
+  btnResume.addEventListener("click", () => {
+    if (activeDownloadId) {
+      chrome.runtime.sendMessage({ action: "RESUME_DOWNLOAD", downloadId: activeDownloadId }, (response) => {
+        btnResume.style.display = "none";
+        threatBox.style.display = "none";
+        statusPill.innerHTML = '<div class="pulse"></div><span>STATUS: OK</span>';
+        chrome.storage.local.set({ lastPausedDownloadId: null });
+      });
     }
   });
 
@@ -78,10 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
     statusPill.style.color = "#ef4444";
     statusPill.innerHTML = "<span>THREAT CONTAINED</span>";
 
-    // Play Audio Chime
     playCyberChime();
 
-    // Trigger AI Voice
     setTimeout(() => {
       speakAIVoiceAlert("Lazarus Infostealer");
     }, 150);
@@ -92,16 +110,16 @@ document.addEventListener("DOMContentLoaded", () => {
       statusPill.innerHTML = '<div class="pulse"></div><span>STATUS: OK</span>';
     }, 2800);
 
-    // Native Windows Desktop Notification with real PNG icon
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: "🚨 CogniGuard AI: Threat Intercepted!",
-      message: "Lazarus_Infostealer.pdf.exe was contained in Cloud Airlock.\n0 Bytes Leaked → SYSTEM STATUS: OK",
-      priority: 2
+    chrome.notifications.clear("cogniguard_alert", () => {
+      chrome.notifications.create("cogniguard_alert", {
+        type: "basic",
+        iconUrl: "icons/icon128.png",
+        title: "🛡️ CogniGuard AI: Threat Intercepted!",
+        message: "Lazarus_Infostealer.pdf.exe was contained in Cloud Airlock.\n0 Bytes Leaked → SYSTEM STATUS: OK",
+        priority: 1
+      });
     });
 
-    // Save to storage
     chrome.storage.local.set({
       downloadsScanned: currentScanned,
       threatsBlocked: currentBlocked,

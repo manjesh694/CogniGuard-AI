@@ -1,6 +1,6 @@
 /**
  * CogniGuard AI - Background Service Worker
- * Intercepts downloads and navigations in real-time before malicious payloads touch the hard drive.
+ * Intercepts downloads and navigations in real-time with smart deduplication and rate-limiting.
  */
 
 // Initialize default protection state
@@ -9,7 +9,8 @@ chrome.runtime.onInstalled.addListener(() => {
     protectionActive: true,
     downloadsScanned: 0,
     threatsBlocked: 0,
-    incidents: []
+    incidents: [],
+    lastPausedDownloadId: null
   });
   console.log("🛡️ CogniGuard AI: Service Worker Activated. Zero-Entry Armed.");
 });
@@ -25,19 +26,39 @@ const PHISHING_KEYWORDS = [
   "bank-kyc-update", "free-nitro", "telegram-gift"
 ];
 
-// Helper: Show Native Windows Desktop Notification
+// Cache to prevent duplicate notifications for the same download
+const processedDownloadIds = new Set();
+let lastAlertTimestamp = 0;
+
+// Helper: Show Single, Rate-Limited Native Windows Desktop Notification
 function showWindowsSecurityAlert(filename, reason) {
-  chrome.notifications.create({
-    type: "basic",
-    iconUrl: "icons/icon128.png",
-    title: "🚨 CogniGuard AI: Threat Intercepted!",
-    message: `Payload: ${filename}\nReason: ${reason}\nQuarantined in Cloud Airlock (0 Bytes Leaked) → STATUS: OK`,
-    priority: 2
+  const now = Date.now();
+  // Rate-limit: Do not fire more than 1 notification every 4 seconds
+  if (now - lastAlertTimestamp < 4000) {
+    return;
+  }
+  lastAlertTimestamp = now;
+
+  // Use a fixed notification ID 'cogniguard_alert' so Chrome REPLACES the old notification
+  // instead of stacking non-stop popups on the screen!
+  chrome.notifications.clear("cogniguard_alert", () => {
+    chrome.notifications.create("cogniguard_alert", {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: "🛡️ CogniGuard AI: Threat Intercepted!",
+      message: `Paused: ${filename}\nQuarantined in Cloud Airlock.\nOpen CogniGuard to Allow if trusted.`,
+      priority: 1
+    });
   });
 }
 
 // 1. DOWNLOAD INTERCEPTOR (The Gatekeeper)
 chrome.downloads.onCreated.addListener((downloadItem) => {
+  // Prevent duplicate triggers for the same download ID
+  if (processedDownloadIds.has(downloadItem.id)) {
+    return;
+  }
+
   chrome.storage.local.get(["protectionActive", "downloadsScanned", "threatsBlocked", "incidents"], (data) => {
     if (!data.protectionActive) return;
 
@@ -50,16 +71,19 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
     const isPhishingSource = PHISHING_KEYWORDS.some(kw => url.includes(kw));
 
     if (isDangerousExt || isPhishingSource) {
+      processedDownloadIds.add(downloadItem.id);
+
       // PAUSE THE DOWNLOAD IMMEDIATELY (Zero Entry - Do not allow writing to disk)
       chrome.downloads.pause(downloadItem.id, () => {
         let totalBlocked = (data.threatsBlocked || 0) + 1;
+        const cleanName = downloadItem.filename ? downloadItem.filename.split(/[\\/]/).pop() : "Executable_Payload.exe";
         const reasonText = isDangerousExt 
-          ? "Executable Payload Disguised as Document" 
+          ? "Executable Payload" 
           : "Untrusted Phishing Domain";
         
         const incident = {
           time: new Date().toLocaleTimeString(),
-          file: downloadItem.filename || "Suspicious_Payload.exe",
+          file: cleanName,
           url: downloadItem.url,
           reason: reasonText,
           action: "PAUSED_IN_AIRLOCK_SANDBOX"
@@ -71,11 +95,12 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
           downloadsScanned: totalScanned,
           threatsBlocked: totalBlocked,
           incidents: incidentList,
-          lastAlert: incident
+          lastAlert: incident,
+          lastPausedDownloadId: downloadItem.id
         });
 
-        // Trigger Real Windows Desktop Notification
-        showWindowsSecurityAlert(downloadItem.filename || "Suspicious_Payload.exe", reasonText);
+        // Trigger rate-limited notification
+        showWindowsSecurityAlert(cleanName, reasonText);
 
         console.warn("🚨 [COGNIGUARD ALERT] Intercepted Threat:", incident);
       });
@@ -83,4 +108,15 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
       chrome.storage.local.set({ downloadsScanned: totalScanned });
     }
   });
+});
+
+// Listener to resume download if user trusts it
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "RESUME_DOWNLOAD" && request.downloadId) {
+    chrome.downloads.resume(request.downloadId, () => {
+      chrome.notifications.clear("cogniguard_alert");
+      sendResponse({ status: "RESUMED" });
+    });
+    return true; // Keep message channel open for async response
+  }
 });
