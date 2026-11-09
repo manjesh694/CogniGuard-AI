@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogniGuard AI — Interactive Executive Demo Portal</title>
+  <style>
+    :root {
+      --bg: #060911;
+      --card: #0d1527;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 30px 16px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 760px; }
+    
+    .header { text-align: center; margin-bottom: 32px; }
+    .brand-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.12); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 16px; }
+    h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+    p { color: var(--muted); font-size: 15px; }
+
+    /* Live Cyber Terminal Box */
+    .terminal-box { background: #030712; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .term-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; padding-bottom: 12px; margin-bottom: 16px; }
+    .term-title { font-size: 13px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    .pulse-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+    .term-body { font-family: "Courier New", monospace; font-size: 13px; line-height: 1.6; min-height: 140px; color: #e2e8f0; }
+
+    /* 4 Interactive Test Buttons */
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .demo-btn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; text-align: left; cursor: pointer; transition: 0.2s; color: var(--text); }
+    .demo-btn:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15); }
+    .demo-btn h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .demo-btn p { font-size: 12px; color: var(--muted); }
+
+    .btn-action-row { text-align: center; margin-top: 10px; }
+    .shred-btn { display: none; background: #dc2626; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
+    .shred-btn:hover { background: #b91c1c; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="brand-pill">
+        <span class="pulse-dot"></span>
+        COGNIGUARD AI — EXECUTIVE DEMO
+      </div>
+      <h1>Autonomous Cyber Defense in Action</h1>
+      <p>Test all 4 defense layers live in your browser. Powered by speaking AI agents.</p>
+    </div>
+
+    <!-- Live Terminal Output -->
+    <div class="terminal-box">
+      <div class="term-header">
+        <div class="term-title">
+          <span>🛡️ COGNIGUARD AI AIRLOCK TERMINAL</span>
+        </div>
+        <div style="font-size: 11px; color: var(--green); font-weight: 700;" id="status-badge">
+          ● STATUS: SECURE (OK)
+        </div>
+      </div>
+      <div class="term-body" id="term-text">
+        [SYSTEM INITIALIZED] CogniGuard AI v1.0.3 Standby.<br>
+        • Zero-Entry Airlock: ARMED<br>
+        • Intent Reverse-Engineer: ARMED<br>
+        • Honeypot Trap Sensor: ACTIVE<br>
+        • Monitored Vaults: Chrome Cookies, AWS, SSH, .env<br>
+        <br>
+        >> Ready. Click any simulation button below to test.
+      </div>
+    </div>
+
+    <div class="btn-action-row">
+      <button class="shred-btn" id="shred-btn" onclick="executeShred()">🗑️ Confirm: Shred & Permanently Delete Threat (0.01s)</button>
+    </div>
+
+    <!-- 4 Interactive Controls -->
+    <div class="grid" style="margin-top: 16px;">
+      <div class="demo-btn" onclick="testAirlock()">
+        <h3 style="color: #60a5fa;">☁️ 1. Zero-Entry Airlock Test</h3>
+        <p>Simulates downloading a disguised North Korean invoice PDF (.pdf.exe) from WhatsApp.</p>
+      </div>
+
+      <div class="demo-btn" onclick="testReverseEngineering()">
+        <h3 style="color: #f87171;">🔍 2. AI Reverse-Engineer (Bank PIN)</h3>
+        <p>Decompiles a script in memory, exposes Bank PIN theft intent, and speaks AI voice warning!</p>
+      </div>
+
+      <div class="demo-btn" onclick="testHoneypot()">
+        <h3 style="color: #fbbf24;">🍯 3. Honeypot Decoy Tripwire</h3>
+        <p>Catches an infostealer touching fake desktop credentials red-handed.</p>
+      </div>
+
+      <div class="demo-btn" onclick="testFullAudit()">
+        <h3 style="color: #34d399;">💻 4. Full Device Health Audit</h3>
+        <p>Scans user profile memory and confirms 0 bytes leaked with STATUS: OK.</p>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted);">
+      <a href="index.html" style="color: var(--accent); text-decoration: none;">← Back to Main Website</a> &nbsp;|&nbsp; 
+      <a href="dashboard.html" style="color: var(--accent); text-decoration: none;">Open SOC Console</a>
+    </div>
+  </div>
+
+  <script>
+    const term = document.getElementById('term-text');
+    const statusBadge = document.getElementById('status-badge');
+    const shredBtn = document.getElementById('shred-btn');
+
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.05;
+        u.pitch = 0.95;
+        window.speechSynthesis.speak(u);
+      }
+    }
+
+    function testAirlock() {
+      shredBtn.style.display = 'none';
+      statusBadge.style.color = '#ef4444';
+      statusBadge.innerText = '● THREAT PAUSED IN AIRLOCK';
+      term.innerHTML = `
+        <span style="color: #ef4444;">🚨 [AIRLOCK INTERCEPT] Incoming Payload Detected!</span><br>
+        • Source: WhatsApp Web (Direct Message)<br>
+        • Disguised File: Job_Offer_Contract.pdf.exe<br>
+        • Detection: Executable header hidden in document<br>
+        • Action: PAUSED IN MEMORY (0 Bytes Written to Disk)<br>
+        • System Status: 100% Protected (Zero Entry achieved).
+      `;
+      speak("Warning! Dangerous payload detected from WhatsApp. Quarantined in cloud airlock before touching disk. System is secure.");
+    }
+
+    function testReverseEngineering() {
+      statusBadge.style.color = '#ef4444';
+      statusBadge.innerText = '● INTENT UNCOVERED: BANK PIN';
+      shredBtn.style.display = 'inline-block';
+      term.innerHTML = `
+        <span style="color: #f87171;">🔍 [REVERSE-ENGINEERING AUDIT] Decompiling Payload...</span><br>
+        • Target Identified: <strong style="color: #fca5a5;">NETBANKING PIN & SAVED PASSWORDS</strong><br>
+        • Code Signature: Hooking chrome::CryptUnprotectData & PIN memory buffers<br>
+        • AI Voice: Spoken threat warning dispatched.<br>
+        <br>
+        <span style="color: #fbbf24;">⚡ Awaiting User Permission: Click "Shred & Permanently Delete" below.</span>
+      `;
+      speak("Warning! CogniGuard has reverse engineered this script. The attacker is actively attempting to steal your Bank PIN and financial accounts. Permission requested: Shall I permanently shred and delete this file?");
+    }
+
+    function testHoneypot() {
+      shredBtn.style.display = 'none';
+      statusBadge.style.color = '#ef4444';
+      statusBadge.innerText = '● INTRUDER CAUGHT IN HONEYPOT';
+      term.innerHTML = `
+        <span style="color: #fbbf24;">🍯 [HONEYPOT TRIPWIRE TRIGGERED]</span><br>
+        • Bait Accessed: bank_passwords_and_pins.txt (Decoy Honey-Token)<br>
+        • Intruder Process: lazarus_token_stealer.exe (PID: 7194)<br>
+        • Containment: Process killed & memory purged in 0.01s<br>
+        • Actual Leaks: 0 BYTES (Decoy contained dummy cryptographic seeds)<br>
+        • Result: Attacker trapped and neutralized.
+      `;
+      speak("Intruder caught red-handed! Process attempted to access your bank password decoy. Attacker neutralized. Zero data leaked.");
+    }
+
+    function executeShred() {
+      shredBtn.style.display = 'none';
+      statusBadge.style.color = '#10b981';
+      statusBadge.innerText = '● FILE SHREDDED → STATUS: OK';
+      term.innerHTML = `
+        <span style="color: #10b981;">✅ [SHREDDER COMPLETE] Malicious Payload Destroyed!</span><br>
+        • File: Fake_Bank_Invoice.vbs (Purged from memory & disk)<br>
+        • Cryptographic Overwrite: 3-pass DoD sanitization<br>
+        • Exfiltration: 0 Bytes Leaked<br>
+        • Current State: 100% OPERATIONAL & SECURE (STATUS: OK)
+      `;
+      speak("File permanently shredded and destroyed. Zero bytes leaked. Your system is 100 percent secure.");
+    }
+
+    function testFullAudit() {
+      shredBtn.style.display = 'none';
+      statusBadge.style.color = '#10b981';
+      statusBadge.innerText = '● AUDIT COMPLETE: 100% CLEAN';
+      term.innerHTML = `
+        <span style="color: #10b981;">💻 [FULL-SYSTEM DEVICE AUDIT]</span><br>
+        • Scan Targets: Downloads, Desktop, Documents, Process RAM<br>
+        • Files Inspected: 1,420 files scanned (0.04s latency)<br>
+        • Hidden Disguised Binaries: 0<br>
+        • Credential Vault Integrity: LOCKED & UNTOUCHED<br>
+        • Verdict: SYSTEM HEALTH 100% — ALL SYSTEMS OK.
+      `;
+      speak("Full system audit complete. All vaults secure. Zero malware detected. Status: OK.");
+    }
+  </script>
+</body>
+</html>
