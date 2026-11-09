@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — CogniGuard AI</title>
+  <style>
+    :root {
+      --bg: #060911;
+      --card: #0d1527;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.7; padding: 40px 10%; max-width: 900px; margin: 0 auto; }
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+    .brand-title { font-size: 22px; font-weight: 800; }
+    h1 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+    .effective-date { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 32px 0 12px; color: var(--accent); }
+    p, li { font-size: 15px; color: var(--muted); margin-bottom: 14px; }
+    ul { padding-left: 20px; margin-bottom: 20px; }
+    li { margin-bottom: 8px; }
+    .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 24px 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-btn { display: inline-block; margin-bottom: 24px; font-size: 13px; color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back-btn">← Back to CogniGuard AI Home</a>
+
+  <div class="header">
+    <img src="../extension/icons/icon48.png" style="width: 36px; height: 36px; border-radius: 8px;" alt="CogniGuard">
+    <div class="brand-title">CogniGuard AI</div>
+  </div>
+
+  <h1>Privacy Policy</h1>
+  <div class="effective-date">Last Updated: November 2026 | Effective Immediately</div>
+
+  <p>At <strong>CogniGuard AI</strong> ("we", "our", or "us"), we believe privacy and security are fundamental human rights. This Privacy Policy describes how the CogniGuard AI Chrome Extension and web services handle your data with a strict <strong>Zero-Knowledge & Privacy-First Architecture</strong>.</p>
+
+  <div class="box">
+    <h3 style="margin-bottom: 8px; color: #fff;">🛡️ Our Zero-Data Guarantee</h3>
+    <p style="margin: 0;">CogniGuard AI does <strong>NOT</strong> sell, rent, monetize, or harvest your personal browsing history, passwords, or personal documents. All security analysis is performed locally on your device or in disposable memory sandboxes.</p>
+  </div>
+
+  <h2>1. Information We Process</h2>
+  <p>To protect your device against infostealer trojans and malicious payloads, CogniGuard AI analyzes the following data strictly for security verification:</p>
+  <ul>
+    <li><strong>Download Metadata:</strong> File name, file extension, and source URL of initiated downloads to verify whether executable code is disguised inside documents.</li>
+    <li><strong>Threat Incident Counters:</strong> Local numerical tallies of scanned and paused files stored solely inside your browser's local sandbox (<code>chrome.storage.local</code>).</li>
+  </ul>
+
+  <h2>2. Chrome Web Store Permissions Justification</h2>
+  <p>CogniGuard AI requests only the minimal permissions required to provide real-time protection:</p>
+  <ul>
+    <li><strong><code>downloads</code>:</strong> Required to pause untrusted executable downloads in memory before they write to your physical hard drive.</li>
+    <li><strong><code>storage</code>:</strong> Required to locally store security metrics, rate-limits, and user whitelist preferences on your machine.</li>
+    <li><strong><code>webNavigation</code>:</strong> Required to detect and intercept deceptive phishing domains and fake login redirects.</li>
+    <li><strong><code>notifications</code>:</strong> Required to display native Windows/macOS desktop alerts when an unauthorized intrusion is blocked.</li>
+  </ul>
+
+  <h2>3. Third-Party Sharing</h2>
+  <p>We do not share, sell, or transfer any user data to third parties, advertising networks, or data brokers under any circumstances.</p>
+
+  <h2>4. Contact & Compliance</h2>
+  <p>If you have any questions regarding this Privacy Policy or our security protocols, please contact our team at:</p>
+  <p><strong>Email:</strong> <a href="mailto:support@cogniguard.ai">support@cogniguard.ai</a> | <a href="mailto:manjesh694@gmail.com">manjesh694@gmail.com</a><br>
+  <strong>Developer:</strong> Manjesh G — Founder & Lead Engineer, CogniGuard AI</p>
+
+</body>
+</html>
