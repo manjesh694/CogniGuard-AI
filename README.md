@@ -4,7 +4,7 @@
 CogniGuard AI is an autonomous, agentic cybersecurity platform designed to protect remote IT workers, developers, and everyday consumers against the modern #1 attack vector: **human-layer credential theft, session hijacking, malicious AI skills, and disguised payloads.**
 
 * **Live Website:** https://manjesh694.github.io/CogniGuard-AI/
-* **Interactive Scanner Demo:** https://manjesh694.github.io/CogniGuard-AI/demo_portal.html
+* **Interactive Scanner Demo & Video:** https://manjesh694.github.io/CogniGuard-AI/demo_portal.html ([Watch 20s Demo MP4](https://manjesh694.github.io/CogniGuard-AI/cogniguard-demo-short.mp4))
 * **B2B SOC Console:** https://manjesh694.github.io/CogniGuard-AI/dashboard.html
 * **Investor Pitch Deck:** https://manjesh694.github.io/CogniGuard-AI/pitch_deck.html
 
