@@ -56,7 +56,10 @@ def scan_repository(target_dir: str):
     findings: List[Dict[str, Any]] = []
 
     for root, dirs, files in os.walk(target_dir):
-        dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "__pycache__", "venv", ".venv", "dist")]
+        skip_dirs = {".git", "node_modules", "__pycache__", "venv", ".venv", "dist"}
+        if os.path.basename(os.path.abspath(target_dir)) != "mock_infected_skill":
+            skip_dirs.add("mock_infected_skill")
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
 
         for file in files:
             lower_file = file.lower()
