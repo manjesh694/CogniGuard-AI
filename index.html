@@ -101,9 +101,14 @@
     <p>
       Hackers don't break code anymore—they compromise employee laptops, fake job offer PDFs, and session cookies. CogniGuard AI catches and neutralizes threats in the cloud before they ever touch your machine.
     </p>
-    <div class="hero-cta">
-      <a href="cogniguard-ai-v1.0.3.zip" download="cogniguard-ai.zip" class="btn-primary">⚡ Download Free Extension (.ZIP)</a>
+    <div class="hero-cta" style="margin-bottom: 24px;">
+      <a href="cogniguard-ai-v1.0.3.zip" download="cogniguard-ai.zip" class="btn-primary" onclick="showInstallTip()">⚡ Download Free Extension (.ZIP)</a>
+      <a href="demo_portal.html" class="btn-secondary">Try 60s Scanner Demo</a>
       <a href="dashboard.html" class="btn-secondary">View Live SOC Dashboard</a>
+    </div>
+    <div id="installGuide" style="max-width: 720px; margin: 0 auto 36px; background: rgba(13, 21, 39, 0.85); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 13px; color: var(--text-muted); text-align: left;">
+      <div style="color: #60a5fa; font-weight: 700; margin-bottom: 6px;">🧩 Install in Chrome / Edge / Brave in 20 Seconds (100% Free):</div>
+      <div>1. Unzip <code style="color:#f8fafc;">cogniguard-ai.zip</code> &nbsp;→&nbsp; 2. Open <code style="color:#f8fafc;">chrome://extensions</code> &amp; enable <strong>Developer mode</strong> &nbsp;→&nbsp; 3. Click <strong>Load unpacked</strong> and select the unzipped folder.</div>
     </div>
   </section>
 
@@ -258,6 +263,13 @@
 
   <script>
     let activePlan = 'pro';
+
+    function showInstallTip() {
+      const el = document.getElementById('installGuide');
+      if (!el) return;
+      el.style.borderColor = '#3b82f6';
+      el.style.boxShadow = '0 0 24px rgba(59, 130, 246, 0.35)';
+    }
 
     function openPlanModal(plan) {
       activePlan = plan;

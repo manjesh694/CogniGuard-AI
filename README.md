@@ -70,7 +70,12 @@ cogniguard daemon
 cogniguard bridge
 ```
 
-### 4. Run Verification Tests
+### 4. Install the Free Browser Extension (20 Seconds, No Store Required)
+1. Download [`docs/cogniguard-ai-v1.0.3.zip`](https://manjesh694.github.io/CogniGuard-AI/cogniguard-ai-v1.0.3.zip) and unzip it.
+2. Open `chrome://extensions` (or `edge://extensions`) and enable **Developer mode**.
+3. Click **Load unpacked** and select the unzipped folder.
+
+### 5. Run Verification Tests
 ```bash
 python tests/verify_all.py
 pytest -v
