@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CogniGuard AI - Security Operations Dashboard</title>
+  <title>CogniGuard AI — Enterprise B2B Security Operations Console</title>
   <style>
     :root {
       --bg: #090d16;
@@ -17,27 +17,42 @@
       --text-muted: #9ca3af;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 24px; }
-    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    body { background: var(--bg); color: var(--text); padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
     .logo-box { display: flex; align-items: center; gap: 12px; }
-    .logo-badge { background: linear-gradient(135deg, #2563eb, #1d4ed8); width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .logo-box img { width: 42px; height: 42px; border-radius: 10px; }
     .title h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
     .title p { font-size: 13px; color: var(--text-muted); }
     .status-pill { display: flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.12); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
     .pulse-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-    .card-title { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .card-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
     .card-value { font-size: 28px; font-weight: 700; }
     .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* Corporate Fleet Panel */
+    .fleet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .endpoint-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .ep-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; }
+    .ep-meta { font-size: 12px; color: var(--text-muted); }
+    .ep-bar { width: 100%; height: 6px; background: #1f2937; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .ep-fill { height: 100%; background: var(--green); }
+
+    .deploy-box { background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .deploy-code { background: #030712; padding: 8px 14px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #60a5fa; border: 1px solid #1e293b; }
+
     .alert-panel { display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red); border-radius: 12px; padding: 20px; margin-bottom: 24px; animation: slideDown 0.3s ease; }
     .alert-header { display: flex; justify-content: space-between; align-items: center; color: var(--red); font-weight: 700; font-size: 16px; margin-bottom: 12px; }
     .alert-body { font-size: 14px; line-height: 1.6; color: #fca5a5; }
-    .action-row { display: flex; gap: 12px; margin-bottom: 24px; }
-    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    
+    .action-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .btn { background: var(--accent); color: white; border: none; padding: 11px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 13px; }
     .btn:hover { background: #2563eb; }
     .btn-danger { background: #dc2626; }
     .btn-danger:hover { background: #b91c1c; }
+    
     .log-table-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
     .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -53,39 +68,83 @@
 
   <div class="header">
     <div class="logo-box">
-      <div class="logo-badge">🛡️</div>
+      <img src="icons/icon48.png" alt="CogniGuard">
       <div class="title">
-        <h1>CogniGuard AI</h1>
-        <p>Autonomous Zero-Entry Endpoint & Vault Defense</p>
+        <h1>CogniGuard AI — Enterprise B2B SOC Console</h1>
+        <p>Multi-Team Fleet Endpoint & Human-Layer Risk Management</p>
       </div>
     </div>
     <div class="status-pill" id="global-status">
       <div class="pulse-dot"></div>
-      <span>SYSTEM STATUS: OK</span>
+      <span>FLEET STATUS: OK (100% SECURE)</span>
     </div>
   </div>
 
+  <!-- Top Metrics -->
   <div class="grid">
     <div class="card">
-      <div class="card-title">Protected Vaults</div>
-      <div class="card-value">4 Vaults</div>
-      <div class="card-sub">Chrome Cookies, SSH, AWS, .env</div>
+      <div class="card-title">Protected Team Endpoints</div>
+      <div class="card-value">3 Devices</div>
+      <div class="card-sub">Engineering, Finance & Remote Dev</div>
     </div>
     <div class="card">
       <div class="card-title">Threats Intercepted</div>
       <div class="card-value" id="blocked-count" style="color: var(--green);">2</div>
-      <div class="card-sub">All contained before execution</div>
+      <div class="card-sub">All contained before disk write</div>
     </div>
     <div class="card">
-      <div class="card-title">Zero-Entry Rate</div>
-      <div class="card-value">100.0%</div>
-      <div class="card-sub">0 Bytes credential data leaked</div>
+      <div class="card-title">Average Human Risk Score</div>
+      <div class="card-value" style="color: var(--green);">97 / 100</div>
+      <div class="card-sub">SOC2 & ISO Compliance Ready</div>
     </div>
     <div class="card">
-      <div class="card-title">Detection Latency</div>
+      <div class="card-title">Containment Latency</div>
       <div class="card-value">0.04s</div>
       <div class="card-sub">Pre-execution cloud sandbox</div>
     </div>
+  </div>
+
+  <!-- Fleet Overview Cards -->
+  <h2 style="font-size: 16px; margin-bottom: 12px; color: var(--text-muted);">🏢 Active Enterprise Employee Fleet</h2>
+  <div class="fleet-grid">
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span>💻 ENG-LAPTOP-01 (Bengaluru)</span>
+        <span class="badge badge-ok">STATUS: OK</span>
+      </div>
+      <div class="ep-meta">Owner: Lead Software Engineer • 24/7 Daemon + Chrome Guard</div>
+      <div class="ep-meta" style="color: var(--green); font-weight: 600;">Safety Score: 99/100 (Vault Locked)</div>
+      <div class="ep-bar"><div class="ep-fill" style="width: 99%;"></div></div>
+    </div>
+
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span>💼 FIN-WORKSTATION-04</span>
+        <span class="badge badge-ok">STATUS: OK</span>
+      </div>
+      <div class="ep-meta">Owner: Finance & Payroll Lead • Honeypot Armed</div>
+      <div class="ep-meta" style="color: var(--green); font-weight: 600;">Safety Score: 98/100 (Zero Entry Active)</div>
+      <div class="ep-bar"><div class="ep-fill" style="width: 98%;"></div></div>
+    </div>
+
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span>🌐 DEV-CONTRACTOR-09</span>
+        <span class="badge badge-ok">STATUS: OK</span>
+      </div>
+      <div class="ep-meta">Owner: Remote Contractor • 1 Infostealer Blocked Today</div>
+      <div class="ep-meta" style="color: var(--green); font-weight: 600;">Safety Score: 94/100 (Protected)</div>
+      <div class="ep-bar"><div class="ep-fill" style="width: 94%;"></div></div>
+    </div>
+  </div>
+
+  <!-- 1-Line Corporate Deploy Banner -->
+  <div class="deploy-box">
+    <div>
+      <strong style="font-size: 14px; color: #60a5fa;">🚀 Onboard New Employee Laptop (1-Line Command):</strong>
+      <div style="font-size: 12px; color: var(--text-muted);">Run on any team machine to join this fleet console:</div>
+    </div>
+    <div class="deploy-code">python src/agent/guardian_daemon_24x7.py</div>
   </div>
 
   <div class="alert-panel" id="alert-banner">
@@ -95,28 +154,29 @@
     </div>
     <div class="alert-body" id="alert-text">
       <strong>Suspicious Payload:</strong> Job_Contract_Offer.pdf.exe (PID: 9942)<br>
-      <strong>Target:</strong> Google Chrome Session Cookies (Credential Dump Attempt)<br>
+      <strong>Target Endpoint:</strong> ENG-LAPTOP-01 (Google Chrome Session Cookies)<br>
       <strong>Action Taken:</strong> Process Terminated, Memory Purged, Outbound C2 Socket Blocked (0.04s).<br>
-      <strong>Result:</strong> Zero credentials exfiltrated. System returned to <strong>STATUS: OK</strong>.
+      <strong>Result:</strong> Zero credentials exfiltrated. Fleet returned to <strong>STATUS: OK</strong>.
     </div>
   </div>
 
   <div class="action-row">
-    <button class="btn btn-danger" onclick="triggerIntrusionSim()">⚡ Test Hacker Intrusion (Simulate Infostealer)</button>
+    <button class="btn btn-danger" onclick="triggerIntrusionSim()">⚡ Simulate Fleet Attack (Test Corporate Alert)</button>
     <button class="btn" onclick="addDevLog()">💻 Simulate Normal Dev Workflow (VS Code)</button>
+    <a href="index.html" class="btn" style="background: #1f2937; text-decoration: none;">← Website Home</a>
   </div>
 
   <div class="log-table-container">
     <div class="table-header">
-      <span>Real-Time Security Event Audit Log</span>
-      <span style="font-size: 12px; color: var(--text-muted);">Auto-updating every event</span>
+      <span>Real-Time Enterprise Audit Log</span>
+      <span style="font-size: 12px; color: var(--text-muted);">Synced with Local Python API</span>
     </div>
     <table>
       <thead>
         <tr>
           <th>Time</th>
           <th>Process / Source</th>
-          <th>Target Vault</th>
+          <th>Endpoint / Target</th>
           <th>Threat Score</th>
           <th>Action Taken</th>
           <th>Status</th>
@@ -124,25 +184,25 @@
       </thead>
       <tbody id="log-body">
         <tr>
-          <td>Today 11:20:10</td>
+          <td>Today 18:35:10</td>
           <td>powershell_payload.vbs (PID 8110)</td>
-          <td>AWS_CREDENTIALS</td>
+          <td>FIN-WORKSTATION-04 (AWS)</td>
           <td style="color: var(--red); font-weight: 600;">98.5% (High)</td>
           <td><span class="badge badge-blocked">QUARANTINE_AND_KILL</span></td>
           <td><span class="badge badge-ok">OK</span></td>
         </tr>
         <tr>
-          <td>Today 11:19:42</td>
+          <td>Today 18:30:42</td>
           <td>Job_Contract_Offer.pdf.exe (PID 9942)</td>
-          <td>BROWSER_COOKIES</td>
+          <td>DEV-CONTRACTOR-09 (Cookies)</td>
           <td style="color: var(--red); font-weight: 600;">99.1% (Critical)</td>
           <td><span class="badge badge-blocked">INTERCEPTED</span></td>
           <td><span class="badge badge-ok">OK</span></td>
         </tr>
         <tr>
-          <td>Today 11:15:02</td>
+          <td>Today 18:15:02</td>
           <td>code.exe (VS Code)</td>
-          <td>ENV_SECRETS</td>
+          <td>ENG-LAPTOP-01 (.env)</td>
           <td style="color: var(--green); font-weight: 600;">4.0% (Safe)</td>
           <td><span class="badge badge-ok">ALLOWED</span></td>
           <td><span class="badge badge-ok">OK</span></td>
@@ -166,13 +226,12 @@
       row.innerHTML = `
         <td>${now}</td>
         <td>malicious_recruiter_link.exe (PID 7731)</td>
-        <td>SSH_KEYS (~/.ssh/id_rsa)</td>
+        <td>ENG-LAPTOP-01 (SSH Keys)</td>
         <td style="color: var(--red); font-weight: 600;">99.8% (Critical)</td>
         <td><span class="badge badge-blocked">TERMINATED (0.03s)</span></td>
         <td><span class="badge badge-ok">OK</span></td>
       `;
 
-      // Flash status pill
       const pill = document.getElementById('global-status');
       pill.style.background = 'rgba(239, 68, 68, 0.2)';
       pill.style.color = '#ef4444';
@@ -183,7 +242,7 @@
         pill.style.background = 'rgba(16, 185, 129, 0.12)';
         pill.style.color = '#10b981';
         pill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-        pill.innerHTML = '<div class="pulse-dot"></div><span>SYSTEM STATUS: OK</span>';
+        pill.innerHTML = '<div class="pulse-dot"></div><span>FLEET STATUS: OK (100% SECURE)</span>';
       }, 3000);
     }
 
@@ -194,14 +253,13 @@
       row.innerHTML = `
         <td>${now}</td>
         <td>git.exe (Git CLI)</td>
-        <td>ENV_SECRETS</td>
+        <td>ENG-LAPTOP-01 (.env)</td>
         <td style="color: var(--green); font-weight: 600;">2.1% (Safe)</td>
         <td><span class="badge badge-ok">ALLOWED</span></td>
         <td><span class="badge badge-ok">OK</span></td>
       `;
     }
 
-    // Live Sync with Local Python Daemon API
     async function syncLiveLogsFromPython() {
       try {
         const res = await fetch('http://127.0.0.1:8765/api/v1/logs');
@@ -218,7 +276,7 @@
             row.innerHTML = `
               <td>${entry.timestamp}</td>
               <td>${entry.filename}</td>
-              <td>${entry.source_url ? 'Browser/Web' : 'Vault'}</td>
+              <td>${entry.source_url ? 'ENG-LAPTOP-01 (Web)' : 'System Vault'}</td>
               <td style="color: ${isThreat ? 'var(--red)' : 'var(--green)'}; font-weight: 600;">
                 ${(entry.threat_score * 100).toFixed(1)}% (${isThreat ? 'High' : 'Safe'})
               </td>
@@ -228,9 +286,7 @@
           });
           document.getElementById('blocked-count').innerText = blocked;
         }
-      } catch (e) {
-        // Standalone mode if Python server is off
-      }
+      } catch (e) {}
     }
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();
