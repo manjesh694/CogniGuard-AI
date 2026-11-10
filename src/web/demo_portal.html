@@ -101,6 +101,11 @@
         <h3 style="color: #34d399;">💻 4. Full Device Health Audit</h3>
         <p>Scans user profile memory and confirms 0 bytes leaked with STATUS: OK.</p>
       </div>
+
+      <div class="demo-btn" onclick="testRepoScanner()" style="grid-column: 1 / -1; border-color: rgba(56, 189, 248, 0.4);">
+        <h3 style="color: #38bdf8;">🔎 5. GitHub Repo & AI-Skill Pre-Install Scanner (Supply-Chain Defense)</h3>
+        <p>Scans downloaded repositories and AI SKILL.md files before installation. Catches hidden SSH stealers & prompt injections.</p>
+      </div>
     </div>
 
     <div style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted);">
@@ -196,6 +201,24 @@
         • Verdict: SYSTEM HEALTH 100% — ALL SYSTEMS OK.
       `;
       speak("Full system audit complete. All vaults secure. Zero malware detected. Status: OK.");
+    }
+
+    function testRepoScanner() {
+      shredBtn.style.display = 'inline-block';
+      statusBadge.style.color = '#ef4444';
+      statusBadge.innerText = '● VERDICT: DO_NOT_INSTALL (100/100)';
+      term.innerHTML = `
+        <span style="color: #38bdf8;">$ cogniguard scan ./untrusted-ai-skill</span><br>
+        Scanned 3,169 files in 0.14s<br><br>
+        <div style="border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 6px; color: #fca5a5;">
+          Risk score: &nbsp;&nbsp;<strong>100 / 100</strong><br>
+          Severity: &nbsp;&nbsp;&nbsp;&nbsp;<strong>CRITICAL</strong><br>
+          Verdict: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>🚨 DO_NOT_INSTALL</strong>
+        </div><br>
+        • Finding 1: [install.py] -> Unauthorized SSH Key Read (~/.ssh/id_rsa)<br>
+        • Finding 2: [SKILL.md] -> AI Prompt Injection Exfiltration
+      `;
+      speak("Critical warning! CogniGuard Repo Scanner found hidden backdoors and SSH credential stealers inside this AI skill. Risk score 100 out of 100. Verdict: Do not install.");
     }
   </script>
 </body>
