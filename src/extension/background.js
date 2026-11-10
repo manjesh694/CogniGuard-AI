@@ -1,8 +1,10 @@
 /**
- * CogniGuard AI - Background Service Worker (v1.0.3)
- * Full 360-Degree Defense: Intercepts downloads, phishing links, and social media attack vectors
- * (WhatsApp Web, Facebook Messenger, LinkedIn, Telegram).
+ * CogniGuard AI - Background Service Worker (v1.0.4)
+ * Connected to Local Python Agent API Bridge (http://127.0.0.1:8765)
+ * Full 360-Degree Defense across Web, WhatsApp, Facebook, LinkedIn, and System Vaults.
  */
+
+const API_BRIDGE_URL = "http://127.0.0.1:8765/api/v1/inspect";
 
 // Initialize default protection state
 chrome.runtime.onInstalled.addListener(() => {
@@ -13,7 +15,7 @@ chrome.runtime.onInstalled.addListener(() => {
     incidents: [],
     lastPausedDownloadId: null
   });
-  console.log("🛡️ CogniGuard AI v1.0.3: 360-Degree Defense Armed (Web + Social Media + Vault).");
+  console.log("🛡️ CogniGuard AI v1.0.4: 360-Degree Defense & Python Bridge Armed.");
 });
 
 // High-Risk File Extensions that Infostealers & Malware use
@@ -28,9 +30,33 @@ const PHISHING_KEYWORDS = [
   "facebook-security", "instagram-badge", "linkedin-talent-verify"
 ];
 
-// Cache to prevent duplicate notifications for the same download
 const processedDownloadIds = new Set();
 let lastAlertTimestamp = 0;
+
+// Helper: Stream Telemetry to Local Python Daemon
+async function syncWithPythonDaemon(filename, sourceUrl, fileSize) {
+  try {
+    const response = await fetch(API_BRIDGE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: filename,
+        source_url: sourceUrl,
+        file_size_bytes: fileSize || 0,
+        client_version: "1.0.4"
+      })
+    });
+    if (response.ok) {
+      const verdictData = await response.json();
+      console.log("📡 [Python Daemon Verdict]:", verdictData);
+      return verdictData;
+    }
+  } catch (err) {
+    // Graceful fallback if local Python daemon is not currently started
+    console.log("ℹ️ Local Python Daemon offline; running on standalone Browser Defense.");
+  }
+  return null;
+}
 
 // Helper: Show Single, Rate-Limited Native Windows Desktop Notification
 function showWindowsSecurityAlert(filename, reason, source = "Web") {
@@ -61,6 +87,7 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
     let totalScanned = (data.downloadsScanned || 0) + 1;
     const filename = (downloadItem.filename || "").toLowerCase();
     const url = (downloadItem.url || "").toLowerCase();
+    const cleanName = downloadItem.filename ? downloadItem.filename.split(/[\\/]/).pop() : "Executable_Payload.exe";
 
     // Detect Source Platform
     let sourcePlatform = "Web Download";
@@ -72,6 +99,9 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
       sourcePlatform = "LinkedIn Message";
     }
 
+    // Stream event asynchronously to Python Threat Engine
+    syncWithPythonDaemon(cleanName, downloadItem.url || "unknown", downloadItem.fileSize);
+
     const isDangerousExt = DANGEROUS_EXTENSIONS.some(ext => filename.endsWith(ext));
     const isPhishingSource = PHISHING_KEYWORDS.some(kw => url.includes(kw));
 
@@ -81,7 +111,6 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
       // PAUSE THE DOWNLOAD IMMEDIATELY (Zero Entry - 0 Bytes to Disk)
       chrome.downloads.pause(downloadItem.id, () => {
         let totalBlocked = (data.threatsBlocked || 0) + 1;
-        const cleanName = downloadItem.filename ? downloadItem.filename.split(/[\\/]/).pop() : "Executable_Payload.exe";
         const reasonText = isDangerousExt ? "Executable Payload Disguised as Document" : "Untrusted Phishing Source";
         
         const incident = {
@@ -102,9 +131,7 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
           lastPausedDownloadId: downloadItem.id
         });
 
-        // Trigger rate-limited notification with source name
         showWindowsSecurityAlert(cleanName, reasonText, sourcePlatform);
-
         console.warn(`🚨 [COGNIGUARD ALERT] Intercepted Threat from ${sourcePlatform}:`, incident);
       });
     } else {
@@ -115,11 +142,12 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
 
 // 2. SOCIAL MEDIA PHISHING & DECEPTIVE LINK RADAR
 chrome.webNavigation.onBeforeNavigate.addListener((details) => {
-  if (details.frameId !== 0) return; // Top-level navigations only
+  if (details.frameId !== 0) return;
   const url = details.url.toLowerCase();
 
   const isPhishing = PHISHING_KEYWORDS.some(kw => url.includes(kw));
   if (isPhishing) {
+    syncWithPythonDaemon("Phishing_URL_Redirect", details.url, 0);
     showWindowsSecurityAlert(details.url, "Deceptive Phishing Link Detected", "Social Link Radar");
     console.warn("🚨 [COGNIGUARD PHISHING INTERCEPT] Blocked Navigation to:", details.url);
   }

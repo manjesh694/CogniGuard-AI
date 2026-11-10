@@ -200,6 +200,40 @@
         <td><span class="badge badge-ok">OK</span></td>
       `;
     }
+
+    // Live Sync with Local Python Daemon API
+    async function syncLiveLogsFromPython() {
+      try {
+        const res = await fetch('http://127.0.0.1:8765/api/v1/logs');
+        if (!res.ok) return;
+        const logs = await res.json();
+        if (logs.length > 0) {
+          const tbody = document.getElementById('log-body');
+          tbody.innerHTML = '';
+          let blocked = 0;
+          logs.slice(0, 15).forEach(entry => {
+            const isThreat = entry.verdict !== 'SAFE';
+            if (isThreat) blocked++;
+            const row = tbody.insertRow();
+            row.innerHTML = `
+              <td>${entry.timestamp}</td>
+              <td>${entry.filename}</td>
+              <td>${entry.source_url ? 'Browser/Web' : 'Vault'}</td>
+              <td style="color: ${isThreat ? 'var(--red)' : 'var(--green)'}; font-weight: 600;">
+                ${(entry.threat_score * 100).toFixed(1)}% (${isThreat ? 'High' : 'Safe'})
+              </td>
+              <td><span class="badge ${isThreat ? 'badge-blocked' : 'badge-ok'}">${entry.action_taken}</span></td>
+              <td><span class="badge badge-ok">${entry.status}</span></td>
+            `;
+          });
+          document.getElementById('blocked-count').innerText = blocked;
+        }
+      } catch (e) {
+        // Standalone mode if Python server is off
+      }
+    }
+    setInterval(syncLiveLogsFromPython, 3000);
+    syncLiveLogsFromPython();
   </script>
 </body>
 </html>
