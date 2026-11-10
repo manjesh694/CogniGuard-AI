@@ -12,8 +12,8 @@ This document contains the exact information to copy & paste into the **Google C
 * **Category:** `Privacy and security`
 * **Visibility:** `Public` (or `Unlisted` during initial review)
 * **Price:** `Free`
-* **Official Website URL:** `https://manjesh694.github.io/CogniGuard-AI/src/web/`
-* **Privacy Policy URL:** `https://manjesh694.github.io/CogniGuard-AI/src/web/privacy.html`
+* **Official Website URL:** `https://manjesh694.github.io/CogniGuard-AI/`
+* **Privacy Policy URL:** `https://manjesh694.github.io/CogniGuard-AI/privacy.html`
 * **Support Contact:** `manjesh694@gmail.com`
 
 ---
@@ -69,4 +69,4 @@ Join the zero-entry movement today. Install CogniGuard AI and browse with comple
 
 ## 4. Package File to Upload
 
-* **Upload File:** `dist/cogniguard-ai-v1.0.2.zip` (Pre-packaged and ready in your project directory!)
+* **Upload File:** `dist/cogniguard-ai-v1.0.3.zip` (Pre-packaged and ready in your project directory!)

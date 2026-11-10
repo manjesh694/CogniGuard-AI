@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CogniGuard AI - Zero-Entry Gatekeeper",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Autonomous Zero-Entry Browser Guardian preventing infostealers, malicious downloads, and credential theft.",
   "permissions": [
     "downloads",

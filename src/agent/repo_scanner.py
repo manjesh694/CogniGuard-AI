@@ -123,6 +123,15 @@ def scan_repository(target_dir: str):
 
     print("=" * 60 + "\n")
 
+    return {
+        "target": target_dir,
+        "files_scanned": files_scanned,
+        "risk_score": final_score,
+        "severity": severity,
+        "verdict": verdict,
+        "findings": findings,
+    }
+
 if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else os.getcwd()
     scan_repository(target)
