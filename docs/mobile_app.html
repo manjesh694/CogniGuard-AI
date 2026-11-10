@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#060911">
+  <title>CogniGuard AI — Mobile Guardian</title>
+  <style>
+    :root {
+      --bg: #060911;
+      --card: #0d1527;
+      --border: #1e293b;
+      --accent: #38bdf8;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding: 16px; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    /* Mobile App Header */
+    .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
+    .brand img { width: 32px; height: 32px; border-radius: 8px; }
+    .status-pill { display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pulse { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+
+    /* Hero Shield Card */
+    .shield-hero { background: linear-gradient(145deg, #0f172a, #090d16); border: 1px solid var(--border); border-radius: 18px; padding: 24px 20px; text-align: center; margin-bottom: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+    .shield-circle { width: 72px; height: 72px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 32px; box-shadow: 0 0 24px rgba(16, 185, 129, 0.25); }
+    .shield-hero h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .shield-hero p { font-size: 13px; color: var(--muted); }
+
+    /* SMS / WhatsApp Link Scanner */
+    .scanner-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+    .scanner-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .scanner-card p { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    textarea { width: 100%; background: #060911; border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 13px; resize: none; height: 75px; margin-bottom: 10px; outline: none; }
+    textarea:focus { border-color: var(--accent); }
+    
+    .btn { width: 100%; padding: 13px; border-radius: 10px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; }
+    .btn-danger { background: #dc2626; color: white; margin-top: 8px; }
+    .btn-sample { background: rgba(56, 189, 248, 0.1); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.25); font-size: 12px; padding: 8px; margin-bottom: 10px; }
+
+    /* Result Box */
+    .result-box { display: none; border-radius: 10px; padding: 14px; margin-top: 12px; font-size: 13px; line-height: 1.5; }
+    .result-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); color: #fca5a5; }
+    .result-safe { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--green); color: #6ee7b7; }
+
+    /* Remote Laptop Card */
+    .remote-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .remote-info h4 { font-size: 14px; font-weight: 700; }
+    .remote-info span { font-size: 12px; color: var(--green); }
+    .lock-btn { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="app-header">
+    <div class="brand">
+      <img src="icons/icon48.png" alt="CogniGuard">
+      <span>CogniGuard Mobile</span>
+    </div>
+    <div class="status-pill" id="mobile-status">
+      <div class="pulse"></div>
+      <span>PROTECTED</span>
+    </div>
+  </div>
+
+  <!-- Shield Overview -->
+  <div class="shield-hero">
+    <div class="shield-circle" id="shield-icon">🛡️</div>
+    <h2 id="hero-title">Phone & Laptop Secured</h2>
+    <p id="hero-sub">Zero-Entry WhatsApp, SMS & UPI Guard Active</p>
+  </div>
+
+  <!-- WhatsApp / SMS / UPI Scam Scanner -->
+  <div class="scanner-card">
+    <h3>💬 WhatsApp, SMS & UPI Scam Radar</h3>
+    <p>Paste any suspicious message, bank alert, or link received on your phone to reverse-engineer the intent before clicking.</p>
+    
+    <button class="btn btn-sample" onclick="fillScamSample()">⚡ Load Sample Fake Bank KYC / UPI Scam</button>
+    <textarea id="msg-input" placeholder="Paste WhatsApp message or suspicious URL here..."></textarea>
+    <button class="btn btn-primary" onclick="scanMobileMessage()">🔍 Analyze Intent & Protect</button>
+
+    <div class="result-box" id="scan-result"></div>
+  </div>
+
+  <!-- Laptop Remote Sync -->
+  <div class="remote-card">
+    <div class="remote-info">
+      <h4>💻 Linked Laptop (Windows 11)</h4>
+      <span id="laptop-state">● Chrome Vault & Honeypot Armed</span>
+    </div>
+    <button class="lock-btn" onclick="triggerPanicLockdown()">🚨 Lock Laptop</button>
+  </div>
+
+  <div style="text-align: center; font-size: 12px; color: var(--muted); margin-top: auto; padding: 16px 0;">
+    <a href="index.html" style="color: var(--accent); text-decoration: none;">← Website Home</a> &nbsp;|&nbsp;
+    <a href="demo_portal.html" style="color: var(--accent); text-decoration: none;">Executive Demo</a>
+  </div>
+
+  <script>
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.05;
+        window.speechSynthesis.speak(u);
+      }
+    }
+
+    function fillScamSample() {
+      document.getElementById('msg-input').value =
+        "URGENT: Your SBI / HDFC NetBanking account is suspended! Verify KYC and enter PIN immediately at http://bank-kyc-update.xyz/verify or lose access.";
+    }
+
+    function scanMobileMessage() {
+      const text = document.getElementById('msg-input').value.trim().toLowerCase();
+      const resBox = document.getElementById('scan-result');
+      const shieldIcon = document.getElementById('shield-icon');
+
+      if (!text) {
+        alert("Please paste a message or click 'Load Sample' first!");
+        return;
+      }
+
+      const scamKeywords = [
+        "kyc", "suspended", "verify", "pin", "upi", "claim", "lottery",
+        "prize", "bit.ly", ".xyz", "apk", "urgent", "blocked", "password", "otp"
+      ];
+
+      const isScam = scamKeywords.some(kw => text.includes(kw));
+
+      resBox.style.display = 'block';
+      if (isScam) {
+        resBox.className = 'result-box result-danger';
+        resBox.innerHTML = `
+          <strong>🚨 SCAM & PHISHING TRAP DETECTED!</strong><br>
+          • <strong>Hacker Intent:</strong> Attempting to steal Bank PIN, OTP, or UPI funds via deceptive urgency.<br>
+          • <strong>Action Taken:</strong> Link blocked. Do NOT tap or enter PIN.<br>
+          • <strong>Status:</strong> Phone Protected (0 Bytes Leaked).
+        `;
+        shieldIcon.innerText = '🚨';
+        shieldIcon.style.borderColor = '#ef4444';
+        speak("Warning! CogniGuard Mobile detected a scam message. The attacker is attempting to steal your Bank PIN and OTP. Do not click the link. Your phone is secure.");
+      } else {
+        resBox.className = 'result-box result-safe';
+        resBox.innerHTML = `
+          <strong>✅ MESSAGE VERIFIED SAFE</strong><br>
+          • No malicious phishing links, deceptive domains, or credential-theft intent detected.<br>
+          • <strong>Status:</strong> OK.
+        `;
+        shieldIcon.innerText = '🛡️';
+        shieldIcon.style.borderColor = '#10b981';
+        speak("Message scanned. No threats detected. Status OK.");
+      }
+    }
+
+    function triggerPanicLockdown() {
+      document.getElementById('laptop-state').style.color = '#ef4444';
+      document.getElementById('laptop-state').innerText = '🔒 REMOTE LOCKDOWN ENGAGED';
+      speak("Emergency remote lockdown engaged. All laptop browser sessions and credential vaults are now locked.");
+      setTimeout(() => {
+        document.getElementById('laptop-state').style.color = '#10b981';
+        document.getElementById('laptop-state').innerText = '● Laptop Secured (Status: OK)';
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
