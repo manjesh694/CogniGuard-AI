@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cogniguard-ai"
+version = "1.0.3"
+description = "Zero-Entry Autonomous Cyber Defense CLI, Repo Scanner, and Local Security Bridge"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110.0",
+  "uvicorn>=0.28.0",
+  "pydantic>=2.6.0",
+  "psutil>=5.9.8",
+  "requests>=2.31.0",
+]
+
+[project.scripts]
+cogniguard = "agent.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["agent*"]

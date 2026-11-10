@@ -32,3 +32,6 @@ build/
 .DS_Store
 Thumbs.db
 *.log
+audit_logs.json
+leads.json
+.pytest_cache/

@@ -289,6 +289,16 @@
       });
     }
 
+    function persistLeadToBridge(payload) {
+      try {
+        fetch('http://127.0.0.1:8765/api/v1/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(function() {});
+      } catch (e) {}
+    }
+
     function submitPlanForm(event) {
       event.preventDefault();
       const email = document.getElementById('emailInput').value.trim();
@@ -300,6 +310,7 @@
         try {
           localStorage.setItem('cogniguard_trial', JSON.stringify({ email, key, plan: 'pro', activatedAt: new Date().toISOString() }));
         } catch (e) {}
+        persistLeadToBridge({ plan: 'pro', email: email, trial_key: key });
         resultBody.innerHTML =
           'Trial key issued for <strong>' + escapeHtml(email) + '</strong>:<br>' +
           '<code style="display:inline-block; margin:8px 0; padding:6px 10px; background:#0d1527; border:1px solid var(--border); border-radius:6px; color:#60a5fa;">' + key + '</code><br>' +
@@ -309,7 +320,9 @@
           '</div>';
       } else {
         const company = document.getElementById('companyInput').value.trim();
-        const seats = String(parseInt(document.getElementById('seatsInput').value, 10) || 25);
+        const seatsNum = parseInt(document.getElementById('seatsInput').value, 10) || 25;
+        const seats = String(seatsNum);
+        persistLeadToBridge({ plan: 'enterprise', email: email, company: company, seats: seatsNum });
         const subject = encodeURIComponent('CogniGuard AI Enterprise Pilot — ' + company + ' (' + seats + ' seats)');
         const body = encodeURIComponent('Hi CogniGuard Team,\n\nWe would like to schedule an Enterprise IT Fleet pilot.\nCompany: ' + company + '\nContact Email: ' + email + '\nSeats: ' + seats + '\n');
         const mailtoUrl = 'mailto:manjesh694@gmail.com?subject=' + subject + '&body=' + body;
