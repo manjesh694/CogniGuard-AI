@@ -102,6 +102,11 @@
       <div class="card-value">0.04s</div>
       <div class="card-sub">Pre-execution cloud sandbox</div>
     </div>
+    <div class="card">
+      <div class="card-title">Trials & Enterprise Leads</div>
+      <div class="card-value" id="leads-count" style="color: #60a5fa;">0</div>
+      <div class="card-sub" id="leads-breakdown">Waiting for local bridge (:8765)</div>
+    </div>
   </div>
 
   <!-- Fleet Overview Cards -->
@@ -144,7 +149,7 @@
       <strong style="font-size: 14px; color: #60a5fa;">🚀 Onboard New Employee Laptop (1-Line Command):</strong>
       <div style="font-size: 12px; color: var(--text-muted);">Run on any team machine to join this fleet console:</div>
     </div>
-    <div class="deploy-code">python src/agent/guardian_daemon_24x7.py</div>
+    <div class="deploy-code">cogniguard daemon &nbsp;|&nbsp; cogniguard bridge</div>
   </div>
 
   <div class="alert-panel" id="alert-banner">
@@ -169,7 +174,7 @@
   <div class="log-table-container">
     <div class="table-header">
       <span>Real-Time Enterprise Audit Log</span>
-      <span style="font-size: 12px; color: var(--text-muted);">Synced with Local Python API</span>
+      <span id="bridge-status-label" style="font-size: 12px; color: var(--text-muted);">Synced with Local Python API</span>
     </div>
     <table>
       <thead>
@@ -211,8 +216,38 @@
     </table>
   </div>
 
+  <div class="log-table-container" style="margin-top: 24px;">
+    <div class="table-header">
+      <span>💼 Pro Trials & Enterprise Pipeline</span>
+      <span style="font-size: 12px; color: var(--text-muted);">Live from /api/v1/leads</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Created</th>
+          <th>Plan</th>
+          <th>Contact Email</th>
+          <th>Company / Trial Key</th>
+          <th>Seats</th>
+        </tr>
+      </thead>
+      <tbody id="leads-body">
+        <tr>
+          <td colspan="5" style="color: var(--text-muted); text-align: center;">Start <code>cogniguard bridge</code> locally to view live trial & enterprise leads.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <script>
+    const API_BASE = 'http://127.0.0.1:8765';
     let blockedCount = 2;
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
 
     function triggerIntrusionSim() {
       const banner = document.getElementById('alert-banner');
@@ -224,7 +259,7 @@
       const tbody = document.getElementById('log-body');
       const row = tbody.insertRow(0);
       row.innerHTML = `
-        <td>${now}</td>
+        <td>${escapeHtml(now)}</td>
         <td>malicious_recruiter_link.exe (PID 7731)</td>
         <td>ENG-LAPTOP-01 (SSH Keys)</td>
         <td style="color: var(--red); font-weight: 600;">99.8% (Critical)</td>
@@ -251,7 +286,7 @@
       const tbody = document.getElementById('log-body');
       const row = tbody.insertRow(0);
       row.innerHTML = `
-        <td>${now}</td>
+        <td>${escapeHtml(now)}</td>
         <td>git.exe (Git CLI)</td>
         <td>ENG-LAPTOP-01 (.env)</td>
         <td style="color: var(--green); font-weight: 600;">2.1% (Safe)</td>
@@ -261,32 +296,74 @@
     }
 
     async function syncLiveLogsFromPython() {
+      const statusLabel = document.getElementById('bridge-status-label');
       try {
-        const res = await fetch('http://127.0.0.1:8765/api/v1/logs');
-        if (!res.ok) return;
-        const logs = await res.json();
+        const [logsRes, summaryRes, leadsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/v1/logs`),
+          fetch(`${API_BASE}/api/v1/telemetry/summary`),
+          fetch(`${API_BASE}/api/v1/leads`)
+        ]);
+
+        if (!logsRes.ok) return;
+        statusLabel.innerHTML = '<span style="color: var(--green);">● LIVE BRIDGE CONNECTED (:8765)</span>';
+
+        const logs = await logsRes.json();
         if (logs.length > 0) {
           const tbody = document.getElementById('log-body');
           tbody.innerHTML = '';
           let blocked = 0;
           logs.slice(0, 15).forEach(entry => {
-            const isThreat = entry.verdict !== 'SAFE';
+            const isThreat = entry.verdict !== 'SAFE' && entry.verdict !== 'SAFE_TO_INSTALL';
             if (isThreat) blocked++;
+            const scorePct = ((Number(entry.threat_score) || 0) * 100).toFixed(1);
             const row = tbody.insertRow();
             row.innerHTML = `
-              <td>${entry.timestamp}</td>
-              <td>${entry.filename}</td>
-              <td>${entry.source_url ? 'ENG-LAPTOP-01 (Web)' : 'System Vault'}</td>
+              <td>${escapeHtml(entry.timestamp)}</td>
+              <td>${escapeHtml(entry.filename)}</td>
+              <td>${entry.source_url ? escapeHtml(entry.source_url) : 'System Vault'}</td>
               <td style="color: ${isThreat ? 'var(--red)' : 'var(--green)'}; font-weight: 600;">
-                ${(entry.threat_score * 100).toFixed(1)}% (${isThreat ? 'High' : 'Safe'})
+                ${scorePct}% (${isThreat ? 'High' : 'Safe'})
               </td>
-              <td><span class="badge ${isThreat ? 'badge-blocked' : 'badge-ok'}">${entry.action_taken}</span></td>
-              <td><span class="badge badge-ok">${entry.status}</span></td>
+              <td><span class="badge ${isThreat ? 'badge-blocked' : 'badge-ok'}">${escapeHtml(entry.action_taken)}</span></td>
+              <td><span class="badge badge-ok">${escapeHtml(entry.status)}</span></td>
             `;
           });
           document.getElementById('blocked-count').innerText = blocked;
         }
-      } catch (e) {}
+
+        if (summaryRes.ok) {
+          const summary = await summaryRes.json();
+          if (summary.total_events > 0) {
+            document.getElementById('blocked-count').innerText = summary.threats_blocked;
+          }
+          document.getElementById('leads-count').innerText = summary.leads_captured;
+          document.getElementById('leads-breakdown').innerText =
+            `${summary.pro_trials} Pro Trials • ${summary.enterprise_pilots} Enterprise Pilots`;
+        }
+
+        if (leadsRes.ok) {
+          const leads = await leadsRes.json();
+          const leadsBody = document.getElementById('leads-body');
+          if (leads.length === 0) {
+            leadsBody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); text-align: center;">No leads captured yet. Submit a Pro Trial or Enterprise inquiry on the landing page.</td></tr>';
+          } else {
+            leadsBody.innerHTML = '';
+            leads.slice(0, 10).forEach(lead => {
+              const isEnt = lead.plan === 'enterprise';
+              const row = leadsBody.insertRow();
+              row.innerHTML = `
+                <td>${escapeHtml((lead.created_at || '').replace('T', ' ').slice(0, 19))}</td>
+                <td><span class="badge ${isEnt ? 'badge-blocked' : 'badge-ok'}">${escapeHtml((lead.plan || '').toUpperCase())}</span></td>
+                <td>${escapeHtml(lead.email)}</td>
+                <td>${escapeHtml(lead.company || lead.trial_key || '—')}</td>
+                <td>${lead.seats ? escapeHtml(lead.seats) : '1'}</td>
+              `;
+            });
+          }
+        }
+      } catch (e) {
+        statusLabel.innerText = 'Demo Mode (Start cogniguard bridge for live sync)';
+      }
     }
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();
