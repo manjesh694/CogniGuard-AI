@@ -93,14 +93,47 @@ function showWindowsSecurityAlert(filename, reason, source = "Web") {
   });
 }
 
+// Helper: Pause a download, update local stats/incidents, and trigger alert
+function quarantineBrowserDownload(downloadItem, cleanName, sourcePlatform, reasonText) {
+  processedDownloadIds.add(downloadItem.id);
+  chrome.downloads.pause(downloadItem.id, () => {
+    if (chrome.runtime.lastError) {
+      console.warn("Notice during pause:", chrome.runtime.lastError.message);
+    }
+    chrome.storage.local.get(["threatsBlocked", "incidents"], (latest) => {
+      const totalBlocked = (latest.threatsBlocked || 0) + 1;
+      const incident = {
+        time: new Date().toLocaleTimeString(),
+        file: `${cleanName} (${sourcePlatform})`,
+        url: downloadItem.url,
+        reason: reasonText,
+        action: "PAUSED_IN_AIRLOCK_SANDBOX"
+      };
+      const incidentList = [incident, ...(latest.incidents || [])].slice(0, 20);
+
+      chrome.storage.local.set({
+        threatsBlocked: totalBlocked,
+        incidents: incidentList,
+        lastAlert: incident,
+        lastPausedDownloadId: downloadItem.id
+      });
+
+      showWindowsSecurityAlert(cleanName, reasonText, sourcePlatform);
+      console.warn(`🚨 [COGNIGUARD ALERT] Intercepted Threat from ${sourcePlatform}:`, incident);
+    });
+  });
+}
+
 // 1. UNIVERSAL DOWNLOAD INTERCEPTOR (WhatsApp, Facebook, LinkedIn, Web)
 chrome.downloads.onCreated.addListener((downloadItem) => {
   if (processedDownloadIds.has(downloadItem.id)) return;
 
-  chrome.storage.local.get(["protectionActive", "downloadsScanned", "threatsBlocked", "incidents"], (data) => {
+  chrome.storage.local.get(["protectionActive", "downloadsScanned"], (data) => {
     if (!data.protectionActive) return;
 
-    let totalScanned = (data.downloadsScanned || 0) + 1;
+    const totalScanned = (data.downloadsScanned || 0) + 1;
+    chrome.storage.local.set({ downloadsScanned: totalScanned });
+
     const filename = (downloadItem.filename || "").toLowerCase();
     const url = (downloadItem.url || "").toLowerCase();
     const cleanName = downloadItem.filename ? downloadItem.filename.split(/[\\/]/).pop() : "Executable_Payload.exe";
@@ -115,44 +148,29 @@ chrome.downloads.onCreated.addListener((downloadItem) => {
       sourcePlatform = "LinkedIn Message";
     }
 
-    // Stream event asynchronously to Python Threat Engine
-    syncWithPythonDaemon(cleanName, downloadItem.url || "unknown", downloadItem.fileSize);
-
     const isDangerousExt = DANGEROUS_EXTENSIONS.some(ext => filename.endsWith(ext));
     const isPhishingSource = PHISHING_KEYWORDS.some(kw => url.includes(kw));
 
     if (isDangerousExt || isPhishingSource) {
-      processedDownloadIds.add(downloadItem.id);
-
-      // PAUSE THE DOWNLOAD IMMEDIATELY (Zero Entry - 0 Bytes to Disk)
-      chrome.downloads.pause(downloadItem.id, () => {
-        let totalBlocked = (data.threatsBlocked || 0) + 1;
-        const reasonText = isDangerousExt ? "Executable Payload Disguised as Document" : "Untrusted Phishing Source";
-        
-        const incident = {
-          time: new Date().toLocaleTimeString(),
-          file: `${cleanName} (${sourcePlatform})`,
-          url: downloadItem.url,
-          reason: reasonText,
-          action: "PAUSED_IN_AIRLOCK_SANDBOX"
-        };
-
-        const incidentList = [incident, ...(data.incidents || [])].slice(0, 20);
-
-        chrome.storage.local.set({
-          downloadsScanned: totalScanned,
-          threatsBlocked: totalBlocked,
-          incidents: incidentList,
-          lastAlert: incident,
-          lastPausedDownloadId: downloadItem.id
-        });
-
-        showWindowsSecurityAlert(cleanName, reasonText, sourcePlatform);
-        console.warn(`🚨 [COGNIGUARD ALERT] Intercepted Threat from ${sourcePlatform}:`, incident);
-      });
-    } else {
-      chrome.storage.local.set({ downloadsScanned: totalScanned });
+      const reasonText = isDangerousExt ? "Executable Payload Disguised as Document" : "Untrusted Phishing Source";
+      quarantineBrowserDownload(downloadItem, cleanName, sourcePlatform, reasonText);
     }
+
+    // Stream event asynchronously to Python Threat Engine and enforce backend verdict if flagged
+    syncWithPythonDaemon(cleanName, downloadItem.url || "unknown", downloadItem.fileSize).then((verdictData) => {
+      if (
+        verdictData &&
+        verdictData.verdict === "INTRUSION_DETECTED" &&
+        !processedDownloadIds.has(downloadItem.id)
+      ) {
+        quarantineBrowserDownload(
+          downloadItem,
+          cleanName,
+          sourcePlatform,
+          verdictData.reason || "Flagged by CogniGuard Python Threat Engine"
+        );
+      }
+    });
   });
 });
 
@@ -173,6 +191,7 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "RESUME_DOWNLOAD" && request.downloadId) {
     chrome.downloads.resume(request.downloadId, () => {
+      if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError.message);
       chrome.notifications.clear("cogniguard_alert");
       sendResponse({ status: "RESUMED" });
     });
@@ -180,7 +199,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   if (request.action === "SHRED_DOWNLOAD" && request.downloadId) {
     chrome.downloads.cancel(request.downloadId, () => {
+      if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError.message);
       chrome.downloads.erase({ id: request.downloadId }, () => {
+        if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError.message);
         chrome.notifications.clear("cogniguard_alert");
         sendResponse({ status: "SHREDDED" });
       });

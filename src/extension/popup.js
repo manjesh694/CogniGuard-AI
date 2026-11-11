@@ -95,7 +95,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const raw = apiBaseInput.value.trim().replace(/\/+$/, "");
     const safe = /^https?:\/\//i.test(raw) ? raw : "http://127.0.0.1:8765";
     apiBaseInput.value = safe;
-    chrome.storage.local.set({ apiBaseUrl: safe }, () => checkBridgeHealth(safe));
+    const persistAndCheck = () => chrome.storage.local.set({ apiBaseUrl: safe }, () => checkBridgeHealth(safe));
+    if (safe.startsWith("https://") && chrome.permissions && chrome.permissions.request) {
+      try {
+        chrome.permissions.request({ origins: [`${new URL(safe).origin}/*`] }, persistAndCheck);
+      } catch (e) {
+        persistAndCheck();
+      }
+    } else {
+      persistAndCheck();
+    }
   });
 
   // Handle "Shred & Permanently Delete" Action

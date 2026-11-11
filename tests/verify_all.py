@@ -35,6 +35,7 @@ def run_tests():
     assert manifest.get("version") == "1.0.4", f"Expected version 1.0.4, got {manifest.get('version')}"
     assert "downloads" in manifest.get("permissions", []), "Missing downloads permission"
     assert "notifications" in manifest.get("permissions", []), "Missing notifications permission"
+    assert "<all_urls>" not in manifest.get("host_permissions", []), "Avoid broad <all_urls> host_permissions for Chrome Web Store compliance"
     assert "icons" in manifest and "128" in manifest["icons"], "Missing 128px icon declaration"
     print("  ✅ Manifest V3 validated: Version 1.0.4, permissions, and icons compliant.")
     passed_count += 1
