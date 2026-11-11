@@ -282,6 +282,34 @@
     <div id="webhook-feedback" style="font-size:12px; color:var(--text-muted); margin-top:8px;"></div>
   </div>
 
+  <div class="log-table-container" style="margin-top: 24px; padding: 18px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      <span style="font-size:16px; font-weight:600;">🛡️ SHA-256 Threat Intelligence IOC Blocklist</span>
+      <span style="font-size:12px; color:var(--text-muted);">Synced with /api/v1/iocs</span>
+    </div>
+    <form onsubmit="addIocHash(event)" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+      <input id="ioc-sha-input" type="text" required pattern="[0-9a-fA-F]{64}" placeholder="64-char SHA-256 hex digest" style="flex:2; min-width:260px; background:#030712; border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:12px; font-family:monospace;">
+      <input id="ioc-label-input" type="text" required placeholder="Threat label (e.g. RedLine_Dropper)" style="flex:1; min-width:180px; background:#030712; border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:12px;">
+      <button type="submit" class="btn btn-danger">Block SHA-256</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>Added</th>
+          <th>Severity</th>
+          <th>Label</th>
+          <th>SHA-256</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="ioc-body">
+        <tr>
+          <td colspan="5" style="color: var(--text-muted); text-align: center;">Start <code>cogniguard bridge</code> to manage fleet SHA-256 IOC hashes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <script>
     function resolveApiBase() {
       try {
@@ -378,12 +406,13 @@
       const statusLabel = document.getElementById('bridge-status-label');
       try {
         const headers = authHeaders();
-        const [logsRes, summaryRes, leadsRes, qRes, alertRes] = await Promise.all([
+        const [logsRes, summaryRes, leadsRes, qRes, alertRes, iocRes] = await Promise.all([
           fetch(`${API_BASE}/api/v1/logs`, { headers }),
           fetch(`${API_BASE}/api/v1/telemetry/summary`),
           fetch(`${API_BASE}/api/v1/leads`, { headers }),
           fetch(`${API_BASE}/api/v1/quarantine`, { headers }),
-          fetch(`${API_BASE}/api/v1/alerts/config`, { headers })
+          fetch(`${API_BASE}/api/v1/alerts/config`, { headers }),
+          fetch(`${API_BASE}/api/v1/iocs`, { headers })
         ]);
 
         if (logsRes.status === 401 || leadsRes.status === 401) {
@@ -457,11 +486,13 @@
         if (qRes.ok) {
           const qItems = await qRes.json();
           const qBody = document.getElementById('quarantine-body');
+          window._quarantineLookup = {};
           if (qItems.length === 0) {
             qBody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); text-align: center;">Quarantine vault is clean (0 isolated files).</td></tr>';
           } else {
             qBody.innerHTML = '';
             qItems.slice(0, 10).forEach(item => {
+              window._quarantineLookup[item.id] = item;
               const isActive = item.status === 'QUARANTINED';
               const safeId = escapeHtml(item.id);
               const row = qBody.insertRow();
@@ -473,8 +504,9 @@
                 <td>${
                   isActive
                     ? `<button class="btn" style="padding:5px 10px; font-size:11px; margin-right:6px;" onclick="quarantineAction('${safeId}', 'restore')">Restore</button>` +
+                      `<button class="btn" style="padding:5px 10px; font-size:11px; margin-right:6px; background:#b45309;" onclick="banQuarantineIoc('${safeId}')">Ban Hash</button>` +
                       `<button class="btn btn-danger" style="padding:5px 10px; font-size:11px;" onclick="quarantineAction('${safeId}', 'shred')">Shred</button>`
-                    : '—'
+                    : `<button class="btn" style="padding:5px 10px; font-size:11px; background:#b45309;" onclick="banQuarantineIoc('${safeId}')">Ban Hash</button>`
                 }</td>
               `;
             });
@@ -486,6 +518,27 @@
           const pill = document.getElementById('webhook-status-pill');
           pill.style.color = cfg.configured ? 'var(--green)' : 'var(--text-muted)';
           pill.innerText = cfg.configured ? `Active: ${cfg.webhook_url}` : 'Not configured';
+        }
+
+        if (iocRes && iocRes.ok) {
+          const iocs = await iocRes.json();
+          const iocBody = document.getElementById('ioc-body');
+          if (iocs.length === 0) {
+            iocBody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); text-align: center;">No SHA-256 IOCs registered yet.</td></tr>';
+          } else {
+            iocBody.innerHTML = '';
+            iocs.slice(0, 15).forEach(ioc => {
+              const safeSha = escapeHtml(ioc.sha256);
+              const row = iocBody.insertRow();
+              row.innerHTML = `
+                <td>${escapeHtml(ioc.added_at)}</td>
+                <td><span class="badge badge-blocked">${escapeHtml(ioc.severity)}</span></td>
+                <td>${escapeHtml(ioc.label)}</td>
+                <td><code>${escapeHtml((ioc.sha256 || '').slice(0, 20))}...</code></td>
+                <td><button class="btn" style="padding:5px 10px; font-size:11px; background:#1f2937;" onclick="removeIoc('${safeSha}')">Remove</button></td>
+              `;
+            });
+          }
         }
       } catch (e) {
         statusLabel.innerText = 'Demo Mode (Start cogniguard bridge for live sync)';
@@ -607,6 +660,41 @@
         fb.style.color = 'var(--yellow)';
         fb.innerText = '[!] Connect to cogniguard bridge to test webhooks.';
       }
+    }
+
+    async function addIocHash(event) {
+      event.preventDefault();
+      const sha256 = document.getElementById('ioc-sha-input').value.trim();
+      const label = document.getElementById('ioc-label-input').value.trim();
+      const res = await fetch(`${API_BASE}/api/v1/iocs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ sha256, label, severity: 'CRITICAL' })
+      });
+      if (res.ok) {
+        document.getElementById('ioc-sha-input').value = '';
+        document.getElementById('ioc-label-input').value = '';
+        syncLiveLogsFromPython();
+      }
+    }
+
+    async function banQuarantineIoc(qid) {
+      const item = (window._quarantineLookup || {})[qid];
+      if (!item || !item.sha256) return;
+      await fetch(`${API_BASE}/api/v1/iocs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ sha256: item.sha256, label: item.filename || 'Quarantined_Payload', severity: 'CRITICAL' })
+      });
+      syncLiveLogsFromPython();
+    }
+
+    async function removeIoc(sha256) {
+      await fetch(`${API_BASE}/api/v1/iocs/${encodeURIComponent(sha256)}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      syncLiveLogsFromPython();
     }
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();

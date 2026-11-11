@@ -8,6 +8,7 @@ Description: Entrypoint for pre-install repo scanning, 24/7 guardian daemon,
 import argparse
 import json
 import os
+import re
 import stat
 import sys
 from typing import List, Optional
@@ -21,6 +22,7 @@ from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import format_scan_sarif, scan_repository  # noqa: E402
+from agent.storage import CogniGuardStore  # noqa: E402
 from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 
@@ -106,6 +108,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     hook_p.add_argument("repo_path", nargs="?", default=".", help="Path to git repository")
     hook_p.add_argument("--force", action="store_true", help="Overwrite an existing pre-commit hook")
+
+    ioc_p = subparsers.add_parser(
+        "ioc",
+        help="Manage the SHA-256 Threat Intelligence IOC blocklist",
+    )
+    ioc_sub = ioc_p.add_subparsers(dest="ioc_action", required=True)
+    ioc_sub.add_parser("list", help="List blocked SHA-256 IOC hashes")
+    ioc_add = ioc_sub.add_parser("add", help="Add a malicious SHA-256 hash to the blocklist")
+    ioc_add.add_argument("sha256", help="64-character hex SHA-256 digest")
+    ioc_add.add_argument("--label", required=True, help="Threat label (e.g. RedLine_Dropper)")
+    ioc_add.add_argument("--severity", choices=["CRITICAL", "HIGH", "MEDIUM"], default="CRITICAL")
+    ioc_rm = ioc_sub.add_parser("remove", help="Remove a SHA-256 hash from the blocklist")
+    ioc_rm.add_argument("sha256", help="64-character hex SHA-256 digest")
 
     return parser
 
@@ -213,6 +228,29 @@ def main(argv: Optional[List[str]] = None) -> int:
             pass
         print(f"✅ Installed CogniGuard pre-commit hook at: {hook_path}")
         return 0
+
+    if args.command == "ioc":
+        store = CogniGuardStore()
+        if args.ioc_action == "list":
+            items = store.list_iocs()
+            if not items:
+                print("IOC blocklist is empty.")
+            for item in items:
+                print(f"[{item['severity']}] {item['sha256']} | {item['label']} ({item['added_at']})")
+            return 0
+        if args.ioc_action == "add":
+            if not re.match(r"^[0-9a-fA-F]{64}$", args.sha256.strip()):
+                print("[!] sha256 must be a 64-character hex digest")
+                return 1
+            rec = store.add_ioc(args.sha256, args.label, args.severity)
+            print(f"🛡️ Added IOC: {rec['sha256']} ({rec['label']})")
+            return 0
+        if args.ioc_action == "remove":
+            if not store.delete_ioc(args.sha256):
+                print(f"[!] IOC not found: {args.sha256}")
+                return 1
+            print(f"🗑️ Removed IOC: {args.sha256.lower()}")
+            return 0
 
     return 1
 

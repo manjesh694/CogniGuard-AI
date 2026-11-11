@@ -537,3 +537,16 @@ def test_ioc_feed_crud_and_hash_blocking(isolated_storage):
     removed = api_bridge.remove_ioc(evil_sha)
     assert removed["deleted_sha256"] == evil_sha
     assert len(api_bridge.list_iocs()) == 0
+
+
+def test_cli_ioc_commands(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", str(tmp_path / "cli_ioc.db"))
+    valid_sha = "a" * 64
+
+    assert cli.main(["ioc", "add", "badhash", "--label", "Invalid"]) == 1
+    assert cli.main(["ioc", "add", valid_sha, "--label", "CLI_Trojan", "--severity", "HIGH"]) == 0
+    assert cli.main(["ioc", "list"]) == 0
+    out = capsys.readouterr().out
+    assert valid_sha in out and "CLI_Trojan" in out
+    assert cli.main(["ioc", "remove", valid_sha]) == 0
+    assert cli.main(["ioc", "remove", valid_sha]) == 1
