@@ -9,6 +9,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+from agent.alerts import format_alert_payload, validate_webhook_url  # noqa: E402
 from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.heuristics import (  # noqa: E402
@@ -162,3 +163,24 @@ def test_live_process_auditor(tmp_path, monkeypatch):
     assert report["flagged_count"] == 1
     assert report["status"] == "THREATS_DETECTED"
     assert len(store.list_audit_logs()) == 1
+
+
+def test_webhook_validation_and_payload_format():
+    import pytest
+
+    assert validate_webhook_url("https://discord.com/api/webhooks/123/abc") == "https://discord.com/api/webhooks/123/abc"
+    assert validate_webhook_url("http://127.0.0.1:9000/hook") == "http://127.0.0.1:9000/hook"
+
+    for unsafe in (
+        "http://public.example.com/hook",
+        "https://169.254.169.254/latest/meta-data",
+        "https://192.168.1.10/internal",
+        "ftp://files.example.com/hook",
+    ):
+        with pytest.raises(ValueError):
+            validate_webhook_url(unsafe)
+
+    payload = format_alert_payload({"filename": "stealer.exe", "threat_score": 0.99, "reason": "Trojan"})
+    assert "stealer.exe" in payload["text"]
+    assert payload["content"] == payload["text"]
+    assert payload["cogniguard_event"]["threat_score"] == 0.99

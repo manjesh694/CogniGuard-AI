@@ -34,11 +34,17 @@ _SRC_DIR = os.path.dirname(_AGENT_DIR)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
+from agent.alerts import (  # noqa: E402
+    WEBHOOK_SETTING_KEY,
+    WebhookDispatcher,
+    mask_webhook_url,
+    validate_webhook_url,
+)
 from agent.heuristics import evaluate_download_risk  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
-from agent.storage import CogniGuardStore  # noqa: E402
+from agent.storage import THREAT_VERDICTS, CogniGuardStore  # noqa: E402
 from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 APP_VERSION = "1.0.3"
@@ -89,6 +95,7 @@ class SlidingWindowRateLimiter:
 
 store = CogniGuardStore()
 quarantine_manager = QuarantineManager(store=store)
+alert_dispatcher = WebhookDispatcher(store=store)
 scan_rate_limiter = SlidingWindowRateLimiter(
     max_requests=int(os.environ.get("COGNIGUARD_SCAN_RATE_LIMIT", "15")),
     window_seconds=60,
@@ -148,6 +155,10 @@ class LeadCaptureRequest(BaseModel):
     trial_key: Optional[str] = Field(default=None, max_length=64)
 
 
+class WebhookConfigRequest(BaseModel):
+    webhook_url: str = Field(..., min_length=8, max_length=2048)
+
+
 def _client_key(request: Any) -> str:
     if request and getattr(request, "client", None) and request.client.host:
         return request.client.host
@@ -186,8 +197,10 @@ def _validate_local_scan_path(target: str) -> str:
 
 
 def log_incident_to_disk(entry: Dict[str, Any]) -> None:
-    """Persist incident records to atomic SQLite WAL storage."""
+    """Persist incident records to atomic SQLite WAL storage and dispatch alerts."""
     store.record_audit_event(entry)
+    if entry.get("verdict") in THREAT_VERDICTS:
+        alert_dispatcher.dispatch_async(entry)
 
 
 @app.get("/")
@@ -391,6 +404,45 @@ def audit_processes():
     """Inspect live OS processes via psutil and record suspicious findings."""
     agent = CogniGuardAgent()
     return agent.audit_live_processes(store=store)
+
+
+@app.get("/api/v1/alerts/config", dependencies=[Depends(require_api_key)])
+def get_alert_config():
+    """Return masked webhook alert configuration status."""
+    url = alert_dispatcher.get_webhook_url()
+    return {
+        "configured": bool(url),
+        "webhook_url": mask_webhook_url(url) if url else None,
+    }
+
+
+@app.post("/api/v1/alerts/config", dependencies=[Depends(require_api_key)])
+def set_alert_config(payload: WebhookConfigRequest):
+    """Validate and save a Slack/Discord/SIEM alert webhook URL."""
+    try:
+        validated = validate_webhook_url(payload.webhook_url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    store.set_setting(WEBHOOK_SETTING_KEY, validated)
+    return {"status": "OK", "webhook_url": mask_webhook_url(validated)}
+
+
+@app.post("/api/v1/alerts/test", dependencies=[Depends(require_api_key)])
+def test_alert_webhook():
+    """Send a test security alert to the configured webhook."""
+    delivered, status_code, error = alert_dispatcher.send_sync({
+        "severity": "CRITICAL",
+        "filename": "cogniguard_webhook_test.exe",
+        "reason": "Manual Webhook Verification Alert",
+        "threat_score": 0.99,
+        "action_taken": "TEST_DISPATCH",
+    })
+    return {
+        "status": "OK" if delivered else "FAILED",
+        "delivered": delivered,
+        "status_code": status_code,
+        "error": error,
+    }
 
 
 @app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])

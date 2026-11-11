@@ -98,6 +98,15 @@ class CogniGuardStore:
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_quarantine_status ON quarantine (status);"
                 )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS settings (
+                        key TEXT PRIMARY KEY,
+                        value TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                    """
+                )
 
     def record_audit_event(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         record = {
@@ -302,3 +311,21 @@ class CogniGuardStore:
         with self._lock:
             with self._connect() as conn:
                 conn.execute("UPDATE quarantine SET status = ? WHERE id = ?", (status, qid))
+
+    def set_setting(self, key: str, value: str) -> None:
+        now = datetime.now().isoformat()
+        with self._lock:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+                    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+                    """,
+                    (key, value, now),
+                )
+
+    def get_setting(self, key: str) -> Optional[str]:
+        with self._lock:
+            with self._connect() as conn:
+                row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+        return str(row["value"]) if row else None

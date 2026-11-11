@@ -11,17 +11,21 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from agent import api_bridge, cli, repo_scanner  # noqa: E402
+from agent.alerts import WebhookDispatcher  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
 
 @pytest.fixture()
 def isolated_storage(tmp_path, monkeypatch):
-    """Isolate SQLite storage and quarantine vault to a temporary directory."""
+    """Isolate SQLite storage, alerts, and quarantine vault to a temporary directory."""
     test_store = CogniGuardStore(str(tmp_path / "test_cogniguard.db"))
     test_vault = QuarantineManager(vault_dir=str(tmp_path / "vault"), store=test_store)
+    test_dispatcher = WebhookDispatcher(store=test_store)
     monkeypatch.setattr(api_bridge, "store", test_store)
     monkeypatch.setattr(api_bridge, "quarantine_manager", test_vault)
+    monkeypatch.setattr(api_bridge, "alert_dispatcher", test_dispatcher)
+    monkeypatch.delenv("COGNIGUARD_WEBHOOK_URL", raising=False)
     api_bridge.scan_rate_limiter.reset()
     api_bridge.lead_rate_limiter.reset()
     monkeypatch.delenv("COGNIGUARD_API_KEY", raising=False)
@@ -33,6 +37,8 @@ def test_fastapi_routes_registered():
     paths = {route.path for route in api_bridge.app.routes}
     for expected in (
         "/",
+        "/api/v1/alerts/config",
+        "/api/v1/alerts/test",
         "/api/v1/health",
         "/api/v1/inspect",
         "/api/v1/reverse-engineer",
@@ -409,3 +415,38 @@ def test_process_audit_endpoint_and_cli(isolated_storage, monkeypatch, capsys):
     assert cli.main(["process-audit", "--json"]) == 0
     cli_out = json.loads(capsys.readouterr().out)
     assert cli_out["status"] == "OK"
+
+
+def test_webhook_config_and_test_dispatch(isolated_storage, monkeypatch):
+    assert api_bridge.get_alert_config()["configured"] is False
+
+    with pytest.raises(HTTPException) as bad_url:
+        api_bridge.set_alert_config(api_bridge.WebhookConfigRequest(webhook_url="http://evil.example/hook"))
+    assert bad_url.value.status_code == 400
+
+    saved = api_bridge.set_alert_config(
+        api_bridge.WebhookConfigRequest(webhook_url="https://hooks.slack.com/services/T000/B000/SECRET99")
+    )
+    assert saved["status"] == "OK"
+    assert saved["webhook_url"].endswith("CRET99")
+    assert "T000" not in saved["webhook_url"]
+
+    assert api_bridge.get_alert_config()["configured"] is True
+
+    import agent.alerts as alerts_mod
+
+    class FakeResp:
+        status_code = 200
+
+    sent_payloads = []
+
+    def fake_post(url, json=None, timeout=None):
+        sent_payloads.append((url, json))
+        return FakeResp()
+
+    monkeypatch.setattr(alerts_mod.requests, "post", fake_post)
+    test_res = api_bridge.test_alert_webhook()
+    assert test_res["delivered"] is True
+    assert test_res["status_code"] == 200
+    assert len(sent_payloads) == 1
+    assert "cogniguard_webhook_test.exe" in sent_payloads[0][1]["text"]
