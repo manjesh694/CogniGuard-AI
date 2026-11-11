@@ -52,6 +52,22 @@ MALICIOUS_NPM_HOOK_RE = re.compile(
 )
 ANY_NPM_HOOK_RE = re.compile(r'"(?:preinstall|postinstall)"\s*:', re.IGNORECASE)
 
+SECRET_LEAK_SIGNATURES: List[Tuple[str, str, int]] = [
+    (r"\bAKIA[0-9A-Z]{16}\b", "Exposed AWS Access Key ID", 45),
+    (r"\b(?:ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{22,})\b", "Exposed GitHub Personal Access Token", 50),
+    (r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", "Exposed Private Key Material", 50),
+    (r"\bsk_live_[0-9a-zA-Z]{20,}\b", "Exposed Stripe Live Secret Key", 45),
+]
+
+DOCKERFILE_SIGNATURES: List[Tuple[str, str, int]] = [
+    (r"(?:curl|wget)\s+[^\n|]+\|\s*(?:sh|bash)", "Dockerfile Pipe-to-Shell Execution", 45),
+    (r"^\s*ADD\s+http://", "Insecure Plaintext HTTP ADD in Dockerfile", 35),
+]
+
+REQUIREMENTS_SIGNATURES: List[Tuple[str, str, int]] = [
+    (r"(?:git\+http://|^\s*http://[^\s]+)", "Insecure Plaintext HTTP Dependency in requirements.txt", 35),
+]
+
 CODE_EXTENSIONS = (".py", ".js", ".ts", ".sh", ".ps1", ".bat")
 DOC_EXTENSIONS = (".md", ".yaml", ".yml", ".txt")
 GITHUB_REPO_PATH_RE = re.compile(r"^/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$")
@@ -176,37 +192,47 @@ def validate_github_url(raw_url: str) -> str:
 
 
 def _evaluate_file_content(rel_path: str, filename: str, content: str) -> List[Dict[str, Any]]:
-    """Run signature checks on a single file's text and return findings."""
+    """Run signature, secret-leak, container, and AST checks on a single file."""
     lower_file = filename.lower()
     file_findings: List[Dict[str, Any]] = []
+    seen_threats: Set[str] = set()
+
+    def record(threat: str, score: int) -> None:
+        if threat not in seen_threats:
+            seen_threats.add(threat)
+            file_findings.append({"file": rel_path, "threat": threat, "score": score})
+
+    for pattern, description, score in SECRET_LEAK_SIGNATURES:
+        if re.search(pattern, content):
+            record(description, score)
 
     if lower_file == "package.json":
         if MALICIOUS_NPM_HOOK_RE.search(content):
-            file_findings.append({
-                "file": rel_path,
-                "threat": "Malicious npm Lifecycle Install Hook",
-                "score": 50,
-            })
+            record("Malicious npm Lifecycle Install Hook", 50)
         elif ANY_NPM_HOOK_RE.search(content):
-            file_findings.append({
-                "file": rel_path,
-                "threat": "npm Lifecycle Hook Present (Manual Review)",
-                "score": 15,
-            })
+            record("npm Lifecycle Hook Present (Manual Review)", 15)
+        return file_findings
+
+    if lower_file == "dockerfile" or lower_file.startswith("dockerfile."):
+        for pattern, description, score in DOCKERFILE_SIGNATURES:
+            if re.search(pattern, content, re.IGNORECASE | re.MULTILINE):
+                record(description, score)
+        return file_findings
+
+    if lower_file == "requirements.txt":
+        for pattern, description, score in REQUIREMENTS_SIGNATURES:
+            if re.search(pattern, content, re.IGNORECASE | re.MULTILINE):
+                record(description, score)
         return file_findings
 
     sigs = CODE_SIGNATURES if lower_file.endswith(CODE_EXTENSIONS) else PROMPT_INJECTION_SIGNATURES
-    seen_threats: Set[str] = set()
     for pattern, description, score in sigs:
-        if re.search(pattern, content, re.IGNORECASE) and description not in seen_threats:
-            seen_threats.add(description)
-            file_findings.append({"file": rel_path, "threat": description, "score": score})
+        if re.search(pattern, content, re.IGNORECASE):
+            record(description, score)
 
     if lower_file.endswith(".py"):
         for ast_item in _ast_inspect_python(rel_path, content):
-            if ast_item["threat"] not in seen_threats:
-                seen_threats.add(ast_item["threat"])
-                file_findings.append(ast_item)
+            record(ast_item["threat"], ast_item["score"])
 
     return file_findings
 
@@ -240,6 +266,8 @@ def _scan_local_directory(
                 lower_file.endswith(CODE_EXTENSIONS)
                 or lower_file.endswith(DOC_EXTENSIONS)
                 or lower_file == "package.json"
+                or lower_file == "dockerfile"
+                or lower_file.startswith("dockerfile.")
             )
             if not is_supported or file in SELF_DEFENSE_FILES:
                 continue

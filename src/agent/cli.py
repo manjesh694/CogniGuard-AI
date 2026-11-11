@@ -6,9 +6,12 @@ Description: Entrypoint for pre-install repo scanning, 24/7 guardian daemon,
 """
 
 import argparse
+import importlib
 import json
 import os
+import platform
 import re
+import shutil
 import stat
 import sys
 from typing import List, Optional
@@ -121,6 +124,12 @@ def build_parser() -> argparse.ArgumentParser:
     ioc_add.add_argument("--severity", choices=["CRITICAL", "HIGH", "MEDIUM"], default="CRITICAL")
     ioc_rm = ioc_sub.add_parser("remove", help="Remove a SHA-256 hash from the blocklist")
     ioc_rm.add_argument("sha256", help="64-character hex SHA-256 digest")
+
+    doc_p = subparsers.add_parser(
+        "doctor",
+        help="Run self-diagnostics on CogniGuard environment, DB, git, and security posture",
+    )
+    doc_p.add_argument("--json", action="store_true", help="Output diagnostics as JSON")
 
     return parser
 
@@ -251,6 +260,40 @@ def main(argv: Optional[List[str]] = None) -> int:
                 return 1
             print(f"🗑️ Removed IOC: {args.sha256.lower()}")
             return 0
+
+    if args.command == "doctor":
+        store = CogniGuardStore()
+        mgr = QuarantineManager(store=store)
+        deps = {}
+        for mod in ("fastapi", "uvicorn", "pydantic", "psutil", "requests"):
+            try:
+                importlib.import_module(mod)
+                deps[mod] = True
+            except ImportError:
+                deps[mod] = False
+        summary = store.get_telemetry_summary("1.0.4")
+        diag = {
+            "status": "OK" if all(deps.values()) else "DEGRADED",
+            "python": platform.python_version(),
+            "platform": platform.system(),
+            "git_available": shutil.which("git") is not None,
+            "db_path": store.db_path,
+            "quarantine_dir": mgr.vault_dir,
+            "api_key_enabled": bool(os.environ.get("COGNIGUARD_API_KEY", "").strip()),
+            "webhook_configured": bool(
+                os.environ.get("COGNIGUARD_WEBHOOK_URL", "").strip()
+                or store.get_setting("alert_webhook_url")
+            ),
+            "dependencies": deps,
+            "telemetry": summary,
+        }
+        if args.json:
+            print(json.dumps(diag, indent=2))
+        else:
+            print(f"CogniGuard Doctor: {diag['status']} | Python {diag['python']} ({diag['platform']})")
+            print(f"  git: {'OK' if diag['git_available'] else 'MISSING'} | DB: {diag['db_path']}")
+            print(f"  Vault: {diag['quarantine_dir']} | API Key Auth: {diag['api_key_enabled']}")
+        return 0 if diag["status"] == "OK" else 1
 
     return 1
 
