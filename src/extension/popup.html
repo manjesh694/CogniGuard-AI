@@ -78,8 +78,16 @@
 
   <button class="btn-sim" id="btn-test">⚡ Test AI Reverse-Engineering (Bank PIN Attack)</button>
 
+  <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); margin-bottom:4px;">
+      <span>API Bridge URL</span>
+      <span id="bridge-dot" style="color: var(--text-muted);">● Checking...</span>
+    </div>
+    <input id="api-base-input" type="url" placeholder="http://127.0.0.1:8765" style="width:100%; background:#030712; border:1px solid var(--border); color:var(--text); padding:6px 8px; border-radius:6px; font-size:11px;">
+  </div>
+
   <div class="footer">
-    CogniGuard Autonomous Defense v1.0.3
+    CogniGuard Autonomous Defense v1.0.4
   </div>
 
   <script src="popup.js"></script>

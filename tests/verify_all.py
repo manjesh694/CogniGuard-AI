@@ -32,19 +32,19 @@ def run_tests():
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
     assert manifest.get("manifest_version") == 3, "Must be Manifest V3"
-    assert manifest.get("version") == "1.0.3", f"Expected version 1.0.3, got {manifest.get('version')}"
+    assert manifest.get("version") == "1.0.4", f"Expected version 1.0.4, got {manifest.get('version')}"
     assert "downloads" in manifest.get("permissions", []), "Missing downloads permission"
     assert "notifications" in manifest.get("permissions", []), "Missing notifications permission"
     assert "icons" in manifest and "128" in manifest["icons"], "Missing 128px icon declaration"
-    print("  ✅ Manifest V3 validated: Version 1.0.3, permissions, and icons compliant.")
+    print("  ✅ Manifest V3 validated: Version 1.0.4, permissions, and icons compliant.")
     passed_count += 1
 
     # TEST 2: Distribution Zip Package Verification
     print("\n[TEST 2] Chrome Web Store Distribution Package:")
-    zip_targets = [("docs", "cogniguard-ai-v1.0.3.zip")]
-    dist_zip = os.path.join(PROJECT_ROOT, "dist", "cogniguard-ai-v1.0.3.zip")
+    zip_targets = [("docs", "cogniguard-ai-v1.0.4.zip")]
+    dist_zip = os.path.join(PROJECT_ROOT, "dist", "cogniguard-ai-v1.0.4.zip")
     if os.path.exists(dist_zip):
-        zip_targets.append(("dist", "cogniguard-ai-v1.0.3.zip"))
+        zip_targets.append(("dist", "cogniguard-ai-v1.0.4.zip"))
     for rel_zip in zip_targets:
         zip_path = os.path.join(PROJECT_ROOT, *rel_zip)
         assert os.path.exists(zip_path), f"Production zip package missing: {zip_path}"
@@ -56,7 +56,7 @@ def run_tests():
             assert "popup.js" in file_list, "popup.js missing from zip"
             assert any("icon128.png" in f for f in file_list), "icon128.png missing from zip"
             zip_manifest = json.loads(z.read("manifest.json").decode("utf-8"))
-            assert zip_manifest.get("version") == "1.0.3", "Zip manifest version mismatch"
+            assert zip_manifest.get("version") == "1.0.4", "Zip manifest version mismatch"
     print(f"  ✅ Zip package(s) verified ({len(zip_targets)} target(s)): {len(file_list)} files packaged cleanly ({os.path.getsize(zip_path)} bytes).")
     passed_count += 1
 

@@ -17,7 +17,7 @@ CogniGuard AI is an autonomous, agentic cybersecurity platform designed to prote
                                   │
          ┌────────────────────────┴────────────────────────┐
          ▼                                                 ▼
-[ Chrome Extension v1.0.3 ]                        [ Desktop Agent & CLI ]
+[ Chrome Extension v1.0.4 ]                        [ Desktop Agent & CLI ]
 (Download & Link Interceptor)                     (Repo Scanner, 24/7 Daemon & Vault)
          │                                                 │
          └────────────────────────┬────────────────────────┘
@@ -45,7 +45,7 @@ CogniGuard AI is an autonomous, agentic cybersecurity platform designed to prote
 * **`src/agent/guardian_daemon_24x7.py`**: 24/7 background watcher monitoring Downloads and the honeypot bait file (`bank_passwords_and_pins.txt`).
 * **`src/agent/api_bridge.py`**: FastAPI bridge serving download inspection, repo scanning, lead capture, and SOC telemetry endpoints.
 * **`src/agent/vault_guardian.py` & `src/agent/full_system_scanner.py`**: Credential vault tripwires and disguised PE-header disk auditor.
-* **`src/extension/`**: Chrome Manifest V3 extension (`v1.0.3`), pre-packaged in `dist/cogniguard-ai-v1.0.3.zip` and `docs/cogniguard-ai-v1.0.3.zip`.
+* **`src/extension/`**: Chrome Manifest V3 extension (`v1.0.4`), pre-packaged in `dist/cogniguard-ai-v1.0.4.zip` and `docs/cogniguard-ai-v1.0.4.zip`.
 
 ---
 
@@ -71,7 +71,7 @@ cogniguard bridge
 ```
 
 ### 4. Install the Free Browser Extension (20 Seconds, No Store Required)
-1. Download [`docs/cogniguard-ai-v1.0.3.zip`](https://manjesh694.github.io/CogniGuard-AI/cogniguard-ai-v1.0.3.zip) and unzip it.
+1. Download [`docs/cogniguard-ai-v1.0.4.zip`](https://manjesh694.github.io/CogniGuard-AI/cogniguard-ai-v1.0.4.zip) and unzip it.
 2. Open `chrome://extensions` (or `edge://extensions`) and enable **Developer mode**.
 3. Click **Load unpacked** and select the unzipped folder.
 

@@ -4,16 +4,19 @@
  * Full 360-Degree Defense across Web, WhatsApp, Facebook, LinkedIn, and System Vaults.
  */
 
-const API_BRIDGE_URL = "http://127.0.0.1:8765/api/v1/inspect";
+const DEFAULT_API_BASE = "http://127.0.0.1:8765";
 
 // Initialize default protection state
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    protectionActive: true,
-    downloadsScanned: 0,
-    threatsBlocked: 0,
-    incidents: [],
-    lastPausedDownloadId: null
+  chrome.storage.local.get(["apiBaseUrl"], (existing) => {
+    chrome.storage.local.set({
+      protectionActive: true,
+      downloadsScanned: 0,
+      threatsBlocked: 0,
+      incidents: [],
+      lastPausedDownloadId: null,
+      apiBaseUrl: existing.apiBaseUrl || DEFAULT_API_BASE
+    });
   });
   console.log("🛡️ CogniGuard AI v1.0.4: 360-Degree Defense & Python Bridge Armed.");
 });
@@ -33,29 +36,42 @@ const PHISHING_KEYWORDS = [
 const processedDownloadIds = new Set();
 let lastAlertTimestamp = 0;
 
-// Helper: Stream Telemetry to Local Python Daemon
+// Helper: Resolve sanitized API Base URL from storage
+function resolveApiBase(callback) {
+  chrome.storage.local.get(["apiBaseUrl"], (data) => {
+    const raw = (data.apiBaseUrl || DEFAULT_API_BASE).trim().replace(/\/+$/, "");
+    const safeUrl = /^https?:\/\//i.test(raw) ? raw : DEFAULT_API_BASE;
+    callback(safeUrl);
+  });
+}
+
+// Helper: Stream Telemetry to Local or Cloud Python Daemon
 async function syncWithPythonDaemon(filename, sourceUrl, fileSize) {
-  try {
-    const response = await fetch(API_BRIDGE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        filename: filename,
-        source_url: sourceUrl,
-        file_size_bytes: fileSize || 0,
-        client_version: "1.0.4"
-      })
+  return new Promise((resolve) => {
+    resolveApiBase(async (apiBase) => {
+      try {
+        const response = await fetch(`${apiBase}/api/v1/inspect`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: filename,
+            source_url: sourceUrl,
+            file_size_bytes: fileSize || 0,
+            client_version: "1.0.4"
+          })
+        });
+        if (response.ok) {
+          const verdictData = await response.json();
+          console.log("📡 [Python Daemon Verdict]:", verdictData);
+          resolve(verdictData);
+          return;
+        }
+      } catch (err) {
+        console.log("ℹ️ Python Bridge offline; running on standalone Browser Defense.");
+      }
+      resolve(null);
     });
-    if (response.ok) {
-      const verdictData = await response.json();
-      console.log("📡 [Python Daemon Verdict]:", verdictData);
-      return verdictData;
-    }
-  } catch (err) {
-    // Graceful fallback if local Python daemon is not currently started
-    console.log("ℹ️ Local Python Daemon offline; running on standalone Browser Defense.");
-  }
-  return null;
+  });
 }
 
 // Helper: Show Single, Rate-Limited Native Windows Desktop Notification
@@ -153,12 +169,21 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
   }
 });
 
-// Listener to resume download if user trusts it
+// Listener to resume or shred a paused download from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "RESUME_DOWNLOAD" && request.downloadId) {
     chrome.downloads.resume(request.downloadId, () => {
       chrome.notifications.clear("cogniguard_alert");
       sendResponse({ status: "RESUMED" });
+    });
+    return true;
+  }
+  if (request.action === "SHRED_DOWNLOAD" && request.downloadId) {
+    chrome.downloads.cancel(request.downloadId, () => {
+      chrome.downloads.erase({ id: request.downloadId }, () => {
+        chrome.notifications.clear("cogniguard_alert");
+        sendResponse({ status: "SHREDDED" });
+      });
     });
     return true;
   }

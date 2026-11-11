@@ -69,4 +69,4 @@ Join the zero-entry movement today. Install CogniGuard AI and browse with comple
 
 ## 4. Package File to Upload
 
-* **Upload File:** `dist/cogniguard-ai-v1.0.3.zip` (Pre-packaged and ready in your project directory!)
+* **Upload File:** `dist/cogniguard-ai-v1.0.4.zip` (Pre-packaged and ready in your project directory!)

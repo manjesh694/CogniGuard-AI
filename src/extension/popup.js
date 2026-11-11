@@ -10,13 +10,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnShred = document.getElementById("btn-shred");
   const btnResume = document.getElementById("btn-resume");
   const statusPill = document.getElementById("status-pill");
+  const apiBaseInput = document.getElementById("api-base-input");
+  const bridgeDot = document.getElementById("bridge-dot");
 
   let activeDownloadId = null;
 
+  function checkBridgeHealth(baseUrl) {
+    const clean = (baseUrl || "http://127.0.0.1:8765").trim().replace(/\/+$/, "");
+    fetch(`${clean}/api/v1/health`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(() => {
+        bridgeDot.style.color = "#10b981";
+        bridgeDot.innerText = "● Connected";
+      })
+      .catch(() => {
+        bridgeDot.style.color = "#94a3b8";
+        bridgeDot.innerText = "● Standalone";
+      });
+  }
+
   // Load live counts from chrome.storage
-  chrome.storage.local.get(["downloadsScanned", "threatsBlocked", "lastAlert", "lastPausedDownloadId"], (data) => {
+  chrome.storage.local.get(["downloadsScanned", "threatsBlocked", "lastAlert", "lastPausedDownloadId", "apiBaseUrl"], (data) => {
     if (data.downloadsScanned !== undefined) scannedEl.innerText = data.downloadsScanned;
     if (data.threatsBlocked !== undefined) blockedEl.innerText = data.threatsBlocked;
+    const savedApi = data.apiBaseUrl || "http://127.0.0.1:8765";
+    apiBaseInput.value = savedApi;
+    checkBridgeHealth(savedApi);
 
     if (data.lastAlert) {
       threatBox.style.display = "block";
@@ -72,37 +91,52 @@ document.addEventListener("DOMContentLoaded", () => {
     window.speechSynthesis.speak(utterance);
   }
 
+  apiBaseInput.addEventListener("change", () => {
+    const raw = apiBaseInput.value.trim().replace(/\/+$/, "");
+    const safe = /^https?:\/\//i.test(raw) ? raw : "http://127.0.0.1:8765";
+    apiBaseInput.value = safe;
+    chrome.storage.local.set({ apiBaseUrl: safe }, () => checkBridgeHealth(safe));
+  });
+
   // Handle "Shred & Permanently Delete" Action
   btnShred.addEventListener("click", () => {
-    let currentBlocked = parseInt(blockedEl.innerText || "0") + 1;
-    blockedEl.innerText = currentBlocked;
+    const finishShred = () => {
+      let currentBlocked = parseInt(blockedEl.innerText || "0") + 1;
+      blockedEl.innerText = currentBlocked;
 
-    threatBox.style.display = "none";
-    btnShred.style.display = "none";
-    btnResume.style.display = "none";
+      threatBox.style.display = "none";
+      btnShred.style.display = "none";
+      btnResume.style.display = "none";
 
-    statusPill.style.background = "rgba(16, 185, 129, 0.2)";
-    statusPill.style.color = "#10b981";
-    statusPill.innerHTML = '<div class="pulse"></div><span>FILE SHREDDED → STATUS: OK</span>';
+      statusPill.style.background = "rgba(16, 185, 129, 0.2)";
+      statusPill.style.color = "#10b981";
+      statusPill.innerHTML = '<div class="pulse"></div><span>FILE SHREDDED → STATUS: OK</span>';
 
-    // AI voice confirms shredding
-    speakAIVoiceAlert("File permanently shredded and destroyed. Zero bytes leaked. Your system is 100 percent secure.");
+      speakAIVoiceAlert("File permanently shredded and destroyed. Zero bytes leaked. Your system is 100 percent secure.");
 
-    chrome.notifications.clear("cogniguard_alert", () => {
-      chrome.notifications.create("cogniguard_alert", {
-        type: "basic",
-        iconUrl: "icons/icon128.png",
-        title: "🛡️ CogniGuard AI: Threat Shredded!",
-        message: "Malicious payload permanently deleted.\n0 Bytes Leaked → SYSTEM STATUS: OK",
-        priority: 1
+      chrome.notifications.clear("cogniguard_alert", () => {
+        chrome.notifications.create("cogniguard_alert", {
+          type: "basic",
+          iconUrl: "icons/icon128.png",
+          title: "🛡️ CogniGuard AI: Threat Shredded!",
+          message: "Malicious payload permanently deleted.\n0 Bytes Leaked → SYSTEM STATUS: OK",
+          priority: 1
+        });
       });
-    });
 
-    chrome.storage.local.set({
-      threatsBlocked: currentBlocked,
-      lastAlert: null,
-      lastPausedDownloadId: null
-    });
+      activeDownloadId = null;
+      chrome.storage.local.set({
+        threatsBlocked: currentBlocked,
+        lastAlert: null,
+        lastPausedDownloadId: null
+      });
+    };
+
+    if (activeDownloadId) {
+      chrome.runtime.sendMessage({ action: "SHRED_DOWNLOAD", downloadId: activeDownloadId }, finishShred);
+    } else {
+      finishShred();
+    }
   });
 
   // Handle "Allow & Resume Download" Action

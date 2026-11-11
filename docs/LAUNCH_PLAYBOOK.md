@@ -10,14 +10,14 @@
 
 Verify before driving traffic:
 1. Click **Start 14-Day Trial** and **Contact Enterprise Sales** on the landing page to confirm the onboarding modal issues a trial key and opens a pre-filled enterprise inquiry.
-2. Click **Download Free Extension (.ZIP)** to confirm `cogniguard-ai-v1.0.3.zip` downloads cleanly with the 3-step `Load unpacked` install guide visible right below.
+2. Click **Download Free Extension (.ZIP)** to confirm `cogniguard-ai-v1.0.4.zip` downloads cleanly with the 3-step `Load unpacked` install guide visible right below.
 
 ---
 
 ## 2. Browser Extension Distribution ($0 Now, Optional Store Later)
-* **Immediate $0 Distribution (Live Today):** Visitors download `cogniguard-ai-v1.0.3.zip` directly from https://manjesh694.github.io/CogniGuard-AI/ and install via `chrome://extensions` -> **Developer mode** -> **Load unpacked**.
-* **Free Store Listing Option ($0):** Microsoft Edge Add-ons accepts the exact same Manifest V3 `.zip` (`dist/cogniguard-ai-v1.0.3.zip`) with **$0 developer registration fee**.
-* **Chrome Web Store (Optional Later — $5 one-time fee):** Whenever ready, upload `dist/cogniguard-ai-v1.0.3.zip` and copy/paste metadata from [`docs/CHROME_STORE_LISTING.md`](./CHROME_STORE_LISTING.md).
+* **Immediate $0 Distribution (Live Today):** Visitors download `cogniguard-ai-v1.0.4.zip` directly from https://manjesh694.github.io/CogniGuard-AI/ and install via `chrome://extensions` -> **Developer mode** -> **Load unpacked**.
+* **Free Store Listing Option ($0):** Microsoft Edge Add-ons accepts the exact same Manifest V3 `.zip` (`dist/cogniguard-ai-v1.0.4.zip`) with **$0 developer registration fee**.
+* **Chrome Web Store (Optional Later — $5 one-time fee):** Whenever ready, upload `dist/cogniguard-ai-v1.0.4.zip` and copy/paste metadata from [`docs/CHROME_STORE_LISTING.md`](./CHROME_STORE_LISTING.md).
 
 ---
 
