@@ -28,10 +28,25 @@ DANGEROUS_EXTENSIONS = (
     ".cmd",
     ".docm",
     ".xlsm",
+    ".jar",
     ".ps1",
 ) + DOUBLE_EXTENSIONS
 
 DISGUISED_DOC_EXTENSIONS = (".pdf", ".jpg", ".png", ".txt", ".docx")
+
+PHISHING_KEYWORDS = (
+    "binance-verify",
+    "metamask-auth",
+    "claim-airdrop",
+    "secure-login-update",
+    "bank-kyc-update",
+    "free-nitro",
+    "telegram-gift",
+    "whatsapp-verify",
+    "facebook-security",
+    "instagram-badge",
+    "linkedin-talent-verify",
+)
 
 
 def is_disguised_executable(filepath: str) -> bool:
@@ -73,3 +88,21 @@ def evaluate_filename_risk(filename: str) -> Dict[str, Any]:
         "action_taken": "ALLOW",
         "reason": "Clean verified file",
     }
+
+
+def evaluate_download_risk(filename: str, source_url: str = "") -> Dict[str, Any]:
+    """Evaluate both filename heuristics and source URL phishing indicators."""
+    result = evaluate_filename_risk(filename)
+    if result["verdict"] != "SAFE":
+        return result
+
+    lower_url = (source_url or "").lower()
+    matched_kw = next((kw for kw in PHISHING_KEYWORDS if kw in lower_url), None)
+    if matched_kw:
+        return {
+            "verdict": "INTRUSION_DETECTED",
+            "threat_score": 0.94,
+            "action_taken": "QUARANTINE_IN_AIRLOCK",
+            "reason": f"Untrusted phishing download source ({matched_kw})",
+        }
+    return result

