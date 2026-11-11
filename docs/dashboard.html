@@ -168,9 +168,12 @@
   <div class="action-row">
     <button class="btn btn-danger" onclick="triggerIntrusionSim()">⚡ Simulate Fleet Attack (Test Corporate Alert)</button>
     <button class="btn" onclick="addDevLog()">💻 Simulate Normal Dev Workflow (VS Code)</button>
+    <button class="btn" style="background: #0f766e;" onclick="runLiveProcessAudit()">🔍 Run Live Process Audit</button>
     <a href="index.html" class="btn" style="background: #1f2937; text-decoration: none;">← Website Home</a>
     <input id="admin-api-key" type="password" placeholder="🔑 Admin X-API-Key (for Cloud)" onchange="saveAdminKey(this.value)" style="background: #030712; border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 12px; min-width: 220px;">
   </div>
+
+  <div id="process-audit-box" style="display:none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px;"></div>
 
   <div class="log-table-container">
     <div class="table-header">
@@ -264,6 +267,19 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="log-table-container" style="margin-top: 24px; padding: 18px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      <span style="font-size:16px; font-weight:600;">🔔 Real-Time Webhook Alerts (Slack / Discord / SIEM)</span>
+      <span id="webhook-status-pill" style="font-size:12px; color:var(--text-muted);">Not configured</span>
+    </div>
+    <form onsubmit="saveWebhookConfig(event)" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <input id="webhook-url-input" type="url" required placeholder="https://hooks.slack.com/services/... or https://discord.com/api/webhooks/..." style="flex:1; min-width:260px; background:#030712; border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:12px;">
+      <button type="submit" class="btn">Save Webhook</button>
+      <button type="button" class="btn" style="background:#1f2937;" onclick="sendTestWebhook()">Send Test Alert</button>
+    </form>
+    <div id="webhook-feedback" style="font-size:12px; color:var(--text-muted); margin-top:8px;"></div>
   </div>
 
   <script>
@@ -362,11 +378,12 @@
       const statusLabel = document.getElementById('bridge-status-label');
       try {
         const headers = authHeaders();
-        const [logsRes, summaryRes, leadsRes, qRes] = await Promise.all([
+        const [logsRes, summaryRes, leadsRes, qRes, alertRes] = await Promise.all([
           fetch(`${API_BASE}/api/v1/logs`, { headers }),
           fetch(`${API_BASE}/api/v1/telemetry/summary`),
           fetch(`${API_BASE}/api/v1/leads`, { headers }),
-          fetch(`${API_BASE}/api/v1/quarantine`, { headers })
+          fetch(`${API_BASE}/api/v1/quarantine`, { headers }),
+          fetch(`${API_BASE}/api/v1/alerts/config`, { headers })
         ]);
 
         if (logsRes.status === 401 || leadsRes.status === 401) {
@@ -463,6 +480,13 @@
             });
           }
         }
+
+        if (alertRes && alertRes.ok) {
+          const cfg = await alertRes.json();
+          const pill = document.getElementById('webhook-status-pill');
+          pill.style.color = cfg.configured ? 'var(--green)' : 'var(--text-muted)';
+          pill.innerText = cfg.configured ? `Active: ${cfg.webhook_url}` : 'Not configured';
+        }
       } catch (e) {
         statusLabel.innerText = 'Demo Mode (Start cogniguard bridge for live sync)';
       }
@@ -505,6 +529,84 @@
       link.download = 'cogniguard_audit_logs_demo.csv';
       link.click();
       URL.revokeObjectURL(link.href);
+    }
+
+    async function runLiveProcessAudit() {
+      const box = document.getElementById('process-audit-box');
+      box.style.display = 'block';
+      box.style.borderColor = 'var(--border)';
+      box.innerText = '🔍 Inspecting live OS processes via psutil...';
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/processes/audit`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) {
+          box.style.borderColor = 'var(--yellow)';
+          box.innerText = `[!] ${data.detail || 'Unauthorized or unable to run process audit.'}`;
+          return;
+        }
+        const clean = data.flagged_count === 0;
+        box.style.borderColor = clean ? 'var(--green)' : 'var(--red)';
+        const details = (data.flagged || []).map(
+          item => `<div style="color:#fca5a5; margin-top:4px;">• PID ${escapeHtml(item.pid)} (${escapeHtml(item.name)}) — ${escapeHtml(item.reason)}</div>`
+        ).join('');
+        box.innerHTML = `<strong style="color:${clean ? 'var(--green)' : 'var(--red)'};">${
+          clean ? '✅ Live Process Audit Clean' : `🚨 ${escapeHtml(data.flagged_count)} Suspicious Process(es) Flagged`
+        }</strong> — Inspected ${escapeHtml(data.processes_inspected)} running processes.${details}`;
+        syncLiveLogsFromPython();
+      } catch (e) {
+        box.style.borderColor = 'var(--yellow)';
+        box.innerText = '[!] Start cogniguard bridge locally to run live psutil process audits.';
+      }
+    }
+
+    async function saveWebhookConfig(event) {
+      event.preventDefault();
+      const url = document.getElementById('webhook-url-input').value.trim();
+      const fb = document.getElementById('webhook-feedback');
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/alerts/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ webhook_url: url })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          fb.style.color = 'var(--red)';
+          fb.innerText = data.detail || 'Failed to save webhook URL.';
+          return;
+        }
+        fb.style.color = 'var(--green)';
+        fb.innerText = `✅ Saved webhook: ${data.webhook_url}`;
+        syncLiveLogsFromPython();
+      } catch (e) {
+        fb.style.color = 'var(--yellow)';
+        fb.innerText = '[!] Connect to cogniguard bridge to save webhook settings.';
+      }
+    }
+
+    async function sendTestWebhook() {
+      const fb = document.getElementById('webhook-feedback');
+      fb.style.color = 'var(--text-muted)';
+      fb.innerText = 'Sending test alert...';
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/alerts/test`, {
+          method: 'POST',
+          headers: authHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          fb.style.color = 'var(--red)';
+          fb.innerText = data.detail || 'Authorization required.';
+          return;
+        }
+        fb.style.color = data.delivered ? 'var(--green)' : 'var(--yellow)';
+        fb.innerText = data.delivered
+          ? `✅ Test alert delivered (HTTP ${data.status_code}).`
+          : `⚠️ Dispatch failed: ${data.error || 'Check webhook URL'}`;
+      } catch (e) {
+        fb.style.color = 'var(--yellow)';
+        fb.innerText = '[!] Connect to cogniguard bridge to test webhooks.';
+      }
     }
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();
