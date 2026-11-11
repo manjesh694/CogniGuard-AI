@@ -516,6 +516,13 @@ def audit_network():
     return agent.audit_network_connections(store=store)
 
 
+@app.get("/api/v1/killchain/audit", dependencies=[Depends(require_api_key)])
+def audit_kill_chain(window_seconds: Annotated[int, Query(ge=10, le=86400)] = 300):
+    """Correlate multi-stage threat events across a time window for APT kill chains."""
+    agent = CogniGuardAgent()
+    return agent.audit_kill_chains(store=store, window_seconds=window_seconds)
+
+
 @app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])
 def list_quarantine_items(
     limit: Annotated[int, Query(ge=1, le=500)] = 50,

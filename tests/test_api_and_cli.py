@@ -672,3 +672,37 @@ def test_network_audit_terminate_cli_and_dashboard_sync(isolated_storage, monkey
 
     dash_html = open(os.path.join(PROJECT_ROOT, "docs", "dashboard.html"), "r", encoding="utf-8").read()
     assert "/api/v1/network/audit" in dash_html
+
+
+def test_killchain_audit_api_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+
+    route_paths = {route.path for route in api_bridge.app.routes}
+    assert "/api/v1/killchain/audit" in route_paths
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", api_bridge.store.db_path)
+
+    api_bridge.store.record_audit_event({
+        "verdict": "INTRUSION_DETECTED",
+        "threat_score": 0.96,
+        "action_taken": "BLOCK_AND_QUARANTINE",
+        "filename": "payload.exe",
+        "timestamp": "2026-11-11 15:10:00",
+    })
+    api_bridge.store.record_audit_event({
+        "verdict": "INTRUSION_DETECTED",
+        "threat_score": 0.98,
+        "action_taken": "FLAGGED_C2_SOCKET",
+        "filename": "payload.exe",
+        "source_url": "198.51.100.77:4444",
+        "timestamp": "2026-11-11 15:10:40",
+    })
+
+    api_res = api_bridge.audit_kill_chain(window_seconds=300)
+    assert api_res["status"] == "KILL_CHAIN_DETECTED"
+    assert api_res["severity"] == "HIGH"
+    assert api_res["stages_detected"] == ["INGRESS", "EXFILTRATION"]
+
+    assert cli.main(["killchain-audit", "--window", "300", "--json"]) == 2
+    cli_res = json.loads(capsys.readouterr().out)
+    assert cli_res["status"] == "KILL_CHAIN_DETECTED"
+    assert cli_res["sequence_score"] == 0.5

@@ -252,6 +252,95 @@ class CogniGuardAgent:
                 results.append({"pid": pid, "status": "FAILED", "error": str(exc)})
         return results
 
+    KILL_CHAIN_STAGE_MAP = {
+        "BLOCK_AND_QUARANTINE": "INGRESS",
+        "QUARANTINE": "INGRESS",
+        "DOWNLOAD_BLOCKED": "INGRESS",
+        "FLAGGED_LIVE_PROCESS": "EXECUTION",
+        "LOLBIN_EXECUTION": "EXECUTION",
+        "HONEYPOT_TRIGGERED": "CREDENTIAL_ACCESS",
+        "PROCESS_KILLED_CONTAINED": "CREDENTIAL_ACCESS",
+        "FLAGGED_C2_SOCKET": "EXFILTRATION",
+    }
+
+    @staticmethod
+    def _parse_event_timestamp(raw_ts: str) -> Optional[datetime]:
+        """Parse ISO-8601 or standard YYYY-MM-DD HH:MM:SS audit log timestamps."""
+        if not raw_ts:
+            return None
+        for parser in (datetime.fromisoformat, lambda s: datetime.strptime(s, "%Y-%m-%d %H:%M:%S")):
+            try:
+                return parser(raw_ts.strip())
+            except ValueError:
+                continue
+        return None
+
+    def audit_kill_chains(self, store: Any, window_seconds: int = 300) -> Dict[str, Any]:
+        """Correlate multi-stage threat events within a positional time window using sequence attention."""
+        logs = store.list_audit_logs(limit=200)
+        parsed_events: List[tuple[datetime, str, Dict[str, Any]]] = []
+
+        for row in logs:
+            if row.get("verdict") in {"SAFE", "SAFE_TO_INSTALL"}:
+                continue
+            action = str(row.get("action_taken") or "")
+            reason_upper = str(row.get("reason") or "").upper()
+            stage = self.KILL_CHAIN_STAGE_MAP.get(action)
+            if stage is None:
+                if "C2" in reason_upper or "SOCKET" in reason_upper or "EXFIL" in reason_upper:
+                    stage = "EXFILTRATION"
+                elif "HONEYPOT" in reason_upper or "VAULT" in reason_upper or "COOKIE" in reason_upper:
+                    stage = "CREDENTIAL_ACCESS"
+                elif "PROCESS" in reason_upper or "LOLBIN" in reason_upper:
+                    stage = "EXECUTION"
+                elif row.get("verdict") == "INTRUSION_DETECTED":
+                    stage = "INGRESS"
+            if stage is None:
+                continue
+            ts = self._parse_event_timestamp(str(row.get("timestamp") or ""))
+            if ts is not None:
+                parsed_events.append((ts, stage, row))
+
+        parsed_events.sort(key=lambda item: item[0])
+        best_cluster: List[tuple[datetime, str, Dict[str, Any]]] = []
+        best_stages: List[str] = []
+
+        for idx, (anchor_ts, _, _) in enumerate(parsed_events):
+            cluster = [
+                item for item in parsed_events[idx:]
+                if (item[0] - anchor_ts).total_seconds() <= window_seconds
+            ]
+            stages_in_order = list(dict.fromkeys(stage for _, stage, _ in cluster))
+            if len(stages_in_order) > len(best_stages) or (
+                len(stages_in_order) == len(best_stages) and len(cluster) > len(best_cluster)
+            ):
+                best_stages = stages_in_order
+                best_cluster = cluster
+
+        stage_count = len(best_stages)
+        detected = stage_count >= 2
+        severity = "CRITICAL" if stage_count >= 3 else ("HIGH" if stage_count == 2 else "LOW")
+        sequence_score = round(min(1.0, stage_count / 4.0), 2)
+
+        return {
+            "status": "KILL_CHAIN_DETECTED" if detected else "OK",
+            "severity": severity,
+            "window_seconds": window_seconds,
+            "events_analyzed": len(parsed_events),
+            "stages_detected": best_stages,
+            "sequence_score": sequence_score,
+            "chain_events": [
+                {
+                    "timestamp": item[0].strftime("%Y-%m-%d %H:%M:%S"),
+                    "stage": item[1],
+                    "action_taken": item[2].get("action_taken"),
+                    "filename": item[2].get("filename"),
+                    "source_url": item[2].get("source_url"),
+                }
+                for item in best_cluster
+            ],
+        }
+
     def evaluate_access(self, process_name: str, target_vault: str, pid: int = 1337) -> Dict[str, Any]:
         """
         Agentic Heuristic Reasoning:

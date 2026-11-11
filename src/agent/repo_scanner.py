@@ -267,8 +267,24 @@ def validate_github_url(raw_url: str) -> str:
     return f"https://github.com/{owner}/{repo}.git"
 
 
+_ATTENTION_HEADS: Tuple[Tuple[str, re.Pattern], ...] = (
+    (
+        "source",
+        re.compile(r"os\.environ|getenv\(|\.ssh|id_rsa|aws/credentials|Network/Cookies|Login Data|keychain", re.IGNORECASE),
+    ),
+    (
+        "obfuscation",
+        re.compile(r"b64decode|frombase64string|Buffer\.from\([^)]*base64|bytes\.fromhex|zlib\.decompress|__import__\(|getattr\(\s*__builtins__", re.IGNORECASE),
+    ),
+    (
+        "exfil",
+        re.compile(r"requests\.(?:post|put)|urllib\.request\.urlopen|httpx\.post|fetch\(|socket\.|sendall\(|webhook|eval\(|exec\(", re.IGNORECASE),
+    ),
+)
+
+
 def _evaluate_file_content(rel_path: str, filename: str, content: str) -> List[Dict[str, Any]]:
-    """Run signature, secret-leak, container, and AST checks on a single file."""
+    """Run signature, secret-leak, container, AST, and multi-head attention checks on a file."""
     lower_file = filename.lower()
     file_findings: List[Dict[str, Any]] = []
     seen_threats: Set[str] = set()
@@ -313,6 +329,11 @@ def _evaluate_file_content(rel_path: str, filename: str, content: str) -> List[D
     if lower_file.endswith(".py"):
         for ast_item in _ast_inspect_python(rel_path, content):
             record(ast_item["threat"], ast_item["score"])
+
+    if lower_file.endswith(CODE_EXTENSIONS):
+        active_heads = {head_name for head_name, pattern in _ATTENTION_HEADS if pattern.search(content)}
+        if active_heads == {"source", "obfuscation", "exfil"}:
+            record("Multi-Head Attention: Convergent Stealth Exfiltration Pattern", 45)
 
     return file_findings
 
