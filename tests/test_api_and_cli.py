@@ -450,3 +450,23 @@ def test_webhook_config_and_test_dispatch(isolated_storage, monkeypatch):
     assert test_res["status_code"] == 200
     assert len(sent_payloads) == 1
     assert "cogniguard_webhook_test.exe" in sent_payloads[0][1]["text"]
+
+
+def test_install_hook_and_self_scan(tmp_path):
+    # Self-scan of the CogniGuard repo itself must pass cleanly
+    assert cli.main(["scan", PROJECT_ROOT, "--strict", "--format", "json"]) == 0
+
+    non_git = tmp_path / "not_a_repo"
+    non_git.mkdir()
+    assert cli.main(["install-hook", str(non_git)]) == 1
+
+    repo = tmp_path / "demo_repo"
+    (repo / ".git" / "hooks").mkdir(parents=True)
+    assert cli.main(["install-hook", str(repo)]) == 0
+    hook_file = repo / ".git" / "hooks" / "pre-commit"
+    assert hook_file.exists()
+    assert "cogniguard scan --strict ." in hook_file.read_text(encoding="utf-8")
+
+    # Refuses overwrite without --force, succeeds with --force
+    assert cli.main(["install-hook", str(repo)]) == 1
+    assert cli.main(["install-hook", str(repo), "--force"]) == 0

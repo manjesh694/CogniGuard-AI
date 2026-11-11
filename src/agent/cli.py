@@ -8,6 +8,7 @@ Description: Entrypoint for pre-install repo scanning, 24/7 guardian daemon,
 import argparse
 import json
 import os
+import stat
 import sys
 from typing import List, Optional
 
@@ -99,6 +100,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     proc_p.add_argument("--json", action="store_true", help="Output process audit as JSON")
 
+    hook_p = subparsers.add_parser(
+        "install-hook",
+        help="Install a Git pre-commit hook that blocks risky code via cogniguard scan --strict",
+    )
+    hook_p.add_argument("repo_path", nargs="?", default=".", help="Path to git repository")
+    hook_p.add_argument("--force", action="store_true", help="Overwrite an existing pre-commit hook")
+
     return parser
 
 
@@ -176,6 +184,35 @@ def main(argv: Optional[List[str]] = None) -> int:
             for item in report["flagged"]:
                 print(f"  🚨 PID {item['pid']} ({item['name']}) -> {item['reason']}")
         return 2 if report["flagged_count"] > 0 else 0
+
+    if args.command == "install-hook":
+        git_dir = os.path.join(os.path.abspath(args.repo_path), ".git")
+        if not os.path.isdir(git_dir):
+            print(f"[!] Not a git repository: {args.repo_path}")
+            return 1
+        hooks_dir = os.path.join(git_dir, "hooks")
+        os.makedirs(hooks_dir, exist_ok=True)
+        hook_path = os.path.join(hooks_dir, "pre-commit")
+        if os.path.exists(hook_path) and not args.force:
+            print(f"[!] pre-commit hook already exists at {hook_path} (use --force to overwrite)")
+            return 1
+        hook_script = (
+            "#!/usr/bin/env sh\n"
+            "if command -v cogniguard >/dev/null 2>&1; then\n"
+            "  cogniguard scan --strict .\n"
+            "else\n"
+            "  python -m agent.cli scan --strict .\n"
+            "fi\n"
+        )
+        with open(hook_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(hook_script)
+        try:
+            current_mode = os.stat(hook_path).st_mode
+            os.chmod(hook_path, current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        except OSError:
+            pass
+        print(f"✅ Installed CogniGuard pre-commit hook at: {hook_path}")
+        return 0
 
     return 1
 

@@ -62,6 +62,8 @@ SELF_DEFENSE_FILES = {
     "vault_guardian.py", "simulator.py", "full_system_scanner.py",
     "api_bridge.py", "verify_all.py", "bank_passwords_and_pins.txt",
     "cli.py", "heuristics.py", "storage.py", "quarantine.py",
+    "guardian_daemon_24x7.py", "alerts.py",
+    "test_api_and_cli.py", "test_backend_modules.py",
 }
 
 
