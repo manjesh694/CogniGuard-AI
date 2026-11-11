@@ -113,8 +113,75 @@ def _collect_docstring_ids(tree: ast.AST) -> Set[int]:
     return doc_ids
 
 
+_SENSITIVE_SOURCE_TOKENS = (
+    ".ssh",
+    "id_rsa",
+    "aws/credentials",
+    ".aws",
+    "cookies",
+    ".env",
+    "login data",
+)
+
+_EXFIL_SINKS = {
+    "requests.post",
+    "requests.put",
+    "urllib.request.urlopen",
+    "httpx.post",
+    "socket.sendall",
+    "eval",
+    "exec",
+}
+
+
+def _expr_has_taint_source(expr: Optional[ast.AST], tainted_vars: Set[str]) -> bool:
+    """Return True when an AST expression reads a sensitive local source or tainted variable."""
+    if expr is None:
+        return False
+    for sub in ast.walk(expr):
+        if isinstance(sub, ast.Name) and sub.id in tainted_vars:
+            return True
+        if isinstance(sub, ast.Attribute) and _call_name(sub) == "os.environ":
+            return True
+        if isinstance(sub, ast.Call):
+            cname = _call_name(sub.func)
+            if cname in {"os.getenv", "sqlite3.connect"}:
+                return True
+            if cname == "open" or cname.endswith(".open"):
+                for arg in list(sub.args) + [kw.value for kw in sub.keywords]:
+                    if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                        lowered = arg.value.lower()
+                        if any(tok in lowered for tok in _SENSITIVE_SOURCE_TOKENS):
+                            return True
+    return False
+
+
+def _collect_tainted_vars(tree: ast.AST) -> Set[str]:
+    """Perform lightweight intra-procedural taint collection across assignments and with-blocks."""
+    tainted: Set[str] = set()
+    nodes = list(ast.walk(tree))
+    for _ in range(3):
+        before = len(tainted)
+        for node in nodes:
+            if isinstance(node, ast.Assign) and _expr_has_taint_source(node.value, tainted):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        tainted.add(target.id)
+            elif isinstance(node, ast.AnnAssign) and _expr_has_taint_source(node.value, tainted):
+                if isinstance(node.target, ast.Name):
+                    tainted.add(node.target.id)
+            elif isinstance(node, ast.With):
+                for item in node.items:
+                    if item.optional_vars is not None and isinstance(item.optional_vars, ast.Name):
+                        if _expr_has_taint_source(item.context_expr, tainted):
+                            tainted.add(item.optional_vars.id)
+        if len(tainted) == before:
+            break
+    return tainted
+
+
 def _ast_inspect_python(rel_path: str, content: str) -> List[Dict[str, Any]]:
-    """Inspect Python AST for evasive imports, builtins lookups, and high-entropy blobs."""
+    """Inspect Python AST for evasive imports, taint exfiltration, and high-entropy blobs."""
     try:
         tree = ast.parse(content)
     except SyntaxError:
@@ -123,6 +190,7 @@ def _ast_inspect_python(rel_path: str, content: str) -> List[Dict[str, Any]]:
     findings: List[Dict[str, Any]] = []
     seen_threats: Set[str] = set()
     docstring_ids = _collect_docstring_ids(tree)
+    tainted_vars = _collect_tainted_vars(tree)
 
     def add_finding(threat: str, score: int) -> None:
         if threat not in seen_threats:
@@ -144,6 +212,14 @@ def _ast_inspect_python(rel_path: str, content: str) -> List[Dict[str, Any]]:
                 inner_calls = {_call_name(sub.func) for sub in ast.walk(node.args[0]) if isinstance(sub, ast.Call)}
                 if inner_calls & {"bytes.fromhex", "zlib.decompress", "marshal.loads", "compile", "base64.b64decode"}:
                     add_finding("AST-Detected Obfuscated Dynamic Execution", 50)
+            if name in _EXFIL_SINKS and tainted_vars:
+                arg_nodes = list(node.args) + [kw.value for kw in node.keywords]
+                if any(
+                    isinstance(sub, ast.Name) and sub.id in tainted_vars
+                    for arg in arg_nodes
+                    for sub in ast.walk(arg)
+                ):
+                    add_finding("AST Taint Flow: Sensitive Data Exfiltration to Network", 50)
         elif (
             isinstance(node, ast.Constant)
             and id(node) not in docstring_ids

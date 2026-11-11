@@ -133,6 +133,85 @@ class CogniGuardAgent:
             "timestamp": datetime.now().isoformat(),
         }
 
+    SUSPICIOUS_C2_PORTS = {4444, 5555, 6666, 1337, 31337, 9001}
+    TEMP_EXEC_MARKERS = ("\\appdata\\local\\temp\\", "\\windows\\temp\\", "/tmp/", "/dev/shm/")
+
+    def audit_network_connections(self, store: Any = None, max_connections: int = 500) -> Dict[str, Any]:
+        """Inspect active outbound inet sockets for suspicious C2 ports or temp-binary beacons."""
+        flagged: List[Dict[str, Any]] = []
+        inspected = 0
+
+        try:
+            connections = psutil.net_connections(kind="inet")
+        except (psutil.AccessDenied, RuntimeError):
+            connections = []
+
+        for conn in connections:
+            if inspected >= max_connections:
+                break
+            raddr = getattr(conn, "raddr", None)
+            status = getattr(conn, "status", "")
+            if not raddr or status not in {"ESTABLISHED", "SYN_SENT"}:
+                continue
+
+            inspected += 1
+            remote_ip = getattr(raddr, "ip", raddr[0] if isinstance(raddr, tuple) and raddr else "")
+            remote_port = int(getattr(raddr, "port", raddr[1] if isinstance(raddr, tuple) and len(raddr) > 1 else 0))
+            pid = getattr(conn, "pid", None) or 0
+
+            proc_name = "unknown"
+            exe_path = ""
+            if pid:
+                try:
+                    proc = psutil.Process(pid)
+                    proc_name = proc.name() or "unknown"
+                    exe_path = proc.exe() or ""
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+
+            exe_lower = exe_path.lower()
+            is_c2_port = remote_port in self.SUSPICIOUS_C2_PORTS
+            is_temp_exec = any(marker in exe_lower for marker in self.TEMP_EXEC_MARKERS)
+            if not is_c2_port and not is_temp_exec:
+                continue
+
+            if is_c2_port:
+                reason = f"Outbound socket to suspicious C2 port {remote_port} ({remote_ip})"
+                score = 0.98
+            else:
+                reason = f"Outbound socket from temporary directory executable ({exe_path}) to {remote_ip}:{remote_port}"
+                score = 0.95
+
+            event = {
+                "pid": pid,
+                "process_name": proc_name,
+                "exe_path": exe_path,
+                "remote_ip": remote_ip,
+                "remote_port": remote_port,
+                "status": status,
+                "risk_score": score,
+                "reason": reason,
+            }
+            flagged.append(event)
+            if store is not None:
+                store.record_audit_event({
+                    "status": "OK",
+                    "verdict": "INTRUSION_DETECTED",
+                    "threat_score": score,
+                    "action_taken": "FLAGGED_C2_SOCKET",
+                    "reason": reason,
+                    "filename": f"{proc_name} (PID {pid})",
+                    "source_url": f"{remote_ip}:{remote_port}",
+                })
+
+        return {
+            "status": "OK" if not flagged else "C2_DETECTED",
+            "connections_inspected": inspected,
+            "flagged_count": len(flagged),
+            "flagged": flagged,
+            "timestamp": datetime.now().isoformat(),
+        }
+
     def evaluate_access(self, process_name: str, target_vault: str, pid: int = 1337) -> Dict[str, Any]:
         """
         Agentic Heuristic Reasoning:

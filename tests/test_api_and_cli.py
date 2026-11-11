@@ -593,3 +593,43 @@ def test_secret_leaks_dockerfile_requirements_and_doctor(tmp_path, monkeypatch, 
     doc_out = json.loads(capsys.readouterr().out)
     assert doc_out["status"] == "OK"
     assert doc_out["git_available"] is True
+
+
+def test_network_audit_api_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+    from types import SimpleNamespace
+    import psutil
+
+    route_paths = {route.path for route in api_bridge.app.routes}
+    assert "/api/v1/network/audit" in route_paths
+
+    fake_conns = [
+        SimpleNamespace(
+            raddr=SimpleNamespace(ip="198.51.100.42", port=31337),
+            status="SYN_SENT",
+            pid=7777,
+        )
+    ]
+
+    class FakeProc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def name(self):
+            return "reverse_shell.exe"
+
+        def exe(self):
+            return "/tmp/reverse_shell.exe"
+
+    monkeypatch.setattr(psutil, "net_connections", lambda kind="inet": fake_conns)
+    monkeypatch.setattr(psutil, "Process", FakeProc)
+
+    api_res = api_bridge.audit_network()
+    assert api_res["status"] == "C2_DETECTED"
+    assert api_res["flagged_count"] == 1
+    assert api_res["flagged"][0]["remote_port"] == 31337
+
+    assert cli.main(["network-audit", "--json"]) == 2
+    cli_res = json.loads(capsys.readouterr().out)
+    assert cli_res["status"] == "C2_DETECTED"
+    assert cli_res["flagged"][0]["process_name"] == "reverse_shell.exe"

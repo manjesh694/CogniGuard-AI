@@ -131,6 +131,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     doc_p.add_argument("--json", action="store_true", help="Output diagnostics as JSON")
 
+    net_p = subparsers.add_parser(
+        "network-audit",
+        help="Audit active outbound network sockets for C2 ports or temp-binary beacons",
+    )
+    net_p.add_argument("--json", action="store_true", help="Output network audit report as JSON")
+
     return parser
 
 
@@ -294,6 +300,20 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"  git: {'OK' if diag['git_available'] else 'MISSING'} | DB: {diag['db_path']}")
             print(f"  Vault: {diag['quarantine_dir']} | API Key Auth: {diag['api_key_enabled']}")
         return 0 if diag["status"] == "OK" else 1
+
+    if args.command == "network-audit":
+        agent = CogniGuardAgent()
+        result = agent.audit_network_connections()
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            print(
+                f"CogniGuard Network Audit: {result['status']} "
+                f"({result['connections_inspected']} outbound sockets inspected, {result['flagged_count']} flagged)"
+            )
+            for item in result["flagged"]:
+                print(f"  [!] PID {item['pid']} ({item['process_name']}) -> {item['remote_ip']}:{item['remote_port']} [{item['reason']}]")
+        return 2 if result["flagged_count"] > 0 else 0
 
     return 1
 

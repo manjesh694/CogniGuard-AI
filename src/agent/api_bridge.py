@@ -509,6 +509,13 @@ def remove_ioc(sha256: str):
     return {"status": "OK", "deleted_sha256": sha256.lower()}
 
 
+@app.get("/api/v1/network/audit", dependencies=[Depends(require_api_key)])
+def audit_network():
+    """Inspect active outbound inet sockets for suspicious C2 ports or temp-binary beacons."""
+    agent = CogniGuardAgent()
+    return agent.audit_network_connections(store=store)
+
+
 @app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])
 def list_quarantine_items(
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
