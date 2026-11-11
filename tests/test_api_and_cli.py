@@ -580,6 +580,13 @@ def test_secret_leaks_dockerfile_requirements_and_doctor(tmp_path, monkeypatch, 
     assert "Insecure Plaintext HTTP ADD in Dockerfile" in threats
     assert "Insecure Plaintext HTTP Dependency in requirements.txt" in threats
 
+    (scan_dir / ".env").write_text("SECRET_KEY=demo\n", encoding="utf-8")
+    (scan_dir / ".env.example").write_text("SECRET_KEY=changeme\n", encoding="utf-8")
+    env_report = repo_scanner.scan_repository(str(scan_dir), quiet=True)
+    env_files = {item["file"] for item in env_report["findings"] if item["threat"] == "Exposed .env Environment Secrets File"}
+    assert ".env" in env_files
+    assert ".env.example" not in env_files
+
     monkeypatch.setenv("COGNIGUARD_DB_PATH", str(tmp_path / "doc.db"))
     monkeypatch.setenv("COGNIGUARD_QUARANTINE_DIR", str(tmp_path / "doc_vault"))
     assert cli.main(["doctor", "--json"]) == 0

@@ -71,7 +71,18 @@ def run_tests():
             index_content = f.read()
         assert "privacy.html" in index_content, f"{index_path} must link to privacy.html"
         assert 'href="#"' not in index_content, f"{index_path} still has dead href='#' links!"
-    print("  ✅ Web endpoints verified: Landing pages link to Privacy Policy with zero dead CTA links.")
+
+    # Drift check across docs/, root index.html, and src/web/
+    with open(os.path.join(PROJECT_ROOT, "docs", "index.html"), "r", encoding="utf-8") as f:
+        docs_idx = f.read()
+    with open(os.path.join(PROJECT_ROOT, "index.html"), "r", encoding="utf-8") as f:
+        root_idx = f.read()
+    assert docs_idx == root_idx, "Root index.html drifted from docs/index.html (run scripts/build_release.py)"
+    for synced_page in ("dashboard.html", "demo_portal.html", "privacy.html"):
+        with open(os.path.join(PROJECT_ROOT, "docs", synced_page), "r", encoding="utf-8") as f1:
+            with open(os.path.join(PROJECT_ROOT, "src", "web", synced_page), "r", encoding="utf-8") as f2:
+                assert f1.read() == f2.read(), f"src/web/{synced_page} drifted from docs/{synced_page}"
+    print("  ✅ Web endpoints & sync verified: Privacy links, zero dead CTAs, zero drift.")
     passed_count += 1
 
     # TEST 4: Python Vault Guardian Heuristics

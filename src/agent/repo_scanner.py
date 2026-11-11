@@ -206,6 +206,10 @@ def _evaluate_file_content(rel_path: str, filename: str, content: str) -> List[D
         if re.search(pattern, content):
             record(description, score)
 
+    if lower_file == ".env" or (lower_file.startswith(".env.") and not lower_file.endswith((".example", ".sample", ".template"))):
+        record("Exposed .env Environment Secrets File", 40)
+        return file_findings
+
     if lower_file == "package.json":
         if MALICIOUS_NPM_HOOK_RE.search(content):
             record("Malicious npm Lifecycle Install Hook", 50)
@@ -268,6 +272,8 @@ def _scan_local_directory(
                 or lower_file == "package.json"
                 or lower_file == "dockerfile"
                 or lower_file.startswith("dockerfile.")
+                or lower_file == ".env"
+                or lower_file.startswith(".env.")
             )
             if not is_supported or file in SELF_DEFENSE_FILES:
                 continue

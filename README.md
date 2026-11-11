@@ -87,8 +87,24 @@ cogniguard bridge
     format: "sarif"
 ```
 
-### 6. Run Verification Tests
+### 6. Run Verification Tests & Sync Release Assets
 ```bash
+python scripts/build_release.py
 python tests/verify_all.py
 pytest -v
 ```
+
+---
+
+## CLI & API Quick Reference
+
+| Command | Purpose |
+| :--- | :--- |
+| `cogniguard scan <path_or_github_url> [--format text\|json\|sarif] [--strict]` | Pre-install repo, AI-skill, AST, secret-leak & container scan |
+| `cogniguard daemon` | 24/7 Downloads & Honeypot watcher with SHA-256 quarantine |
+| `cogniguard bridge` | Start FastAPI server (`:8765`) for extension, demo, & SOC console |
+| `cogniguard process-audit [--json]` | Inspect live OS processes via `psutil` |
+| `cogniguard quarantine list\|restore\|shred` | Manage isolated files in `.quarantine/` |
+| `cogniguard ioc add\|list\|remove` | Manage fleet SHA-256 Threat Intelligence blocklist |
+| `cogniguard install-hook [repo_path]` | Install `.git/hooks/pre-commit` security gate |
+| `cogniguard doctor [--json]` | Run system, dependency, DB, & security posture check |
