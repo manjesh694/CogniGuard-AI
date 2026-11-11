@@ -40,6 +40,7 @@ def test_fastapi_routes_registered():
         "/api/v1/leads",
         "/api/v1/logs",
         "/api/v1/logs/export",
+        "/api/v1/processes/audit",
         "/api/v1/quarantine",
         "/api/v1/quarantine/{qid}/restore",
         "/api/v1/quarantine/{qid}",
@@ -384,3 +385,27 @@ def test_audit_export_csv_json_and_sarif_cli(isolated_storage, capsys):
     assert cli.main(["scan", infected, "--format", "json"]) == 2
     json_out = json.loads(capsys.readouterr().out)
     assert json_out["verdict"] == "DO_NOT_INSTALL"
+
+
+def test_process_audit_endpoint_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+    import agent.vault_guardian as vg
+
+    class FakeProc:
+        def __init__(self, info):
+            self.info = info
+
+    monkeypatch.setattr(
+        vg.psutil,
+        "process_iter",
+        lambda attrs=None: iter([FakeProc({"pid": 10, "name": "python.exe", "exe": "/usr/bin/python", "cmdline": []})]),
+    )
+
+    res = api_bridge.audit_processes()
+    assert res["status"] == "OK"
+    assert res["processes_inspected"] == 1
+    assert res["flagged_count"] == 0
+
+    assert cli.main(["process-audit", "--json"]) == 0
+    cli_out = json.loads(capsys.readouterr().out)
+    assert cli_out["status"] == "OK"

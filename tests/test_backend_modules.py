@@ -20,6 +20,7 @@ from agent.honeypot_trap import CogniGuardHoneypot  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
+from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 
 def test_sqlite_store_concurrent_writes(tmp_path):
@@ -127,3 +128,37 @@ def test_phishing_download_and_reverse_engineer():
     assert clean["primary_target"] == "NONE"
     assert clean["recommended_action"] == "ALLOW"
     assert clean["threat_score"] == 0.05
+
+
+def test_live_process_auditor(tmp_path, monkeypatch):
+    agent = CogniGuardAgent()
+    assert agent.evaluate_process_info(101, "code.exe", r"C:\Program Files\VSCode\Code.exe", ["code.exe"]) is None
+
+    temp_drop = agent.evaluate_process_info(202, "update.exe", r"C:\Users\dev\AppData\Local\Temp\update.exe", [])
+    assert temp_drop is not None and temp_drop["threat_score"] == 0.90
+
+    encoded_ps = agent.evaluate_process_info(
+        303,
+        "powershell.exe",
+        r"C:\Windows\System32\powershell.exe",
+        ["powershell.exe", "-EncodedCommand", "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAKQA="],
+    )
+    assert encoded_ps is not None and encoded_ps["threat_score"] == 0.97
+
+    class FakeProc:
+        def __init__(self, info):
+            self.info = info
+
+    fake_procs = [
+        FakeProc({"pid": 1, "name": "python.exe", "exe": r"C:\Python313\python.exe", "cmdline": ["python"]}),
+        FakeProc({"pid": 999, "name": "infostealer.exe", "exe": r"C:\Users\x\AppData\Local\Temp\infostealer.exe", "cmdline": []}),
+    ]
+    import agent.vault_guardian as vg
+    monkeypatch.setattr(vg.psutil, "process_iter", lambda attrs=None: iter(fake_procs))
+
+    store = CogniGuardStore(str(tmp_path / "proc.db"))
+    report = agent.audit_live_processes(store=store)
+    assert report["processes_inspected"] == 2
+    assert report["flagged_count"] == 1
+    assert report["status"] == "THREATS_DETECTED"
+    assert len(store.list_audit_logs()) == 1

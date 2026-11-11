@@ -20,6 +20,7 @@ from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import format_scan_sarif, scan_repository  # noqa: E402
+from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -92,6 +93,12 @@ def build_parser() -> argparse.ArgumentParser:
     q_shred = q_sub.add_parser("shred", help="Permanently delete a quarantined item by ID")
     q_shred.add_argument("qid", help="Quarantine ID")
 
+    proc_p = subparsers.add_parser(
+        "process-audit",
+        help="Audit live running OS processes via psutil for suspicious executions",
+    )
+    proc_p.add_argument("--json", action="store_true", help="Output process audit as JSON")
+
     return parser
 
 
@@ -158,6 +165,17 @@ def main(argv: Optional[List[str]] = None) -> int:
                 return 1
             print(f"🗑️ Permanently shredded item: {args.qid}")
             return 0
+
+    if args.command == "process-audit":
+        agent = CogniGuardAgent()
+        report = agent.audit_live_processes()
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            print(f"Inspected {report['processes_inspected']} live processes | Flagged: {report['flagged_count']}")
+            for item in report["flagged"]:
+                print(f"  🚨 PID {item['pid']} ({item['name']}) -> {item['reason']}")
+        return 2 if report["flagged_count"] > 0 else 0
 
     return 1
 

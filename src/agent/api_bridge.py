@@ -39,6 +39,7 @@ from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
+from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 APP_VERSION = "1.0.3"
 DEFAULT_ALLOWED_ORIGINS = [
@@ -383,6 +384,13 @@ def export_audit_logs(
 def get_telemetry_summary():
     """Return aggregated SOC & GTM conversion telemetry."""
     return store.get_telemetry_summary(APP_VERSION)
+
+
+@app.get("/api/v1/processes/audit", dependencies=[Depends(require_api_key)])
+def audit_processes():
+    """Inspect live OS processes via psutil and record suspicious findings."""
+    agent = CogniGuardAgent()
+    return agent.audit_live_processes(store=store)
 
 
 @app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])
