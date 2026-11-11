@@ -175,7 +175,10 @@
   <div class="log-table-container">
     <div class="table-header">
       <span>Real-Time Enterprise Audit Log</span>
-      <span id="bridge-status-label" style="font-size: 12px; color: var(--text-muted);">Synced with Local Python API</span>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span id="bridge-status-label" style="font-size: 12px; color: var(--text-muted);">Synced with Local Python API</span>
+        <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="exportAuditCsv()">⬇ Export Audit CSV</button>
+      </div>
     </div>
     <table>
       <thead>
@@ -473,6 +476,35 @@
       const method = action === 'restore' ? 'POST' : 'DELETE';
       await fetch(url, { method, headers });
       syncLiveLogsFromPython();
+    }
+
+    async function exportAuditCsv() {
+      const headers = authHeaders();
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/logs/export?format=csv`, { headers });
+        if (res.ok) {
+          const blob = await res.blob();
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'cogniguard_audit_logs.csv';
+          link.click();
+          URL.revokeObjectURL(link.href);
+          return;
+        }
+      } catch (e) {}
+
+      // Fallback: export currently displayed audit rows in Demo Mode
+      const rows = [['Time', 'Process / Source', 'Endpoint / Target', 'Threat Score', 'Action Taken', 'Status']];
+      document.querySelectorAll('#log-body tr').forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""')}"`);
+        if (cols.length) rows.push(cols);
+      });
+      const csvBlob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(csvBlob);
+      link.download = 'cogniguard_audit_logs_demo.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
     }
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();

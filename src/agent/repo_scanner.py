@@ -209,12 +209,17 @@ def _evaluate_file_content(rel_path: str, filename: str, content: str) -> List[D
     return file_findings
 
 
-def _scan_local_directory(target_dir: str, display_target: Optional[str] = None) -> Dict[str, Any]:
+def _scan_local_directory(
+    target_dir: str,
+    display_target: Optional[str] = None,
+    quiet: bool = False,
+) -> Dict[str, Any]:
     """Scan all supported files inside an existing local directory."""
     shown_target = display_target or target_dir
-    print("\n" + "=" * 60)
-    print(f"$ cogniguard scan {shown_target}")
-    print("=" * 60)
+    if not quiet:
+        print("\n" + "=" * 60)
+        print(f"$ cogniguard scan {shown_target}")
+        print("=" * 60)
 
     start_time = time.time()
     files_scanned = 0
@@ -260,21 +265,22 @@ def _scan_local_directory(target_dir: str, display_target: Optional[str] = None)
     else:
         severity, verdict, color_icon = "LOW", "SAFE_TO_INSTALL", "✅"
 
-    print(f"Scanned {files_scanned:,} files in {elapsed:.2f}s\n")
-    print("+" + "-" * 42 + "+")
-    print(f"| Risk score   {final_score:>3} / 100                   |")
-    print(f"| Severity     {severity:<27} |")
-    print(f"| Verdict      {color_icon} {verdict:<24} |")
-    print("+" + "-" * 42 + "+")
+    if not quiet:
+        print(f"Scanned {files_scanned:,} files in {elapsed:.2f}s\n")
+        print("+" + "-" * 42 + "+")
+        print(f"| Risk score   {final_score:>3} / 100                   |")
+        print(f"| Severity     {severity:<27} |")
+        print(f"| Verdict      {color_icon} {verdict:<24} |")
+        print("+" + "-" * 42 + "+")
 
-    if findings:
-        print("\n🔍 Top Security Findings:")
-        for item in findings[:5]:
-            print(f"  • [{item['file']}] -> {item['threat']} (+{item['score']} risk)")
-    else:
-        print("\n🛡️ Clean repository: No hidden backdoors or credential stealers detected.")
+        if findings:
+            print("\n🔍 Top Security Findings:")
+            for item in findings[:5]:
+                print(f"  • [{item['file']}] -> {item['threat']} (+{item['score']} risk)")
+        else:
+            print("\n🛡️ Clean repository: No hidden backdoors or credential stealers detected.")
 
-    print("=" * 60 + "\n")
+        print("=" * 60 + "\n")
 
     return {
         "target": shown_target,
@@ -286,7 +292,56 @@ def _scan_local_directory(target_dir: str, display_target: Optional[str] = None)
     }
 
 
-def scan_repository(target: str, clone_timeout: int = 30) -> Optional[Dict[str, Any]]:
+def format_scan_sarif(report: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a scan_repository report into SARIF v2.1.0 for GitHub Code Scanning."""
+    rules: List[Dict[str, Any]] = []
+    seen_rules: Set[str] = set()
+    results: List[Dict[str, Any]] = []
+
+    for item in report.get("findings", []):
+        threat = item["threat"]
+        rule_id = re.sub(r"[^a-z0-9]+", "-", threat.lower()).strip("-") or "cogniguard-finding"
+        level = "error" if item["score"] >= 35 else "warning"
+        if rule_id not in seen_rules:
+            seen_rules.add(rule_id)
+            rules.append({
+                "id": rule_id,
+                "name": threat,
+                "shortDescription": {"text": threat},
+                "defaultConfiguration": {"level": level},
+            })
+        results.append({
+            "ruleId": rule_id,
+            "level": level,
+            "message": {"text": f"{threat} (+{item['score']} risk)"},
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": str(item["file"]).replace("\\", "/")},
+                }
+            }],
+        })
+
+    return {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "CogniGuard AI",
+                    "version": "1.0.4",
+                    "rules": rules,
+                }
+            },
+            "results": results,
+        }],
+    }
+
+
+def scan_repository(
+    target: str,
+    clone_timeout: int = 30,
+    quiet: bool = False,
+) -> Optional[Dict[str, Any]]:
     """Scan a local repository folder or a public HTTPS GitHub repository URL."""
     if is_url_like(target):
         normalized_url = validate_github_url(target)
@@ -303,13 +358,14 @@ def scan_repository(target: str, clone_timeout: int = 30) -> Optional[Dict[str, 
             if proc.returncode != 0:
                 err_msg = (proc.stderr or proc.stdout or "git clone failed").strip()
                 raise RuntimeError(f"Failed to clone {normalized_url}: {err_msg}")
-            return _scan_local_directory(clone_dir, display_target=normalized_url)
+            return _scan_local_directory(clone_dir, display_target=normalized_url, quiet=quiet)
 
     if not os.path.exists(target):
-        print(f"[!] Directory not found: {target}")
+        if not quiet:
+            print(f"[!] Directory not found: {target}")
         return None
 
-    return _scan_local_directory(target)
+    return _scan_local_directory(target, quiet=quiet)
 
 
 if __name__ == "__main__":

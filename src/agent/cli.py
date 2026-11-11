@@ -6,6 +6,7 @@ Description: Entrypoint for pre-install repo scanning, 24/7 guardian daemon,
 """
 
 import argparse
+import json
 import os
 import sys
 from typing import List, Optional
@@ -18,7 +19,7 @@ if _SRC_DIR not in sys.path:
 from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
-from agent.repo_scanner import scan_repository  # noqa: E402
+from agent.repo_scanner import format_scan_sarif, scan_repository  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,6 +44,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--strict",
         action="store_true",
         help="Exit non-zero on REVIEW_REQUIRED as well as DO_NOT_INSTALL",
+    )
+    scan_p.add_argument(
+        "--format",
+        choices=["text", "json", "sarif"],
+        default="text",
+        help="Output format (text, json, or sarif)",
     )
 
     daemon_p = subparsers.add_parser(
@@ -94,13 +101,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "scan":
+        quiet_mode = args.format in {"json", "sarif"}
         try:
-            report = scan_repository(args.target)
+            report = scan_repository(args.target, quiet=quiet_mode)
         except (ValueError, RuntimeError) as exc:
-            print(f"[!] {exc}")
+            print(f"[!] {exc}", file=sys.stderr if quiet_mode else sys.stdout)
             return 1
         if report is None:
             return 1
+        if args.format == "json":
+            print(json.dumps(report, indent=2))
+        elif args.format == "sarif":
+            print(json.dumps(format_scan_sarif(report), indent=2))
         if report["verdict"] == "DO_NOT_INSTALL":
             return 2
         if args.strict and report["verdict"] == "REVIEW_REQUIRED":

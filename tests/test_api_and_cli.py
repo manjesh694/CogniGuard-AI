@@ -39,6 +39,7 @@ def test_fastapi_routes_registered():
         "/api/v1/scan-repo",
         "/api/v1/leads",
         "/api/v1/logs",
+        "/api/v1/logs/export",
         "/api/v1/quarantine",
         "/api/v1/quarantine/{qid}/restore",
         "/api/v1/quarantine/{qid}",
@@ -352,3 +353,34 @@ def test_cli_quarantine_commands(isolated_storage, monkeypatch, capsys):
     item2 = mgr.quarantine_file(str(bad), reason="CLI shred test")
     assert cli.main(["quarantine", "shred", item2["id"]]) == 0
     assert not os.path.exists(item2["vault_path"])
+
+
+def test_audit_export_csv_json_and_sarif_cli(isolated_storage, capsys):
+    import json
+
+    api_bridge.inspect_download(
+        api_bridge.InspectPayloadRequest(
+            filename="=CMD('calc').exe",
+            source_url="https://evil.example/payload",
+        )
+    )
+
+    csv_resp = api_bridge.export_audit_logs(format="csv")
+    assert csv_resp.media_type.startswith("text/csv")
+    csv_text = csv_resp.body.decode("utf-8")
+    assert "'=CMD('calc').exe" in csv_text
+
+    json_resp = api_bridge.export_audit_logs(format="json")
+    exported = json.loads(json_resp.body.decode("utf-8"))
+    assert len(exported) == 1
+    assert exported[0]["verdict"] == "INTRUSION_DETECTED"
+
+    infected = os.path.join(PROJECT_ROOT, "tests", "mock_infected_skill")
+    assert cli.main(["scan", infected, "--format", "sarif"]) == 2
+    sarif_out = json.loads(capsys.readouterr().out)
+    assert sarif_out["version"] == "2.1.0"
+    assert len(sarif_out["runs"][0]["results"]) >= 2
+
+    assert cli.main(["scan", infected, "--format", "json"]) == 2
+    json_out = json.loads(capsys.readouterr().out)
+    assert json_out["verdict"] == "DO_NOT_INSTALL"

@@ -8,7 +8,10 @@ Description: Hardened FastAPI bridge connecting the Chrome extension, web portal
 import base64
 import binascii
 from collections import defaultdict, deque
+import csv
 import hmac
+import io
+import json
 import os
 import sys
 import threading
@@ -19,6 +22,7 @@ from typing import Annotated, Any, Deque, Dict, List, Literal, Optional
 try:
     from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import Response
     from pydantic import BaseModel, Field
     import uvicorn
 except ImportError:
@@ -337,6 +341,42 @@ def get_audit_logs(
 ):
     """Return recent security audit logs for the SOC dashboard."""
     return store.list_audit_logs(limit=limit, offset=offset, verdict=verdict)
+
+
+def _safe_csv_cell(value: Any) -> str:
+    """Neutralize spreadsheet formula-injection prefixes when exporting CSV."""
+    text = str("" if value is None else value)
+    if text.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return f"'{text}"
+    return text
+
+
+@app.get("/api/v1/logs/export", dependencies=[Depends(require_api_key)])
+def export_audit_logs(
+    format: Annotated[Literal["csv", "json"], Query()] = "csv",
+    limit: Annotated[int, Query(ge=1, le=500)] = 500,
+    verdict: Annotated[Optional[str], Query()] = None,
+):
+    """Export SOC2 / ISO compliance audit logs as downloadable CSV or JSON."""
+    rows = store.list_audit_logs(limit=limit, offset=0, verdict=verdict)
+    if format == "json":
+        return Response(
+            content=json.dumps(rows, indent=2),
+            media_type="application/json",
+            headers={"Content-Disposition": 'attachment; filename="cogniguard_audit_logs.json"'},
+        )
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    headers = ["timestamp", "filename", "source_url", "verdict", "threat_score", "action_taken", "reason", "status", "file_size"]
+    writer.writerow(headers)
+    for row in rows:
+        writer.writerow([_safe_csv_cell(row.get(col, "")) for col in headers])
+    return Response(
+        content=buf.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="cogniguard_audit_logs.csv"'},
+    )
 
 
 @app.get("/api/v1/telemetry/summary")
