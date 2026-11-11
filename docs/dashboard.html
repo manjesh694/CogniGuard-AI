@@ -169,6 +169,7 @@
     <button class="btn btn-danger" onclick="triggerIntrusionSim()">⚡ Simulate Fleet Attack (Test Corporate Alert)</button>
     <button class="btn" onclick="addDevLog()">💻 Simulate Normal Dev Workflow (VS Code)</button>
     <a href="index.html" class="btn" style="background: #1f2937; text-decoration: none;">← Website Home</a>
+    <input id="admin-api-key" type="password" placeholder="🔑 Admin X-API-Key (for Cloud)" onchange="saveAdminKey(this.value)" style="background: #030712; border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 12px; min-width: 220px;">
   </div>
 
   <div class="log-table-container">
@@ -254,6 +255,31 @@
     const API_BASE = resolveApiBase();
     let blockedCount = 2;
 
+    (function initAdminKey() {
+      try {
+        const saved = sessionStorage.getItem('cogniguard_admin_key') || '';
+        const input = document.getElementById('admin-api-key');
+        if (input && saved) input.value = saved;
+      } catch (e) {}
+    })();
+
+    function saveAdminKey(val) {
+      try {
+        if (val) sessionStorage.setItem('cogniguard_admin_key', val.trim());
+        else sessionStorage.removeItem('cogniguard_admin_key');
+      } catch (e) {}
+      syncLiveLogsFromPython();
+    }
+
+    function authHeaders() {
+      try {
+        const key = sessionStorage.getItem('cogniguard_admin_key');
+        return key ? { 'X-API-Key': key } : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
     function escapeHtml(value) {
       return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -309,12 +335,23 @@
     async function syncLiveLogsFromPython() {
       const statusLabel = document.getElementById('bridge-status-label');
       try {
+        const headers = authHeaders();
         const [logsRes, summaryRes, leadsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/v1/logs`),
+          fetch(`${API_BASE}/api/v1/logs`, { headers }),
           fetch(`${API_BASE}/api/v1/telemetry/summary`),
-          fetch(`${API_BASE}/api/v1/leads`)
+          fetch(`${API_BASE}/api/v1/leads`, { headers })
         ]);
 
+        if (logsRes.status === 401 || leadsRes.status === 401) {
+          statusLabel.innerHTML = '<span style="color: var(--yellow);">🔑 Connected — Enter Admin X-API-Key to unlock private logs & leads</span>';
+          if (summaryRes.ok) {
+            const summary = await summaryRes.json();
+            document.getElementById('leads-count').innerText = summary.leads_captured;
+            document.getElementById('leads-breakdown').innerText =
+              `${summary.pro_trials} Pro Trials • ${summary.enterprise_pilots} Enterprise Pilots`;
+          }
+          return;
+        }
         if (!logsRes.ok) return;
         statusLabel.innerHTML = '<span style="color: var(--green);">● LIVE BRIDGE CONNECTED (:8765)</span>';
 

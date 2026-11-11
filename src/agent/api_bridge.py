@@ -147,6 +147,13 @@ def require_api_key(x_api_key: Optional[str] = Header(default=None)) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key")
 
 
+def _has_valid_api_key(x_api_key: Optional[str]) -> bool:
+    expected = os.environ.get("COGNIGUARD_API_KEY", "").strip()
+    if not expected:
+        return True
+    return bool(x_api_key and hmac.compare_digest(x_api_key, expected))
+
+
 def _validate_local_scan_path(target: str) -> str:
     """Validate local scan directory path and enforce optional scan root confinement."""
     if "\x00" in target:
@@ -209,12 +216,18 @@ def inspect_download(payload: InspectPayloadRequest):
     return decision
 
 
-@app.post("/api/v1/scan-repo", dependencies=[Depends(require_api_key)])
-def scan_repo_endpoint(payload: RepoScanRequest, request: Request = None):  # type: ignore[assignment]
-    """Run CogniGuard pre-install scanner on a local directory or public GitHub URL."""
+@app.post("/api/v1/scan-repo")
+def scan_repo_endpoint(
+    payload: RepoScanRequest,
+    request: Request = None,  # type: ignore[assignment]
+    x_api_key: Optional[str] = Header(default=None),
+):
+    """Run CogniGuard pre-install scanner on a public GitHub URL or (when authorized) a local directory."""
     scan_rate_limiter.check(_client_key(request))
     target = payload.target_dir.strip()
     is_remote = is_url_like(target)
+    if not is_remote and not _has_valid_api_key(x_api_key):
+        raise HTTPException(status_code=401, detail="Local path scans require X-API-Key when auth is enabled")
     scan_arg = target if is_remote else _validate_local_scan_path(target)
 
     try:

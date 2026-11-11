@@ -225,9 +225,18 @@ def test_api_key_auth_cors_and_pagination(isolated_storage, monkeypatch):
     monkeypatch.setenv("COGNIGUARD_ALLOWED_SCAN_ROOT", str(isolated_storage))
     with pytest.raises(HTTPException) as outside_root:
         api_bridge.scan_repo_endpoint(
-            api_bridge.RepoScanRequest(target_dir=os.path.join(PROJECT_ROOT, "tests", "mock_infected_skill"))
+            api_bridge.RepoScanRequest(target_dir=os.path.join(PROJECT_ROOT, "tests", "mock_infected_skill")),
+            x_api_key="super-secret-key",
         )
     assert outside_root.value.status_code == 403
+
+    monkeypatch.delenv("COGNIGUARD_ALLOWED_SCAN_ROOT", raising=False)
+    with pytest.raises(HTTPException) as local_no_key:
+        api_bridge.scan_repo_endpoint(
+            api_bridge.RepoScanRequest(target_dir=os.path.join(PROJECT_ROOT, "tests", "mock_infected_skill")),
+            x_api_key=None,
+        )
+    assert local_no_key.value.status_code == 401
 
 
 def test_rate_limiter_enforces_429_and_db_env(tmp_path, monkeypatch):

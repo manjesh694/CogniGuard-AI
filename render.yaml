@@ -13,3 +13,5 @@ services:
         value: https://manjesh694.github.io
       - key: COGNIGUARD_DB_PATH
         value: /tmp/cogniguard.db
+      - key: COGNIGUARD_API_KEY
+        generateValue: true
