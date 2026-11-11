@@ -21,6 +21,7 @@ _SRC_DIR = os.path.dirname(_AGENT_DIR)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
+from agent.defense_council import AutonomousDefenseCouncil  # noqa: E402
 from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
@@ -150,6 +151,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     kc_p.add_argument("--window", type=int, default=300, help="Correlation time window in seconds (default: 300)")
     kc_p.add_argument("--json", action="store_true", help="Output kill-chain correlation report as JSON")
+
+    dc_p = subparsers.add_parser(
+        "council",
+        help="Run CogniGuard's Multi-Agent Autonomous Defense Council across static, runtime, and kill-chain agents",
+    )
+    dc_p.add_argument("--target", default=None, help="Optional workspace/repository path for StaticSupplyChainAgent")
+    dc_p.add_argument("--window", type=int, default=300, help="Kill-chain time window in seconds (default: 300)")
+    dc_p.add_argument("--remediate", action="store_true", help="Contain detected threats and verify clean post-state")
+    dc_p.add_argument("--no-runtime", action="store_true", help="Skip live OS process & network socket inspection")
+    dc_p.add_argument("--json", action="store_true", help="Output council investigation report as JSON")
 
     return parser
 
@@ -347,6 +358,24 @@ def main(argv: Optional[List[str]] = None) -> int:
                 f"| Stages: {', '.join(report['stages_detected']) or 'none'}"
             )
         return 2 if report["status"] == "KILL_CHAIN_DETECTED" else 0
+
+    if args.command == "council":
+        store = CogniGuardStore()
+        mgr = QuarantineManager(store=store)
+        council = AutonomousDefenseCouncil(store=store, quarantine_manager=mgr)
+        result = council.investigate(
+            target_dir=args.target,
+            window_seconds=args.window,
+            auto_remediate=args.remediate,
+            include_runtime=not args.no_runtime,
+        )
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            print(f"CogniGuard Defense Council: {result['status']}")
+            for step in result["reasoning_trace"]:
+                print(f"  [{step['agent']}] {step['summary']}")
+        return 2 if result["status"] == "THREATS_DETECTED" else 0
 
     return 1
 

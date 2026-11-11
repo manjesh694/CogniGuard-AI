@@ -41,6 +41,7 @@ from agent.alerts import (  # noqa: E402
     mask_webhook_url,
     validate_webhook_url,
 )
+from agent.defense_council import AutonomousDefenseCouncil  # noqa: E402
 from agent.heuristics import evaluate_bytes_risk, evaluate_download_risk  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
@@ -166,6 +167,13 @@ class IocCreateRequest(BaseModel):
     sha256: str = Field(..., min_length=64, max_length=64)
     label: str = Field(..., min_length=1, max_length=200)
     severity: Literal["CRITICAL", "HIGH", "MEDIUM"] = "CRITICAL"
+
+
+class CouncilInvestigateRequest(BaseModel):
+    target_dir: Optional[str] = Field(default=None, max_length=1024)
+    window_seconds: int = Field(default=300, ge=10, le=86400)
+    auto_remediate: bool = False
+    include_runtime: bool = True
 
 
 def _client_key(request: Any) -> str:
@@ -521,6 +529,20 @@ def audit_kill_chain(window_seconds: Annotated[int, Query(ge=10, le=86400)] = 30
     """Correlate multi-stage threat events across a time window for APT kill chains."""
     agent = CogniGuardAgent()
     return agent.audit_kill_chains(store=store, window_seconds=window_seconds)
+
+
+@app.post("/api/v1/council/investigate", dependencies=[Depends(require_api_key)])
+def run_defense_council(payload: CouncilInvestigateRequest, request: Request = None):
+    """Run CogniGuard's multi-agent Defense Council with optional closed-loop containment."""
+    scan_rate_limiter.check(_client_key(request))
+    resolved_dir = _validate_local_scan_path(payload.target_dir) if payload.target_dir else None
+    council = AutonomousDefenseCouncil(store=store, quarantine_manager=quarantine_manager)
+    return council.investigate(
+        target_dir=resolved_dir,
+        window_seconds=payload.window_seconds,
+        auto_remediate=payload.auto_remediate,
+        include_runtime=payload.include_runtime,
+    )
 
 
 @app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])
