@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#060911">
   <title>CogniGuard AI — Mobile Guardian</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon192.png">
+  <link rel="apple-touch-icon" href="icons/icon192.png">
   <style>
     :root {
       --bg: #060911;
@@ -99,10 +102,42 @@
 
   <div style="text-align: center; font-size: 12px; color: var(--muted); margin-top: auto; padding: 16px 0;">
     <a href="index.html" style="color: var(--accent); text-decoration: none;">← Website Home</a> &nbsp;|&nbsp;
-    <a href="demo_portal.html" style="color: var(--accent); text-decoration: none;">Executive Demo</a>
+    <a href="demo_portal.html" style="color: var(--accent); text-decoration: none;">Executive Demo</a> &nbsp;|&nbsp;
+    <a href="privacy.html" style="color: var(--accent); text-decoration: none;">Privacy Policy</a>
+    <div style="margin-top: 10px;">
+      <button id="install-pwa-btn" class="btn btn-sample" style="display:none; max-width:260px; margin: 0 auto;" onclick="installMobileApp()">📲 Install Mobile App (Android / PWA)</button>
+    </div>
   </div>
 
   <script>
+    let deferredInstallPrompt = null;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btn = document.getElementById('install-pwa-btn');
+      if (btn) btn.style.display = 'inline-flex';
+    });
+
+    function installMobileApp() {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(() => {
+        deferredInstallPrompt = null;
+        document.getElementById('install-pwa-btn').style.display = 'none';
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
     function speak(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -117,40 +152,68 @@
         "URGENT: Your SBI / HDFC NetBanking account is suspended! Verify KYC and enter PIN immediately at http://bank-kyc-update.xyz/verify or lose access.";
     }
 
-    function scanMobileMessage() {
-      const text = document.getElementById('msg-input').value.trim().toLowerCase();
+    async function checkRemoteBridge(rawText) {
+      const bridgeUrl = (localStorage.getItem('cg_api_base') || '').trim().replace(/\/+$/, '');
+      if (!bridgeUrl) return null;
+      const urlMatch = rawText.match(/https?:\/\/[^\s]+/i);
+      const targetUrl = urlMatch ? urlMatch[0] : 'mobile://sms-text';
+      const filename = /\.apk(\b|$)/i.test(rawText) ? 'suspicious_app.apk' : 'mobile_message.txt';
+      try {
+        const res = await fetch(`${bridgeUrl}/api/v1/inspect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, source_url: targetUrl, file_size_bytes: rawText.length, client_version: 'mobile-1.0.4' })
+        });
+        return res.ok ? await res.json() : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function scanMobileMessage() {
+      const raw = document.getElementById('msg-input').value.trim();
+      const text = raw.toLowerCase();
       const resBox = document.getElementById('scan-result');
       const shieldIcon = document.getElementById('shield-icon');
 
       if (!text) {
-        alert("Please paste a message or click 'Load Sample' first!");
+        resBox.style.display = 'block';
+        resBox.className = 'result-box result-danger';
+        resBox.innerHTML = '<strong>[!] Paste a message or tap "Load Sample" first.</strong>';
         return;
       }
 
-      const scamKeywords = [
-        "kyc", "suspended", "verify", "pin", "upi", "claim", "lottery",
-        "prize", "bit.ly", ".xyz", "apk", "urgent", "blocked", "password", "otp"
+      const scamRules = [
+        { pattern: /kyc|suspended|blocked/, reason: 'Fake Bank / Account Suspension Social Engineering' },
+        { pattern: /pin|otp|password|cvv/, reason: 'Credential / OTP / PIN Harvesting Trap' },
+        { pattern: /upi|collect|claim|lottery|prize|airdrop/, reason: 'Deceptive UPI / Financial Reward Fraud' },
+        { pattern: /\.apk\b|bit\.ly|\.xyz|\.top\b/, reason: 'High-Risk Shortener, Unverified TLD, or Malicious APK Sideload' }
       ];
 
-      const isScam = scamKeywords.some(kw => text.includes(kw));
+      const matchedReasons = scamRules.filter(r => r.pattern.test(text)).map(r => r.reason);
+      const bridgeVerdict = await checkRemoteBridge(raw);
+      if (bridgeVerdict && bridgeVerdict.verdict === 'INTRUSION_DETECTED') {
+        matchedReasons.push(bridgeVerdict.reason || 'Flagged by CogniGuard Cloud Threat Engine');
+      }
 
       resBox.style.display = 'block';
-      if (isScam) {
+      if (matchedReasons.length > 0) {
+        const reasonList = matchedReasons.map(r => `• ${escapeHtml(r)}`).join('<br>');
         resBox.className = 'result-box result-danger';
         resBox.innerHTML = `
           <strong>🚨 SCAM & PHISHING TRAP DETECTED!</strong><br>
-          • <strong>Hacker Intent:</strong> Attempting to steal Bank PIN, OTP, or UPI funds via deceptive urgency.<br>
-          • <strong>Action Taken:</strong> Link blocked. Do NOT tap or enter PIN.<br>
+          ${reasonList}<br>
+          • <strong>Action Taken:</strong> Link neutralized offline. Do NOT tap, pay, or share OTP/PIN.<br>
           • <strong>Status:</strong> Phone Protected (0 Bytes Leaked).
         `;
         shieldIcon.innerText = '🚨';
         shieldIcon.style.borderColor = '#ef4444';
-        speak("Warning! CogniGuard Mobile detected a scam message. The attacker is attempting to steal your Bank PIN and OTP. Do not click the link. Your phone is secure.");
+        speak("Warning! CogniGuard Mobile detected a scam threat. Do not click the link or share OTP or PIN. Your phone is secure.");
       } else {
         resBox.className = 'result-box result-safe';
         resBox.innerHTML = `
           <strong>✅ MESSAGE VERIFIED SAFE</strong><br>
-          • No malicious phishing links, deceptive domains, or credential-theft intent detected.<br>
+          • No malicious phishing links, deceptive domains, APK sideloads, or credential-theft intent detected.<br>
           • <strong>Status:</strong> OK.
         `;
         shieldIcon.innerText = '🛡️';

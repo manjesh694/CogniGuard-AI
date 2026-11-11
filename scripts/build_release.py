@@ -32,7 +32,15 @@ def sync_web_assets() -> None:
     with open(os.path.join(web_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(src_web_index)
 
-    for page in ("dashboard.html", "demo_portal.html", "mobile_app.html", "pitch_deck.html", "privacy.html"):
+    for page in (
+        "dashboard.html",
+        "demo_portal.html",
+        "mobile_app.html",
+        "pitch_deck.html",
+        "privacy.html",
+        "manifest.webmanifest",
+        "sw.js",
+    ):
         src_page = os.path.join(docs_dir, page)
         if os.path.exists(src_page):
             shutil.copy2(src_page, os.path.join(web_dir, page))

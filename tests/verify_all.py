@@ -79,11 +79,18 @@ def run_tests():
     with open(os.path.join(PROJECT_ROOT, "index.html"), "r", encoding="utf-8") as f:
         root_idx = f.read()
     assert docs_idx == root_idx, "Root index.html drifted from docs/index.html (run scripts/build_release.py)"
-    for synced_page in ("dashboard.html", "demo_portal.html", "privacy.html"):
+    for synced_page in ("dashboard.html", "demo_portal.html", "mobile_app.html", "privacy.html", "manifest.webmanifest", "sw.js"):
         with open(os.path.join(PROJECT_ROOT, "docs", synced_page), "r", encoding="utf-8") as f1:
             with open(os.path.join(PROJECT_ROOT, "src", "web", synced_page), "r", encoding="utf-8") as f2:
                 assert f1.read() == f2.read(), f"src/web/{synced_page} drifted from docs/{synced_page}"
-    print("  ✅ Web endpoints & sync verified: Privacy links, zero dead CTAs, zero drift.")
+
+    # Verify Android PWA / Play Store TWA readiness assets
+    for icon_size in ("192", "512"):
+        assert os.path.exists(os.path.join(PROJECT_ROOT, "docs", "icons", f"icon{icon_size}.png")), f"Missing {icon_size}px PWA icon"
+    with open(os.path.join(PROJECT_ROOT, "docs", "manifest.webmanifest"), "r", encoding="utf-8") as mf:
+        pwa = json.load(mf)
+    assert pwa.get("display") == "standalone" and pwa.get("start_url") == "./mobile_app.html"
+    print("  ✅ Web endpoints, PWA manifest, and sync verified: zero dead CTAs, zero drift.")
     passed_count += 1
 
     # TEST 4: Python Vault Guardian Heuristics
