@@ -15,8 +15,12 @@ from typing import List, Dict, Any
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-# Magic bytes signature for Windows Executables (MZ header)
-PE_MAGIC_BYTES = b"MZ"
+_SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _SRC_DIR not in sys.path:
+    sys.path.insert(0, _SRC_DIR)
+
+from agent.heuristics import DOUBLE_EXTENSIONS, is_disguised_executable as _check_disguised_pe  # noqa: E402
+
 
 class FullSystemGuardian:
     def __init__(self):
@@ -30,22 +34,8 @@ class FullSystemGuardian:
         self.flagged_threats: List[Dict[str, Any]] = []
 
     def is_disguised_executable(self, filepath: str) -> bool:
-        """
-        Deep Inspection: Checks if a non-exe file (e.g. .pdf, .jpg) actually contains
-        an executable Windows binary header (PE MZ header) hidden inside.
-        """
-        try:
-            if os.path.isfile(filepath) and os.path.getsize(filepath) > 64:
-                with open(filepath, "rb") as f:
-                    header = f.read(2)
-                    # If filename claims to be .pdf/.jpg but starts with executable MZ
-                    lower_name = filepath.lower()
-                    if lower_name.endswith((".pdf", ".jpg", ".png", ".txt", ".docx")):
-                        if header == PE_MAGIC_BYTES:
-                            return True
-        except (PermissionError, OSError):
-            pass
-        return False
+        """Check if a non-exe file starts with a Windows PE (MZ) binary header."""
+        return _check_disguised_pe(filepath)
 
     def scan_full_system(self, max_files: int = 1000):
         print("=" * 65)
@@ -72,7 +62,7 @@ class FullSystemGuardian:
                     
                     # 1. Check double extensions (e.g. invoice.pdf.exe)
                     lower = filename.lower()
-                    if lower.endswith((".pdf.exe", ".doc.exe", ".jpg.exe", ".zip.exe")):
+                    if lower.endswith(DOUBLE_EXTENSIONS):
                         threat = {
                             "file": filepath,
                             "type": "Deceptive Double Extension",

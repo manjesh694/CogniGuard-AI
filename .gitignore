@@ -34,4 +34,7 @@ Thumbs.db
 *.log
 audit_logs.json
 leads.json
+*.db
+*.db-wal
+*.db-shm
 .pytest_cache/

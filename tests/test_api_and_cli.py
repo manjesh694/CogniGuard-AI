@@ -11,13 +11,16 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from agent import api_bridge, cli, repo_scanner  # noqa: E402
+from agent.storage import CogniGuardStore  # noqa: E402
 
 
 @pytest.fixture()
 def isolated_storage(tmp_path, monkeypatch):
-    """Isolate audit_logs.json and leads.json to a temporary directory."""
-    monkeypatch.setattr(api_bridge, "AUDIT_LOG_FILE", str(tmp_path / "audit_logs.json"))
-    monkeypatch.setattr(api_bridge, "LEADS_FILE", str(tmp_path / "leads.json"))
+    """Isolate SQLite storage to a temporary database."""
+    test_store = CogniGuardStore(str(tmp_path / "test_cogniguard.db"))
+    monkeypatch.setattr(api_bridge, "store", test_store)
+    monkeypatch.delenv("COGNIGUARD_API_KEY", raising=False)
+    monkeypatch.delenv("COGNIGUARD_ALLOWED_SCAN_ROOT", raising=False)
     return tmp_path
 
 
@@ -183,3 +186,40 @@ def test_github_url_shallow_clone_flow(monkeypatch):
     assert report["target"] == "https://github.com/manjesh694/CogniGuard-AI.git"
     assert report["verdict"] == "SAFE_TO_INSTALL"
     assert report["files_scanned"] == 1
+
+
+def test_api_key_auth_cors_and_pagination(isolated_storage, monkeypatch):
+    for i in range(5):
+        api_bridge.inspect_download(
+            api_bridge.InspectPayloadRequest(
+                filename=f"file_{i}.exe" if i % 2 == 0 else f"doc_{i}.pdf",
+                source_url=f"https://example.com/{i}",
+            )
+        )
+
+    page = api_bridge.get_audit_logs(limit=2, offset=1, verdict=None)
+    assert len(page) == 2
+    blocked_only = api_bridge.get_audit_logs(limit=10, offset=0, verdict="INTRUSION_DETECTED")
+    assert len(blocked_only) == 3
+
+    monkeypatch.setenv("COGNIGUARD_API_KEY", "super-secret-key")
+    with pytest.raises(HTTPException) as missing_key:
+        api_bridge.require_api_key(None)
+    assert missing_key.value.status_code == 401
+
+    with pytest.raises(HTTPException) as wrong_key:
+        api_bridge.require_api_key("wrong")
+    assert wrong_key.value.status_code == 401
+
+    api_bridge.require_api_key("super-secret-key")
+
+    origins = api_bridge.get_allowed_origins()
+    assert "*" not in origins
+    assert "https://manjesh694.github.io" in origins
+
+    monkeypatch.setenv("COGNIGUARD_ALLOWED_SCAN_ROOT", str(isolated_storage))
+    with pytest.raises(HTTPException) as outside_root:
+        api_bridge.scan_repo_endpoint(
+            api_bridge.RepoScanRequest(target_dir=os.path.join(PROJECT_ROOT, "tests", "mock_infected_skill"))
+        )
+    assert outside_root.value.status_code == 403
