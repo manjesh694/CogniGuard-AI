@@ -71,6 +71,8 @@ def run_tests():
         with open(index_path, "r", encoding="utf-8") as f:
             index_content = f.read()
         assert "privacy.html" in index_content, f"{index_path} must link to privacy.html"
+        assert 'name="description"' in index_content, f"{index_path} missing SEO meta description"
+        assert 'property="og:title"' in index_content, f"{index_path} missing OpenGraph og:title"
         assert 'href="#"' not in index_content, f"{index_path} still has dead href='#' links!"
 
     # Drift check across docs/, root index.html, and src/web/
@@ -79,7 +81,7 @@ def run_tests():
     with open(os.path.join(PROJECT_ROOT, "index.html"), "r", encoding="utf-8") as f:
         root_idx = f.read()
     assert docs_idx == root_idx, "Root index.html drifted from docs/index.html (run scripts/build_release.py)"
-    for synced_page in ("dashboard.html", "demo_portal.html", "mobile_app.html", "privacy.html", "manifest.webmanifest", "sw.js"):
+    for synced_page in ("dashboard.html", "demo_portal.html", "mobile_app.html", "privacy.html", "manifest.webmanifest", "sw.js", "robots.txt", "sitemap.xml"):
         with open(os.path.join(PROJECT_ROOT, "docs", synced_page), "r", encoding="utf-8") as f1:
             with open(os.path.join(PROJECT_ROOT, "src", "web", synced_page), "r", encoding="utf-8") as f2:
                 assert f1.read() == f2.read(), f"src/web/{synced_page} drifted from docs/{synced_page}"

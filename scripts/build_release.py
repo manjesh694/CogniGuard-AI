@@ -40,6 +40,8 @@ def sync_web_assets() -> None:
         "privacy.html",
         "manifest.webmanifest",
         "sw.js",
+        "robots.txt",
+        "sitemap.xml",
     ):
         src_page = os.path.join(docs_dir, page)
         if os.path.exists(src_page):
