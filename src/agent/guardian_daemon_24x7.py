@@ -21,18 +21,26 @@ if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
 from agent.heuristics import DANGEROUS_EXTENSIONS, is_disguised_executable  # noqa: E402
+from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
 
 class CogniGuard24x7Daemon:
     """24/7 Downloads & Honeypot watcher backed by atomic SQLite WAL storage."""
 
-    def __init__(self, store: Optional[CogniGuardStore] = None):
+    def __init__(
+        self,
+        store: Optional[CogniGuardStore] = None,
+        quarantine_manager: Optional[QuarantineManager] = None,
+        auto_quarantine: bool = True,
+    ):
         self.user_home = os.path.expanduser("~")
         self.downloads_dir = os.path.join(self.user_home, "Downloads")
         self.project_root = os.path.abspath(os.path.join(_AGENT_DIR, "..", ".."))
         self.honeypot_file = os.path.join(self.project_root, "bank_passwords_and_pins.txt")
         self.store = store or CogniGuardStore()
+        self.quarantine_manager = quarantine_manager or QuarantineManager(store=self.store)
+        self.auto_quarantine = auto_quarantine
 
         self.known_downloads = set()
         self.honeypot_mtime = None
@@ -70,9 +78,20 @@ class CogniGuard24x7Daemon:
                     is_risk = filename.lower().endswith(DANGEROUS_EXTENSIONS) or is_disguised_executable(filepath)
                     if is_risk:
                         print(f"\n🚨 [24/7 WATCHER ALERT] New Risk File Detected in Downloads: {filename}")
-                        print("⚡ Action: Isolated & Flagged | Status: OK")
+                        if self.auto_quarantine and os.path.isfile(filepath):
+                            try:
+                                q_item = self.quarantine_manager.quarantine_file(
+                                    filepath,
+                                    reason="24/7 Background Watcher Detection",
+                                    threat_score=0.96,
+                                )
+                                print(f"🔒 Quarantined (SHA-256: {q_item['sha256'][:16]}...) | Status: OK")
+                            except Exception as exc:
+                                print(f"⚠️ Quarantine failed ({exc}); alert logged.")
+                        else:
+                            print("⚡ Action: Isolated & Flagged | Status: OK")
                         self._log_event(filename, "INTRUSION_DETECTED", "QUARANTINED_BY_24X7_DAEMON", 0.96)
-                self.known_downloads = current_files
+                self.known_downloads = set(os.listdir(self.downloads_dir))
             except Exception:
                 pass
 

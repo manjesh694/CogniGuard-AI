@@ -79,6 +79,25 @@ class CogniGuardStore:
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_leads_plan ON leads (plan);"
                 )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS quarantine (
+                        id TEXT PRIMARY KEY,
+                        filename TEXT NOT NULL,
+                        original_path TEXT NOT NULL,
+                        vault_path TEXT NOT NULL,
+                        sha256 TEXT NOT NULL,
+                        size_bytes INTEGER NOT NULL,
+                        threat_score REAL NOT NULL,
+                        reason TEXT NOT NULL,
+                        status TEXT NOT NULL,
+                        quarantined_at TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_quarantine_status ON quarantine (status);"
+                )
 
     def record_audit_event(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         record = {
@@ -227,3 +246,59 @@ class CogniGuardStore:
             "pro_trials": int(lead_row["pro_trials"]),
             "enterprise_pilots": int(lead_row["enterprise_pilots"]),
         }
+
+    def record_quarantine_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        with self._lock:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO quarantine
+                        (id, filename, original_path, vault_path, sha256, size_bytes, threat_score, reason, status, quarantined_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        item["id"],
+                        item["filename"],
+                        item["original_path"],
+                        item["vault_path"],
+                        item["sha256"],
+                        int(item["size_bytes"]),
+                        float(item["threat_score"]),
+                        item["reason"],
+                        item["status"],
+                        item["quarantined_at"],
+                    ),
+                )
+        return item
+
+    def list_quarantine_items(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        status: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        query = "SELECT id, filename, original_path, vault_path, sha256, size_bytes, threat_score, reason, status, quarantined_at FROM quarantine"
+        params: List[Any] = []
+        if status:
+            query += " WHERE status = ?"
+            params.append(status)
+        query += " ORDER BY rowid DESC LIMIT ? OFFSET ?"
+        params.extend([max(1, min(500, limit)), max(0, offset)])
+        with self._lock:
+            with self._connect() as conn:
+                rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_quarantine_item(self, qid: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            with self._connect() as conn:
+                row = conn.execute(
+                    "SELECT id, filename, original_path, vault_path, sha256, size_bytes, threat_score, reason, status, quarantined_at FROM quarantine WHERE id = ?",
+                    (qid,),
+                ).fetchone()
+        return dict(row) if row else None
+
+    def update_quarantine_status(self, qid: str, status: str) -> None:
+        with self._lock:
+            with self._connect() as conn:
+                conn.execute("UPDATE quarantine SET status = ? WHERE id = ?", (status, qid))

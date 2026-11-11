@@ -11,14 +11,17 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from agent import api_bridge, cli, repo_scanner  # noqa: E402
+from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
 
 @pytest.fixture()
 def isolated_storage(tmp_path, monkeypatch):
-    """Isolate SQLite storage to a temporary database."""
+    """Isolate SQLite storage and quarantine vault to a temporary directory."""
     test_store = CogniGuardStore(str(tmp_path / "test_cogniguard.db"))
+    test_vault = QuarantineManager(vault_dir=str(tmp_path / "vault"), store=test_store)
     monkeypatch.setattr(api_bridge, "store", test_store)
+    monkeypatch.setattr(api_bridge, "quarantine_manager", test_vault)
     api_bridge.scan_rate_limiter.reset()
     api_bridge.lead_rate_limiter.reset()
     monkeypatch.delenv("COGNIGUARD_API_KEY", raising=False)
@@ -36,6 +39,9 @@ def test_fastapi_routes_registered():
         "/api/v1/scan-repo",
         "/api/v1/leads",
         "/api/v1/logs",
+        "/api/v1/quarantine",
+        "/api/v1/quarantine/{qid}/restore",
+        "/api/v1/quarantine/{qid}",
         "/api/v1/telemetry/summary",
     ):
         assert expected in paths, f"Missing route: {expected}"
@@ -283,3 +289,43 @@ def test_reverse_engineer_endpoint(isolated_storage):
     with pytest.raises(HTTPException) as empty_req:
         api_bridge.reverse_engineer_payload(api_bridge.ReverseEngineerRequest(filename="empty.py"))
     assert empty_req.value.status_code == 400
+
+
+def test_ast_obfuscation_and_quarantine_api(isolated_storage):
+    obf_dir = isolated_storage / "obf_skill"
+    obf_dir.mkdir()
+    (obf_dir / "stealth.py").write_text(
+        '"""Clean module docstring that should not be flagged."""\n'
+        "mod = __import__('os')\n"
+        "fn = getattr(__builtins__, 'ev' + 'al')\n"
+        "eval(bytes.fromhex('7072696e74283129').decode())\n"
+        'blob = "aB9$kP2!mQ7@xZ4#wL8^nR5&vT1*yJ6%cF3+dG0=hS9~uK2?pM4_qN7-eW8zX0qW1eR2tY3uI4oP5"\n',
+        encoding="utf-8",
+    )
+    report = repo_scanner.scan_repository(str(obf_dir))
+    assert report["verdict"] == "DO_NOT_INSTALL"
+    threats = {item["threat"] for item in report["findings"]}
+    assert "Dynamic __import__() Code Loading" in threats
+    assert "Obfuscated Builtins Lookup" in threats
+    assert "AST-Detected Obfuscated Dynamic Execution" in threats
+    assert "High-Entropy Obfuscated Payload Blob" in threats
+
+    sample = isolated_storage / "malware_drop.exe"
+    sample.write_bytes(b"MZ_FAKE_PAYLOAD")
+    record = api_bridge.quarantine_manager.quarantine_file(str(sample), reason="Unit test", threat_score=0.98)
+    assert not sample.exists()
+    assert len(record["sha256"]) == 64
+
+    items = api_bridge.list_quarantine_items(status="QUARANTINED")
+    assert len(items) == 1
+    qid = items[0]["id"]
+
+    restored = api_bridge.restore_quarantine_item(qid)
+    assert restored["item"]["status"] == "RESTORED"
+    assert sample.exists()
+
+    sample.write_bytes(b"MZ_FAKE_PAYLOAD_2")
+    record2 = api_bridge.quarantine_manager.quarantine_file(str(sample), reason="Unit test 2", threat_score=0.99)
+    shredded = api_bridge.shred_quarantine_item(record2["id"])
+    assert shredded["deleted_id"] == record2["id"]
+    assert not os.path.exists(record2["vault_path"])

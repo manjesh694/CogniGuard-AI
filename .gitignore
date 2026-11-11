@@ -37,4 +37,5 @@ leads.json
 *.db
 *.db-wal
 *.db-shm
+.quarantine/
 .pytest_cache/

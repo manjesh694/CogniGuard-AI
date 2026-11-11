@@ -31,6 +31,7 @@ if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
 from agent.heuristics import evaluate_download_risk  # noqa: E402
+from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
@@ -82,6 +83,7 @@ class SlidingWindowRateLimiter:
 
 
 store = CogniGuardStore()
+quarantine_manager = QuarantineManager(store=store)
 scan_rate_limiter = SlidingWindowRateLimiter(
     max_requests=int(os.environ.get("COGNIGUARD_SCAN_RATE_LIMIT", "15")),
     window_seconds=60,
@@ -341,6 +343,33 @@ def get_audit_logs(
 def get_telemetry_summary():
     """Return aggregated SOC & GTM conversion telemetry."""
     return store.get_telemetry_summary(APP_VERSION)
+
+
+@app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])
+def list_quarantine_items(
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    status: Annotated[Optional[Literal["QUARANTINED", "RESTORED", "SHREDDED"]], Query()] = None,
+):
+    """List files isolated in the SHA-256 quarantine vault."""
+    return store.list_quarantine_items(limit=limit, offset=offset, status=status)
+
+
+@app.post("/api/v1/quarantine/{qid}/restore", dependencies=[Depends(require_api_key)])
+def restore_quarantine_item(qid: str):
+    """Restore a quarantined file to its original path."""
+    restored = quarantine_manager.restore_file(qid)
+    if not restored:
+        raise HTTPException(status_code=404, detail="Quarantined item not found or cannot be restored")
+    return {"status": "OK", "item": restored}
+
+
+@app.delete("/api/v1/quarantine/{qid}", dependencies=[Depends(require_api_key)])
+def shred_quarantine_item(qid: str):
+    """Permanently delete a quarantined file from the vault."""
+    if not quarantine_manager.shred_file(qid):
+        raise HTTPException(status_code=404, detail="Quarantined item not found")
+    return {"status": "OK", "deleted_id": qid}
 
 
 if __name__ == "__main__":

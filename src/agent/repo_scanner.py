@@ -7,13 +7,16 @@ Description: Scans local repositories, public GitHub URLs, npm/pip packages,
 Usage: python src/agent/repo_scanner.py <folder_path_or_github_url>
 """
 
+import ast
+import math
 import os
 import re
 import subprocess
 import sys
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from collections import Counter
+from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -58,8 +61,83 @@ SELF_DEFENSE_FILES = {
     "repo_scanner.py", "reverse_engineer.py", "honeypot_trap.py",
     "vault_guardian.py", "simulator.py", "full_system_scanner.py",
     "api_bridge.py", "verify_all.py", "bank_passwords_and_pins.txt",
-    "cli.py",
+    "cli.py", "heuristics.py", "storage.py", "quarantine.py",
 }
+
+
+def _shannon_entropy(text: str) -> float:
+    """Compute Shannon entropy (bits per character) for obfuscation detection."""
+    if not text:
+        return 0.0
+    counts = Counter(text)
+    length = len(text)
+    return -sum((c / length) * math.log2(c / length) for c in counts.values())
+
+
+def _call_name(node: ast.AST) -> str:
+    """Extract dotted name for simple AST call targets."""
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+        return f"{node.value.id}.{node.attr}"
+    return ""
+
+
+def _collect_docstring_ids(tree: ast.AST) -> Set[int]:
+    """Return object ids of AST Constant nodes that are module/class/function docstrings."""
+    doc_ids: Set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.body and isinstance(node.body[0], ast.Expr):
+                val = node.body[0].value
+                if isinstance(val, ast.Constant) and isinstance(val.value, str):
+                    doc_ids.add(id(val))
+    return doc_ids
+
+
+def _ast_inspect_python(rel_path: str, content: str) -> List[Dict[str, Any]]:
+    """Inspect Python AST for evasive imports, builtins lookups, and high-entropy blobs."""
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return []
+
+    findings: List[Dict[str, Any]] = []
+    seen_threats: Set[str] = set()
+    docstring_ids = _collect_docstring_ids(tree)
+
+    def add_finding(threat: str, score: int) -> None:
+        if threat not in seen_threats:
+            seen_threats.add(threat)
+            findings.append({"file": rel_path, "threat": threat, "score": score})
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            name = _call_name(node.func)
+            if name == "__import__":
+                add_finding("Dynamic __import__() Code Loading", 40)
+            elif name == "getattr" and node.args:
+                target_arg = node.args[0]
+                if isinstance(target_arg, ast.Name) and target_arg.id in {"__builtins__", "builtins"}:
+                    add_finding("Obfuscated Builtins Lookup", 45)
+            elif name in {"marshal.loads", "pickle.loads"}:
+                add_finding("Unsafe Binary Deserialization (marshal/pickle)", 35)
+            elif name in {"eval", "exec"} and node.args:
+                inner_calls = {_call_name(sub.func) for sub in ast.walk(node.args[0]) if isinstance(sub, ast.Call)}
+                if inner_calls & {"bytes.fromhex", "zlib.decompress", "marshal.loads", "compile", "base64.b64decode"}:
+                    add_finding("AST-Detected Obfuscated Dynamic Execution", 50)
+        elif (
+            isinstance(node, ast.Constant)
+            and id(node) not in docstring_ids
+            and isinstance(node.value, str)
+            and len(node.value) >= 64
+            and not any(ch.isspace() for ch in node.value)
+            and not node.value.startswith(("http://", "https://"))
+            and _shannon_entropy(node.value) >= 4.7
+        ):
+            add_finding("High-Entropy Obfuscated Payload Blob", 30)
+
+    return findings
 
 
 def is_url_like(target: str) -> bool:
@@ -116,9 +194,18 @@ def _evaluate_file_content(rel_path: str, filename: str, content: str) -> List[D
         return file_findings
 
     sigs = CODE_SIGNATURES if lower_file.endswith(CODE_EXTENSIONS) else PROMPT_INJECTION_SIGNATURES
+    seen_threats: Set[str] = set()
     for pattern, description, score in sigs:
-        if re.search(pattern, content, re.IGNORECASE):
+        if re.search(pattern, content, re.IGNORECASE) and description not in seen_threats:
+            seen_threats.add(description)
             file_findings.append({"file": rel_path, "threat": description, "score": score})
+
+    if lower_file.endswith(".py"):
+        for ast_item in _ast_inspect_python(rel_path, content):
+            if ast_item["threat"] not in seen_threats:
+                seen_threats.add(ast_item["threat"])
+                file_findings.append(ast_item)
+
     return file_findings
 
 

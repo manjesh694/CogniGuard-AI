@@ -17,6 +17,7 @@ from agent.heuristics import (  # noqa: E402
     is_disguised_executable,
 )
 from agent.honeypot_trap import CogniGuardHoneypot  # noqa: E402
+from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
@@ -83,18 +84,25 @@ def test_honeypot_deploy_and_daemon_detection(tmp_path, capsys):
     assert "INTRUDER CAUGHT" in captured
 
     store = CogniGuardStore(str(tmp_path / "daemon.db"))
+    quarantine_mgr = QuarantineManager(vault_dir=str(tmp_path / "vault"), store=store)
     downloads_dir = tmp_path / "Downloads"
     downloads_dir.mkdir()
     bait_file = tmp_path / "bait.txt"
     bait_file.write_text("bait", encoding="utf-8")
 
-    daemon = CogniGuard24x7Daemon(store=store)
+    daemon = CogniGuard24x7Daemon(store=store, quarantine_manager=quarantine_mgr)
     daemon.downloads_dir = str(downloads_dir)
     daemon.honeypot_file = str(bait_file)
     daemon._initialize_baseline()
 
-    (downloads_dir / "dropped_stealer.exe").write_text("bad", encoding="utf-8")
+    dropped = downloads_dir / "dropped_stealer.exe"
+    dropped.write_text("bad", encoding="utf-8")
     daemon.check_cycle()
+
+    assert not dropped.exists()
+    q_items = store.list_quarantine_items(status="QUARANTINED")
+    assert len(q_items) == 1
+    assert q_items[0]["filename"] == "dropped_stealer.exe"
 
     logs = store.list_audit_logs()
     assert len(logs) == 1
