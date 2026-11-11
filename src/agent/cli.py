@@ -81,7 +81,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "scan":
-        report = scan_repository(args.target)
+        try:
+            report = scan_repository(args.target)
+        except (ValueError, RuntimeError) as exc:
+            print(f"[!] {exc}")
+            return 1
         if report is None:
             return 1
         if report["verdict"] == "DO_NOT_INSTALL":

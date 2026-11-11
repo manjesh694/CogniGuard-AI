@@ -26,7 +26,7 @@ _SRC_DIR = os.path.dirname(_AGENT_DIR)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from agent.repo_scanner import scan_repository  # noqa: E402
+from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
 
 APP_VERSION = "1.0.3"
 AUDIT_LOG_FILE = os.path.join(_AGENT_DIR, "audit_logs.json")
@@ -143,15 +143,23 @@ def inspect_download(payload: InspectPayloadRequest):
 
 @app.post("/api/v1/scan-repo")
 def scan_repo_endpoint(payload: RepoScanRequest):
-    """Run CogniGuard pre-install scanner on a local directory and log findings."""
-    if not os.path.exists(payload.target_dir):
-        raise HTTPException(status_code=404, detail=f"Directory not found: {payload.target_dir}")
+    """Run CogniGuard pre-install scanner on a local directory or public GitHub URL."""
+    target = payload.target_dir.strip()
+    if not is_url_like(target) and not os.path.exists(target):
+        raise HTTPException(status_code=404, detail=f"Directory not found: {target}")
 
-    report = scan_repository(payload.target_dir)
+    try:
+        report = scan_repository(target)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
     if report is None:
         raise HTTPException(status_code=400, detail="Scan failed to produce a report")
 
     is_threat = report["verdict"] != "SAFE_TO_INSTALL"
+    target_name = os.path.basename(os.path.abspath(target)) if not is_url_like(target) else target
     log_incident_to_disk({
         "status": "OK",
         "verdict": report["verdict"],
@@ -159,8 +167,8 @@ def scan_repo_endpoint(payload: RepoScanRequest):
         "action_taken": "BLOCK_REPO_INSTALL" if is_threat else "ALLOW_REPO",
         "reason": f"Repo scan ({report['files_scanned']} files, {len(report['findings'])} findings)",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "filename": os.path.basename(os.path.abspath(payload.target_dir)),
-        "source_url": payload.target_dir,
+        "filename": target_name,
+        "source_url": report["target"],
     })
     return report
 
