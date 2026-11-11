@@ -329,3 +329,26 @@ def test_ast_obfuscation_and_quarantine_api(isolated_storage):
     shredded = api_bridge.shred_quarantine_item(record2["id"])
     assert shredded["deleted_id"] == record2["id"]
     assert not os.path.exists(record2["vault_path"])
+
+
+def test_cli_quarantine_commands(isolated_storage, monkeypatch, capsys):
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", str(isolated_storage / "cli_q.db"))
+    monkeypatch.setenv("COGNIGUARD_QUARANTINE_DIR", str(isolated_storage / "cli_vault"))
+
+    bad = isolated_storage / "trojan.vbs"
+    bad.write_text("evil", encoding="utf-8")
+    from agent.quarantine import QuarantineManager
+
+    mgr = QuarantineManager()
+    item = mgr.quarantine_file(str(bad), reason="CLI test")
+
+    assert cli.main(["quarantine", "list"]) == 0
+    out = capsys.readouterr().out
+    assert item["id"] in out
+
+    assert cli.main(["quarantine", "restore", item["id"]]) == 0
+    assert bad.exists()
+
+    item2 = mgr.quarantine_file(str(bad), reason="CLI shred test")
+    assert cli.main(["quarantine", "shred", item2["id"]]) == 0
+    assert not os.path.exists(item2["vault_path"])

@@ -104,7 +104,7 @@ app.add_middleware(
     allow_origins=get_allowed_origins(),
     allow_origin_regex=r"^chrome-extension://.*$",
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "X-API-Key"],
 )
 

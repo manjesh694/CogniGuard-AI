@@ -15,9 +15,10 @@ _SRC_DIR = os.path.dirname(_AGENT_DIR)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from agent.repo_scanner import scan_repository  # noqa: E402
-from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
+from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
+from agent.quarantine import QuarantineManager  # noqa: E402
+from agent.repo_scanner import scan_repository  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -72,6 +73,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum files to inspect (default: 500)",
     )
 
+    q_p = subparsers.add_parser(
+        "quarantine",
+        help="Inspect, restore, or shred quarantined files",
+    )
+    q_sub = q_p.add_subparsers(dest="q_action", required=True)
+    q_list = q_sub.add_parser("list", help="List quarantined items")
+    q_list.add_argument("--status", choices=["QUARANTINED", "RESTORED", "SHREDDED"], default=None)
+    q_restore = q_sub.add_parser("restore", help="Restore a quarantined item by ID")
+    q_restore.add_argument("qid", help="Quarantine ID")
+    q_shred = q_sub.add_parser("shred", help="Permanently delete a quarantined item by ID")
+    q_shred.add_argument("qid", help="Quarantine ID")
+
     return parser
 
 
@@ -110,6 +123,29 @@ def main(argv: Optional[List[str]] = None) -> int:
         scanner = FullSystemGuardian()
         scanner.scan_full_system(max_files=args.max_files)
         return 2 if scanner.flagged_threats else 0
+
+    if args.command == "quarantine":
+        mgr = QuarantineManager()
+        if args.q_action == "list":
+            items = mgr.store.list_quarantine_items(status=args.status)
+            if not items:
+                print("Quarantine vault is empty.")
+            for item in items:
+                print(f"[{item['id']}] {item['status']} | {item['filename']} | sha256:{item['sha256'][:16]}...")
+            return 0
+        if args.q_action == "restore":
+            restored = mgr.restore_file(args.qid)
+            if not restored:
+                print(f"[!] Cannot restore item: {args.qid}")
+                return 1
+            print(f"✅ Restored {restored['filename']} to {restored['original_path']}")
+            return 0
+        if args.q_action == "shred":
+            if not mgr.shred_file(args.qid):
+                print(f"[!] Quarantine item not found: {args.qid}")
+                return 1
+            print(f"🗑️ Permanently shredded item: {args.qid}")
+            return 0
 
     return 1
 
