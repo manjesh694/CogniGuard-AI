@@ -40,7 +40,7 @@ from agent.alerts import (  # noqa: E402
     mask_webhook_url,
     validate_webhook_url,
 )
-from agent.heuristics import evaluate_download_risk  # noqa: E402
+from agent.heuristics import evaluate_bytes_risk, evaluate_download_risk  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
@@ -126,6 +126,7 @@ class InspectPayloadRequest(BaseModel):
     source_url: str = Field(..., min_length=1, max_length=2048)
     file_size_bytes: int = Field(default=0, ge=0)
     client_version: str = APP_VERSION
+    content_base64: Optional[str] = Field(default=None, max_length=700000)
 
 
 class SecurityDecisionResponse(BaseModel):
@@ -135,6 +136,7 @@ class SecurityDecisionResponse(BaseModel):
     action_taken: str
     reason: str
     timestamp: str
+    sha256: Optional[str] = None
 
 
 class RepoScanRequest(BaseModel):
@@ -226,10 +228,31 @@ def health_check():
     }
 
 
+MAX_PAYLOAD_BYTES = 512 * 1024
+
+
+def _decode_base64_payload(content_base64: str) -> bytes:
+    """Decode and size-check a base64 payload."""
+    try:
+        raw_bytes = base64.b64decode(content_base64, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid base64 payload") from exc
+    if len(raw_bytes) > MAX_PAYLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Payload exceeds 512 KB limit")
+    return raw_bytes
+
+
 @app.post("/api/v1/inspect", response_model=SecurityDecisionResponse)
 def inspect_download(payload: InspectPayloadRequest):
-    """Evaluate download request using shared filename & phishing URL heuristics."""
-    assessment = evaluate_download_risk(payload.filename, payload.source_url)
+    """Evaluate download request using filename, URL, and optional byte-level PE/SHA-256 inspection."""
+    byte_size = payload.file_size_bytes
+    if payload.content_base64 is not None:
+        raw_bytes = _decode_base64_payload(payload.content_base64)
+        assessment = evaluate_bytes_risk(raw_bytes, payload.filename, payload.source_url)
+        byte_size = len(raw_bytes)
+    else:
+        assessment = evaluate_download_risk(payload.filename, payload.source_url)
+
     decision = {
         "status": "OK",
         **assessment,
@@ -240,7 +263,7 @@ def inspect_download(payload: InspectPayloadRequest):
         **decision,
         "filename": payload.filename,
         "source_url": payload.source_url,
-        "file_size": payload.file_size_bytes,
+        "file_size": byte_size,
     })
     return decision
 
@@ -256,17 +279,13 @@ def reverse_engineer_payload(
     """Analyze a suspicious script snippet or base64 payload in memory."""
     scan_rate_limiter.check(_client_key(request))
     if payload.content_base64:
-        try:
-            raw_bytes = base64.b64decode(payload.content_base64, validate=True)
-        except (binascii.Error, ValueError) as exc:
-            raise HTTPException(status_code=400, detail="Invalid base64 payload") from exc
+        raw_bytes = _decode_base64_payload(payload.content_base64)
     elif payload.snippet is not None:
         raw_bytes = payload.snippet.encode("utf-8", errors="ignore")
+        if len(raw_bytes) > MAX_PAYLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Payload exceeds 512 KB limit")
     else:
         raise HTTPException(status_code=400, detail="Provide snippet or content_base64")
-
-    if len(raw_bytes) > 512 * 1024:
-        raise HTTPException(status_code=413, detail="Payload exceeds 512 KB limit")
 
     analysis = reverse_engineer.analyze_file_intent(raw_bytes, payload.filename)
     is_threat = analysis["recommended_action"] != "ALLOW"

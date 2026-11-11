@@ -13,6 +13,7 @@ from agent.alerts import format_alert_payload, validate_webhook_url  # noqa: E40
 from agent.full_system_scanner import FullSystemGuardian  # noqa: E402
 from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.heuristics import (  # noqa: E402
+    evaluate_bytes_risk,
     evaluate_download_risk,
     evaluate_filename_risk,
     is_disguised_executable,
@@ -184,3 +185,14 @@ def test_webhook_validation_and_payload_format():
     assert "stealer.exe" in payload["text"]
     assert payload["content"] == payload["text"]
     assert payload["cogniguard_event"]["threat_score"] == 0.99
+
+
+def test_bytes_risk_pe_disguise_and_sha256():
+    disguised = evaluate_bytes_risk(b"MZ\x90\x00FAKE_PE", "salary.pdf", "https://safe.example/salary.pdf")
+    assert disguised["verdict"] == "INTRUSION_DETECTED"
+    assert disguised["threat_score"] == 0.99
+    assert len(disguised["sha256"]) == 64
+
+    clean = evaluate_bytes_risk(b"%PDF-1.7\nhello", "salary.pdf", "https://safe.example/salary.pdf")
+    assert clean["verdict"] == "SAFE"
+    assert len(clean["sha256"]) == 64

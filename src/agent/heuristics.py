@@ -5,6 +5,7 @@ Description: Single source of truth for dangerous payload extensions,
              disguised PE header detection, and filename risk evaluation.
 """
 
+import hashlib
 import os
 from typing import Any, Dict
 
@@ -49,6 +50,11 @@ PHISHING_KEYWORDS = (
 )
 
 
+def is_pe_magic_bytes(raw_bytes: bytes) -> bool:
+    """Return True if raw bytes begin with the Windows PE (MZ) signature."""
+    return len(raw_bytes) >= 2 and raw_bytes[:2] == PE_MAGIC_BYTES
+
+
 def is_disguised_executable(filepath: str) -> bool:
     """Return True if a document/image file begins with a Windows PE (MZ) header."""
     try:
@@ -56,7 +62,7 @@ def is_disguised_executable(filepath: str) -> bool:
             lower_name = filepath.lower()
             if lower_name.endswith(DISGUISED_DOC_EXTENSIONS):
                 with open(filepath, "rb") as f:
-                    return f.read(2) == PE_MAGIC_BYTES
+                    return is_pe_magic_bytes(f.read(2))
     except (PermissionError, OSError):
         pass
     return False
@@ -105,4 +111,22 @@ def evaluate_download_risk(filename: str, source_url: str = "") -> Dict[str, Any
             "action_taken": "QUARANTINE_IN_AIRLOCK",
             "reason": f"Untrusted phishing download source ({matched_kw})",
         }
+    return result
+
+
+def evaluate_bytes_risk(raw_bytes: bytes, filename: str, source_url: str = "") -> Dict[str, Any]:
+    """Evaluate file bytes (PE disguise + SHA-256) alongside filename & URL checks."""
+    sha256 = hashlib.sha256(raw_bytes).hexdigest()
+    lower_name = filename.strip().lower()
+    if lower_name.endswith(DISGUISED_DOC_EXTENSIONS) and is_pe_magic_bytes(raw_bytes):
+        return {
+            "verdict": "INTRUSION_DETECTED",
+            "threat_score": 0.99,
+            "action_taken": "QUARANTINE_IN_AIRLOCK",
+            "reason": "Disguised Windows executable (MZ header) inside document",
+            "sha256": sha256,
+        }
+
+    result = evaluate_download_risk(filename, source_url)
+    result["sha256"] = sha256
     return result

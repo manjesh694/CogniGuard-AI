@@ -470,3 +470,35 @@ def test_install_hook_and_self_scan(tmp_path):
     # Refuses overwrite without --force, succeeds with --force
     assert cli.main(["install-hook", str(repo)]) == 1
     assert cli.main(["install-hook", str(repo), "--force"]) == 0
+
+
+def test_inspect_bytes_endpoint_and_action_yml(isolated_storage):
+    import base64
+
+    mz_b64 = base64.b64encode(b"MZ\x90\x00PE_HEADER").decode("ascii")
+    res = api_bridge.inspect_download(
+        api_bridge.InspectPayloadRequest(
+            filename="contract.pdf",
+            source_url="https://docs.example/contract.pdf",
+            content_base64=mz_b64,
+        )
+    )
+    assert res["verdict"] == "INTRUSION_DETECTED"
+    assert res["threat_score"] == 0.99
+    assert len(res["sha256"]) == 64
+
+    with pytest.raises(HTTPException) as bad_b64:
+        api_bridge.inspect_download(
+            api_bridge.InspectPayloadRequest(
+                filename="contract.pdf",
+                source_url="https://docs.example/contract.pdf",
+                content_base64="not-base64!!!",
+            )
+        )
+    assert bad_b64.value.status_code == 400
+
+    action_path = os.path.join(PROJECT_ROOT, "action.yml")
+    assert os.path.exists(action_path)
+    action_text = open(action_path, encoding="utf-8").read()
+    assert 'using: "composite"' in action_text
+    assert "cogniguard" in action_text
