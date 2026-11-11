@@ -69,6 +69,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run 2 monitoring cycles and exit cleanly",
     )
+    daemon_p.add_argument(
+        "--sweep-every",
+        type=int,
+        default=30,
+        help="Run live process/C2/kill-chain sweep every N cycles (default: 30, 0 disables)",
+    )
 
     bridge_p = subparsers.add_parser(
         "bridge",
@@ -162,6 +168,16 @@ def build_parser() -> argparse.ArgumentParser:
     dc_p.add_argument("--no-runtime", action="store_true", help="Skip live OS process & network socket inspection")
     dc_p.add_argument("--json", action="store_true", help="Output council investigation report as JSON")
 
+    st_p = subparsers.add_parser(
+        "startup",
+        help="Install, inspect, or remove user-level OS login autostart launcher for CogniGuard",
+    )
+    st_p.add_argument("--mode", choices=["daemon", "bridge"], default="daemon", help="Target background service")
+    st_group = st_p.add_mutually_exclusive_group()
+    st_group.add_argument("--install", action="store_true", help="Write launcher script into user startup folder")
+    st_group.add_argument("--remove", action="store_true", help="Remove launcher script from user startup folder")
+    st_p.add_argument("--json", action="store_true", help="Output startup configuration result as JSON")
+
     return parser
 
 
@@ -190,7 +206,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     if args.command == "daemon":
-        daemon = CogniGuard24x7Daemon()
+        daemon = CogniGuard24x7Daemon(sweep_interval_cycles=args.sweep_every)
         daemon.run_forever(max_cycles=2 if args.test else 0)
         return 0
 
@@ -376,6 +392,57 @@ def main(argv: Optional[List[str]] = None) -> int:
             for step in result["reasoning_trace"]:
                 print(f"  [{step['agent']}] {step['summary']}")
         return 2 if result["status"] == "THREATS_DETECTED" else 0
+
+    if args.command == "startup":
+        is_windows = platform.system().lower().startswith("win")
+        custom_dir = os.environ.get("COGNIGUARD_STARTUP_DIR", "").strip()
+        if custom_dir:
+            startup_dir = custom_dir
+        elif is_windows:
+            appdata = os.environ.get("APPDATA") or os.path.expanduser("~")
+            startup_dir = os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+        else:
+            startup_dir = os.path.join(os.path.expanduser("~"), ".config", "autostart")
+
+        filename = "cogniguard_ai.cmd" if is_windows else "cogniguard_ai.desktop"
+        target_path = os.path.join(startup_dir, filename)
+        py_exe = sys.executable
+        cli_script = os.path.abspath(__file__)
+        if is_windows:
+            launcher_content = f'@echo off\nstart "" /b "{py_exe}" "{cli_script}" {args.mode}\n'
+        else:
+            launcher_content = (
+                "[Desktop Entry]\n"
+                "Type=Application\n"
+                "Name=CogniGuard AI Guardian\n"
+                f'Exec="{py_exe}" "{cli_script}" {args.mode}\n'
+                "X-GNOME-Autostart-enabled=true\n"
+            )
+
+        action = "PREVIEW"
+        if args.install:
+            os.makedirs(startup_dir, exist_ok=True)
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.write(launcher_content)
+            action = "INSTALLED"
+        elif args.remove:
+            if os.path.exists(target_path):
+                os.remove(target_path)
+                action = "REMOVED"
+            else:
+                action = "NOT_FOUND"
+
+        payload = {
+            "status": "OK",
+            "action": action,
+            "mode": args.mode,
+            "launcher_path": target_path,
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"CogniGuard Startup [{action}] ({args.mode}): {target_path}")
+        return 0
 
     return 1
 

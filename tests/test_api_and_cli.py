@@ -742,3 +742,24 @@ def test_defense_council_api_and_cli(isolated_storage, monkeypatch, capsys):
     cli_res = json.loads(capsys.readouterr().out)
     assert cli_res["status"] == "CONTAINED_AND_VERIFIED"
     assert not payload_file.exists()
+
+
+def test_startup_launcher_and_dashboard_council_wired(tmp_path, monkeypatch, capsys):
+    import json
+
+    startup_dir = tmp_path / "startup_dir"
+    monkeypatch.setenv("COGNIGUARD_STARTUP_DIR", str(startup_dir))
+
+    assert cli.main(["startup", "--mode", "daemon", "--install", "--json"]) == 0
+    install_res = json.loads(capsys.readouterr().out)
+    assert install_res["action"] == "INSTALLED"
+    assert os.path.isfile(install_res["launcher_path"])
+
+    assert cli.main(["startup", "--mode", "daemon", "--remove", "--json"]) == 0
+    remove_res = json.loads(capsys.readouterr().out)
+    assert remove_res["action"] == "REMOVED"
+    assert not os.path.exists(install_res["launcher_path"])
+
+    dash_html = open(os.path.join(PROJECT_ROOT, "docs", "dashboard.html"), "r", encoding="utf-8").read()
+    assert "/api/v1/council/investigate" in dash_html
+    assert "runDefenseCouncilInvestigation" in dash_html

@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -20,19 +20,24 @@ _SRC_DIR = os.path.dirname(_AGENT_DIR)
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
+from agent.alerts import WebhookDispatcher  # noqa: E402
 from agent.heuristics import DANGEROUS_EXTENSIONS, is_disguised_executable  # noqa: E402
 from agent.quarantine import QuarantineManager, compute_sha256  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
+from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 
 class CogniGuard24x7Daemon:
-    """24/7 Downloads & Honeypot watcher backed by atomic SQLite WAL storage."""
+    """24/7 Downloads, Honeypot, Process, C2 Socket & Kill-Chain watcher."""
 
     def __init__(
         self,
         store: Optional[CogniGuardStore] = None,
         quarantine_manager: Optional[QuarantineManager] = None,
         auto_quarantine: bool = True,
+        sweep_interval_cycles: int = 30,
+        agent: Optional[CogniGuardAgent] = None,
+        alert_dispatcher: Optional[WebhookDispatcher] = None,
     ):
         self.user_home = os.path.expanduser("~")
         self.downloads_dir = os.path.join(self.user_home, "Downloads")
@@ -41,6 +46,9 @@ class CogniGuard24x7Daemon:
         self.store = store or CogniGuardStore()
         self.quarantine_manager = quarantine_manager or QuarantineManager(store=self.store)
         self.auto_quarantine = auto_quarantine
+        self.sweep_interval_cycles = sweep_interval_cycles
+        self.agent = agent or CogniGuardAgent()
+        self.alert_dispatcher = alert_dispatcher or WebhookDispatcher(store=self.store)
 
         self.known_downloads = set()
         self.honeypot_mtime = None
@@ -106,7 +114,17 @@ class CogniGuard24x7Daemon:
                                 print(f"⚠️ Quarantine failed ({exc}); alert logged.")
                         else:
                             print("⚡ Action: Isolated & Flagged | Status: OK")
+                        event_rec = {
+                            "status": "OK",
+                            "verdict": "INTRUSION_DETECTED",
+                            "threat_score": score,
+                            "action_taken": "QUARANTINED_BY_24X7_DAEMON",
+                            "reason": reason,
+                            "filename": filename,
+                            "source_url": "Local System Watcher",
+                        }
                         self._log_event(filename, "INTRUSION_DETECTED", "QUARANTINED_BY_24X7_DAEMON", score)
+                        self.alert_dispatcher.dispatch_async(event_rec)
                 self.known_downloads = set(os.listdir(self.downloads_dir))
             except Exception:
                 pass
@@ -117,7 +135,42 @@ class CogniGuard24x7Daemon:
                 print("\n🍯 [EMERGENCY HONEYPOT ALERT] Unauthorized modification to decoy credential file!")
                 print("⚡ Action: Intrusion logged & Vault locked | Status: OK")
                 self._log_event("bank_passwords_and_pins.txt", "HONEYPOT_BREACH", "LOCKDOWN_ENGAGED", 0.99)
+                self.alert_dispatcher.dispatch_async({
+                    "filename": "bank_passwords_and_pins.txt",
+                    "threat_score": 0.99,
+                    "reason": "Honeypot decoy file tampered with!",
+                })
                 self.honeypot_mtime = current_mtime
+
+    def run_scheduled_sweep(self) -> Dict[str, Any]:
+        """Run periodic process, live C2 socket, and kill-chain sweeps with webhook escalation."""
+        proc_res = self.agent.audit_live_processes(store=self.store)
+        net_res = self.agent.audit_network_connections(store=self.store)
+        kc_res = self.agent.audit_kill_chains(store=self.store)
+
+        threat_found = (
+            proc_res["flagged_count"] > 0
+            or net_res["flagged_count"] > 0
+            or kc_res["status"] == "KILL_CHAIN_DETECTED"
+        )
+        if threat_found:
+            summary = (
+                f"Scheduled sweep alert: {proc_res['flagged_count']} processes, "
+                f"{net_res['flagged_count']} C2 sockets, killchain={kc_res['status']}"
+            )
+            print(f"\n🚨 [SCHEDULED FLEET SWEEP] {summary}")
+            self.alert_dispatcher.dispatch_async({
+                "filename": "Scheduled_System_Sweep",
+                "threat_score": 0.98 if kc_res["status"] == "KILL_CHAIN_DETECTED" else 0.95,
+                "reason": summary,
+            })
+
+        return {
+            "processes": proc_res,
+            "network": net_res,
+            "killchain": kc_res,
+            "threat_found": threat_found,
+        }
 
     def run_forever(self, max_cycles: int = 0) -> None:
         print("=" * 65)
@@ -132,6 +185,8 @@ class CogniGuard24x7Daemon:
             while True:
                 self.check_cycle()
                 cycles += 1
+                if self.sweep_interval_cycles > 0 and cycles % self.sweep_interval_cycles == 0:
+                    self.run_scheduled_sweep()
                 if max_cycles > 0 and cycles >= max_cycles:
                     print("✅ [TEST COMPLETE] 24/7 Background Watcher cycle verified cleanly.")
                     break

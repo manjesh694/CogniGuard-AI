@@ -170,6 +170,7 @@
     <button class="btn" onclick="addDevLog()">💻 Simulate Normal Dev Workflow (VS Code)</button>
     <button class="btn" style="background: #0f766e;" onclick="runLiveProcessAudit()">🔍 Run Live Process Audit</button>
     <button class="btn" style="background: #1d4ed8;" onclick="runLiveNetworkAudit()">🌐 Run C2 Network Audit</button>
+    <button class="btn" style="background: #7c3aed;" onclick="runDefenseCouncilInvestigation()">🧠 Run Defense Council &amp; Kill-Chain</button>
     <a href="index.html" class="btn" style="background: #1f2937; text-decoration: none;">← Website Home</a>
     <input id="admin-api-key" type="password" placeholder="🔑 Admin X-API-Key (for Cloud)" onchange="saveAdminKey(this.value)" style="background: #030712; border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 12px; min-width: 220px;">
   </div>
@@ -585,20 +586,23 @@
       URL.revokeObjectURL(link.href);
     }
 
-    async function runAuditPanel(endpoint, loadingMsg, formatCleanFn, formatFlaggedFn, offlineMsg) {
+    async function runAuditPanel(endpoint, loadingMsg, formatCleanFn, formatFlaggedFn, offlineMsg, fetchOpts = {}, isCleanFn = data => data.flagged_count === 0) {
       const box = document.getElementById('process-audit-box');
       box.style.display = 'block';
       box.style.borderColor = 'var(--border)';
       box.innerText = loadingMsg;
       try {
-        const res = await fetch(`${API_BASE}${endpoint}`, { headers: authHeaders() });
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          ...fetchOpts,
+          headers: { ...authHeaders(), ...(fetchOpts.headers || {}) }
+        });
         const data = await res.json();
         if (!res.ok) {
           box.style.borderColor = 'var(--yellow)';
           box.innerText = `[!] ${data.detail || 'Unauthorized or unable to run live audit.'}`;
           return;
         }
-        const clean = data.flagged_count === 0;
+        const clean = isCleanFn(data);
         box.style.borderColor = clean ? 'var(--green)' : 'var(--red)';
         box.innerHTML = clean ? formatCleanFn(data) : formatFlaggedFn(data);
         syncLiveLogsFromPython();
@@ -606,6 +610,25 @@
         box.style.borderColor = 'var(--yellow)';
         box.innerText = offlineMsg;
       }
+    }
+
+    function runDefenseCouncilInvestigation() {
+      const renderTrace = data => (data.reasoning_trace || []).map(
+        step => `<div style="color:#cbd5e1; margin-top:4px;">• <strong>${escapeHtml(step.agent)}:</strong> ${escapeHtml(step.summary)}</div>`
+      ).join('');
+      return runAuditPanel(
+        '/api/v1/council/investigate',
+        '🧠 Dispatching Static, Runtime & Kill-Chain Defense Council...',
+        data => `<strong style="color:var(--green);">✅ Defense Council Status: ${escapeHtml(data.status)}</strong>${renderTrace(data)}`,
+        data => `<strong style="color:var(--red);">🚨 Defense Council Alert: ${escapeHtml(data.status)}</strong>${renderTrace(data)}`,
+        '[!] Start cogniguard bridge locally to run the Multi-Agent Defense Council.',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ window_seconds: 300, auto_remediate: false, include_runtime: true })
+        },
+        data => data.status === 'OK' || data.status === 'CONTAINED_AND_VERIFIED'
+      );
     }
 
     function runLiveProcessAudit() {

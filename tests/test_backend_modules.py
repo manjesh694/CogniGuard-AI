@@ -449,3 +449,39 @@ def test_autonomous_defense_council_closed_loop(tmp_path):
     assert res["post_verification"]["post_static_verdict"] == "SAFE_TO_INSTALL"
     assert res["post_verification"]["post_static_risk_score"] == 0
     assert any(step["agent"] == "VerificationLoop" for step in res["reasoning_trace"])
+
+
+def test_daemon_scheduled_sweep_triggers_alert(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import psutil
+
+    store = CogniGuardStore(str(tmp_path / "sweep.db"))
+    vault = QuarantineManager(vault_dir=str(tmp_path / "sweep_vault"), store=store)
+    dispatched = []
+
+    class FakeDispatcher:
+        def dispatch_async(self, event):
+            dispatched.append(event)
+
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: [])
+    monkeypatch.setattr(
+        psutil,
+        "net_connections",
+        lambda kind="inet": [
+            SimpleNamespace(raddr=SimpleNamespace(ip="198.51.100.88", port=4444), status="ESTABLISHED", pid=0)
+        ],
+    )
+
+    daemon = CogniGuard24x7Daemon(
+        store=store,
+        quarantine_manager=vault,
+        sweep_interval_cycles=1,
+        alert_dispatcher=FakeDispatcher(),
+    )
+    daemon.downloads_dir = str(tmp_path / "empty_dl")
+    sweep = daemon.run_scheduled_sweep()
+
+    assert sweep["threat_found"] is True
+    assert sweep["network"]["flagged_count"] == 1
+    assert len(dispatched) == 1
+    assert "C2 sockets" in dispatched[0]["reason"]
