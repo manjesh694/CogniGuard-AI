@@ -196,3 +196,29 @@ def test_bytes_risk_pe_disguise_and_sha256():
     clean = evaluate_bytes_risk(b"%PDF-1.7\nhello", "salary.pdf", "https://safe.example/salary.pdf")
     assert clean["verdict"] == "SAFE"
     assert len(clean["sha256"]) == 64
+
+
+def test_daemon_quarantines_ioc_hash_match(tmp_path):
+    import hashlib
+
+    store = CogniGuardStore(str(tmp_path / "ioc_daemon.db"))
+    vault = QuarantineManager(vault_dir=str(tmp_path / "vault"), store=store)
+    dl_dir = tmp_path / "Downloads"
+    dl_dir.mkdir()
+
+    payload_bytes = b"renamed-trojan-txt-payload"
+    store.add_ioc(hashlib.sha256(payload_bytes).hexdigest(), "Renamed_Stealer")
+
+    daemon = CogniGuard24x7Daemon(store=store, quarantine_manager=vault)
+    daemon.downloads_dir = str(dl_dir)
+    daemon.honeypot_file = str(tmp_path / "missing_bait.txt")
+    daemon._initialize_baseline()
+
+    benign_name = dl_dir / "readme_notes.txt"
+    benign_name.write_bytes(payload_bytes)
+    daemon.check_cycle()
+
+    assert not benign_name.exists()
+    q_items = store.list_quarantine_items(status="QUARANTINED")
+    assert len(q_items) == 1
+    assert "Renamed_Stealer" in q_items[0]["reason"]

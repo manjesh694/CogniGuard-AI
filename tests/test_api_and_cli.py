@@ -40,6 +40,8 @@ def test_fastapi_routes_registered():
         "/api/v1/alerts/config",
         "/api/v1/alerts/test",
         "/api/v1/health",
+        "/api/v1/iocs",
+        "/api/v1/iocs/{sha256}",
         "/api/v1/inspect",
         "/api/v1/reverse-engineer",
         "/api/v1/scan-repo",
@@ -502,3 +504,36 @@ def test_inspect_bytes_endpoint_and_action_yml(isolated_storage):
     action_text = open(action_path, encoding="utf-8").read()
     assert 'using: "composite"' in action_text
     assert "cogniguard" in action_text
+
+
+def test_ioc_feed_crud_and_hash_blocking(isolated_storage):
+    import base64
+    import hashlib
+
+    with pytest.raises(HTTPException) as bad_hex:
+        api_bridge.register_ioc(api_bridge.IocCreateRequest(sha256="z" * 64, label="Bad"))
+    assert bad_hex.value.status_code == 400
+
+    evil_bytes = b"innocent-looking-bytes-with-known-malware-hash"
+    evil_sha = hashlib.sha256(evil_bytes).hexdigest()
+
+    created = api_bridge.register_ioc(
+        api_bridge.IocCreateRequest(sha256=evil_sha, label="RedLine_Dropper", severity="CRITICAL")
+    )
+    assert created["ioc"]["sha256"] == evil_sha
+    assert len(api_bridge.list_iocs()) == 1
+
+    res = api_bridge.inspect_download(
+        api_bridge.InspectPayloadRequest(
+            filename="notes.txt",
+            source_url="https://docs.example/notes.txt",
+            content_base64=base64.b64encode(evil_bytes).decode("ascii"),
+        )
+    )
+    assert res["verdict"] == "INTRUSION_DETECTED"
+    assert res["threat_score"] == 1.0
+    assert "RedLine_Dropper" in res["reason"]
+
+    removed = api_bridge.remove_ioc(evil_sha)
+    assert removed["deleted_sha256"] == evil_sha
+    assert len(api_bridge.list_iocs()) == 0

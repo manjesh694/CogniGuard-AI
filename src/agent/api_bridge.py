@@ -13,6 +13,7 @@ import hmac
 import io
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -161,6 +162,12 @@ class WebhookConfigRequest(BaseModel):
     webhook_url: str = Field(..., min_length=8, max_length=2048)
 
 
+class IocCreateRequest(BaseModel):
+    sha256: str = Field(..., min_length=64, max_length=64)
+    label: str = Field(..., min_length=1, max_length=200)
+    severity: Literal["CRITICAL", "HIGH", "MEDIUM"] = "CRITICAL"
+
+
 def _client_key(request: Any) -> str:
     if request and getattr(request, "client", None) and request.client.host:
         return request.client.host
@@ -250,6 +257,15 @@ def inspect_download(payload: InspectPayloadRequest):
         raw_bytes = _decode_base64_payload(payload.content_base64)
         assessment = evaluate_bytes_risk(raw_bytes, payload.filename, payload.source_url)
         byte_size = len(raw_bytes)
+        ioc_match = store.get_ioc(assessment["sha256"])
+        if ioc_match:
+            assessment = {
+                "verdict": "INTRUSION_DETECTED",
+                "threat_score": 1.0,
+                "action_taken": "QUARANTINE_IN_AIRLOCK",
+                "reason": f"Known malicious SHA-256 IOC match ({ioc_match['label']})",
+                "sha256": assessment["sha256"],
+            }
     else:
         assessment = evaluate_download_risk(payload.filename, payload.source_url)
 
@@ -462,6 +478,35 @@ def test_alert_webhook():
         "status_code": status_code,
         "error": error,
     }
+
+
+SHA256_HEX_RE = re.compile(r"^[0-9a-fA-F]{64}$")
+
+
+@app.get("/api/v1/iocs", dependencies=[Depends(require_api_key)])
+def list_iocs(
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    """List SHA-256 Threat Intelligence IOC hashes."""
+    return store.list_iocs(limit=limit, offset=offset)
+
+
+@app.post("/api/v1/iocs", dependencies=[Depends(require_api_key)])
+def register_ioc(payload: IocCreateRequest):
+    """Register a known malicious SHA-256 hash into the fleet IOC feed."""
+    if not SHA256_HEX_RE.match(payload.sha256.strip()):
+        raise HTTPException(status_code=400, detail="sha256 must be a 64-character hex digest")
+    record = store.add_ioc(payload.sha256, payload.label, payload.severity)
+    return {"status": "OK", "ioc": record}
+
+
+@app.delete("/api/v1/iocs/{sha256}", dependencies=[Depends(require_api_key)])
+def remove_ioc(sha256: str):
+    """Remove a SHA-256 hash from the IOC feed."""
+    if not store.delete_ioc(sha256):
+        raise HTTPException(status_code=404, detail="IOC hash not found")
+    return {"status": "OK", "deleted_sha256": sha256.lower()}
 
 
 @app.get("/api/v1/quarantine", dependencies=[Depends(require_api_key)])

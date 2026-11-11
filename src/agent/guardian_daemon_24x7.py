@@ -21,7 +21,7 @@ if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
 from agent.heuristics import DANGEROUS_EXTENSIONS, is_disguised_executable  # noqa: E402
-from agent.quarantine import QuarantineManager  # noqa: E402
+from agent.quarantine import QuarantineManager, compute_sha256  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
 
 
@@ -75,22 +75,38 @@ class CogniGuard24x7Daemon:
                 new_files = current_files - self.known_downloads
                 for filename in new_files:
                     filepath = os.path.join(self.downloads_dir, filename)
-                    is_risk = filename.lower().endswith(DANGEROUS_EXTENSIONS) or is_disguised_executable(filepath)
+                    ioc_match = None
+                    if os.path.isfile(filepath):
+                        try:
+                            ioc_match = self.store.get_ioc(compute_sha256(filepath))
+                        except Exception:
+                            ioc_match = None
+                    is_risk = (
+                        ioc_match is not None
+                        or filename.lower().endswith(DANGEROUS_EXTENSIONS)
+                        or is_disguised_executable(filepath)
+                    )
                     if is_risk:
+                        reason = (
+                            f"Known malicious IOC hash ({ioc_match['label']})"
+                            if ioc_match
+                            else "24/7 Background Watcher Detection"
+                        )
+                        score = 1.0 if ioc_match else 0.96
                         print(f"\n🚨 [24/7 WATCHER ALERT] New Risk File Detected in Downloads: {filename}")
                         if self.auto_quarantine and os.path.isfile(filepath):
                             try:
                                 q_item = self.quarantine_manager.quarantine_file(
                                     filepath,
-                                    reason="24/7 Background Watcher Detection",
-                                    threat_score=0.96,
+                                    reason=reason,
+                                    threat_score=score,
                                 )
                                 print(f"🔒 Quarantined (SHA-256: {q_item['sha256'][:16]}...) | Status: OK")
                             except Exception as exc:
                                 print(f"⚠️ Quarantine failed ({exc}); alert logged.")
                         else:
                             print("⚡ Action: Isolated & Flagged | Status: OK")
-                        self._log_event(filename, "INTRUSION_DETECTED", "QUARANTINED_BY_24X7_DAEMON", 0.96)
+                        self._log_event(filename, "INTRUSION_DETECTED", "QUARANTINED_BY_24X7_DAEMON", score)
                 self.known_downloads = set(os.listdir(self.downloads_dir))
             except Exception:
                 pass

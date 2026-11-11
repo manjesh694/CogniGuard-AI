@@ -107,6 +107,16 @@ class CogniGuardStore:
                     )
                     """
                 )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS iocs (
+                        sha256 TEXT PRIMARY KEY,
+                        label TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        added_at TEXT NOT NULL
+                    )
+                    """
+                )
 
     def record_audit_event(self, entry: Dict[str, Any]) -> Dict[str, Any]:
         record = {
@@ -329,3 +339,52 @@ class CogniGuardStore:
             with self._connect() as conn:
                 row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
         return str(row["value"]) if row else None
+
+    def add_ioc(self, sha256: str, label: str, severity: str = "CRITICAL") -> Dict[str, Any]:
+        clean_hash = sha256.strip().lower()
+        record = {
+            "sha256": clean_hash,
+            "label": label.strip(),
+            "severity": severity.upper(),
+            "added_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        with self._lock:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO iocs (sha256, label, severity, added_at)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(sha256) DO UPDATE SET
+                        label = excluded.label,
+                        severity = excluded.severity,
+                        added_at = excluded.added_at
+                    """,
+                    (record["sha256"], record["label"], record["severity"], record["added_at"]),
+                )
+        return record
+
+    def get_ioc(self, sha256: str) -> Optional[Dict[str, Any]]:
+        clean_hash = sha256.strip().lower()
+        with self._lock:
+            with self._connect() as conn:
+                row = conn.execute(
+                    "SELECT sha256, label, severity, added_at FROM iocs WHERE sha256 = ?",
+                    (clean_hash,),
+                ).fetchone()
+        return dict(row) if row else None
+
+    def list_iocs(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
+        with self._lock:
+            with self._connect() as conn:
+                rows = conn.execute(
+                    "SELECT sha256, label, severity, added_at FROM iocs ORDER BY added_at DESC LIMIT ? OFFSET ?",
+                    (max(1, min(500, limit)), max(0, offset)),
+                ).fetchall()
+        return [dict(r) for r in rows]
+
+    def delete_ioc(self, sha256: str) -> bool:
+        clean_hash = sha256.strip().lower()
+        with self._lock:
+            with self._connect() as conn:
+                cur = conn.execute("DELETE FROM iocs WHERE sha256 = ?", (clean_hash,))
+        return cur.rowcount > 0

@@ -78,7 +78,16 @@ cogniguard bridge
 2. Open `chrome://extensions` (or `edge://extensions`) and enable **Developer mode**.
 3. Click **Load unpacked** and select the unzipped folder.
 
-### 5. Run Verification Tests
+### 5. Use in GitHub Actions CI (`action.yml`)
+```yaml
+- uses: manjesh694/CogniGuard-AI@main
+  with:
+    target: "."
+    strict: "true"
+    format: "sarif"
+```
+
+### 6. Run Verification Tests
 ```bash
 python tests/verify_all.py
 pytest -v
