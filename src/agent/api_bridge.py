@@ -47,7 +47,14 @@ from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import is_url_like, scan_repository  # noqa: E402
 from agent.reverse_engineer import IntentReverseEngineer  # noqa: E402
 from agent.storage import THREAT_VERDICTS, CogniGuardStore  # noqa: E402
+from agent.threat_feed import (  # noqa: E402
+    apply_ioc_entries,
+    parse_ioc_entries,
+    sync_builtin_feed,
+    sync_remote_feed,
+)
 from agent.vault_guardian import CogniGuardAgent  # noqa: E402
+import requests  # noqa: E402
 
 APP_VERSION = "1.0.3"
 DEFAULT_ALLOWED_ORIGINS = [
@@ -167,6 +174,11 @@ class IocCreateRequest(BaseModel):
     sha256: str = Field(..., min_length=64, max_length=64)
     label: str = Field(..., min_length=1, max_length=200)
     severity: Literal["CRITICAL", "HIGH", "MEDIUM"] = "CRITICAL"
+
+
+class IocSyncRequest(BaseModel):
+    source_url: Optional[str] = Field(default=None, max_length=2048)
+    entries: Optional[List[IocCreateRequest]] = None
 
 
 class CouncilInvestigateRequest(BaseModel):
@@ -515,6 +527,25 @@ def remove_ioc(sha256: str):
     if not store.delete_ioc(sha256):
         raise HTTPException(status_code=404, detail="IOC hash not found")
     return {"status": "OK", "deleted_sha256": sha256.lower()}
+
+
+@app.post("/api/v1/iocs/sync", dependencies=[Depends(require_api_key)])
+def sync_iocs(payload: Optional[IocSyncRequest] = None):
+    """Sync IOCs from provided batch, SSRF-checked HTTPS feed URL, or built-in feed."""
+    req = payload or IocSyncRequest()
+    if req.entries:
+        normalized = parse_ioc_entries([entry.model_dump() for entry in req.entries])
+        if not normalized:
+            raise HTTPException(status_code=400, detail="No valid SHA-256 IOC entries provided")
+        return apply_ioc_entries(normalized, store=store, source_name="api_batch")
+    if req.source_url:
+        try:
+            return sync_remote_feed(req.source_url, store=store)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except requests.RequestException as exc:
+            raise HTTPException(status_code=502, detail=f"Feed download failed: {exc}") from exc
+    return sync_builtin_feed(store=store)
 
 
 @app.get("/api/v1/network/audit", dependencies=[Depends(require_api_key)])

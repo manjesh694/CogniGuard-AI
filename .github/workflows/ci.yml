@@ -34,5 +34,8 @@ jobs:
       - name: Smoke test installed cogniguard CLI
         run: |
           cogniguard --help
+          cogniguard doctor --json
           cogniguard daemon --test
+          cogniguard killchain-audit --json
+          cogniguard council --no-runtime --json
           cogniguard scan . --strict --format sarif > cogniguard.sarif

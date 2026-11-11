@@ -763,3 +763,24 @@ def test_startup_launcher_and_dashboard_council_wired(tmp_path, monkeypatch, cap
     dash_html = open(os.path.join(PROJECT_ROOT, "docs", "dashboard.html"), "r", encoding="utf-8").read()
     assert "/api/v1/council/investigate" in dash_html
     assert "runDefenseCouncilInvestigation" in dash_html
+    assert "/api/v1/iocs/sync" in dash_html
+    assert "syncCommunityIocFeed" in dash_html
+
+
+def test_ioc_sync_api_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+
+    route_paths = {route.path for route in api_bridge.app.routes}
+    assert "/api/v1/iocs/sync" in route_paths
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", api_bridge.store.db_path)
+
+    api_res = api_bridge.sync_iocs(api_bridge.IocSyncRequest())
+    assert api_res["status"] == "OK"
+    assert api_res["imported_count"] >= 3
+
+    bundle = isolated_storage / "local_iocs.txt"
+    bundle.write_text(f"{'d' * 64},Custom_Spyware\n", encoding="utf-8")
+    assert cli.main(["ioc", "sync", "--file", str(bundle), "--json"]) == 0
+    cli_res = json.loads(capsys.readouterr().out)
+    assert cli_res["imported_count"] == 1
+    assert api_bridge.store.get_ioc("d" * 64)["label"] == "Custom_Spyware"

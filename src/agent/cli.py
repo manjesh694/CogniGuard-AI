@@ -27,6 +27,7 @@ from agent.guardian_daemon_24x7 import CogniGuard24x7Daemon  # noqa: E402
 from agent.quarantine import QuarantineManager  # noqa: E402
 from agent.repo_scanner import format_scan_sarif, scan_repository  # noqa: E402
 from agent.storage import CogniGuardStore  # noqa: E402
+from agent.threat_feed import import_ioc_bundle, sync_builtin_feed, sync_remote_feed  # noqa: E402
 from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 
 
@@ -137,6 +138,11 @@ def build_parser() -> argparse.ArgumentParser:
     ioc_add.add_argument("--severity", choices=["CRITICAL", "HIGH", "MEDIUM"], default="CRITICAL")
     ioc_rm = ioc_sub.add_parser("remove", help="Remove a SHA-256 hash from the blocklist")
     ioc_rm.add_argument("sha256", help="64-character hex SHA-256 digest")
+    ioc_sync = ioc_sub.add_parser("sync", help="Import/sync SHA-256 threat intelligence indicators")
+    ioc_sync_src = ioc_sync.add_mutually_exclusive_group()
+    ioc_sync_src.add_argument("--file", default=None, help="Local JSON, STIX2, CSV, or SHA-256 list file")
+    ioc_sync_src.add_argument("--url", default=None, help="Public HTTPS threat intelligence feed URL")
+    ioc_sync.add_argument("--json", action="store_true", help="Output sync summary as JSON")
 
     doc_p = subparsers.add_parser(
         "doctor",
@@ -310,6 +316,22 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"[!] IOC not found: {args.sha256}")
                 return 1
             print(f"🗑️ Removed IOC: {args.sha256.lower()}")
+            return 0
+        if args.ioc_action == "sync":
+            try:
+                if args.file:
+                    res = import_ioc_bundle(args.file, store=store)
+                elif args.url:
+                    res = sync_remote_feed(args.url, store=store)
+                else:
+                    res = sync_builtin_feed(store=store)
+            except Exception as exc:
+                print(f"[!] IOC sync failed: {exc}")
+                return 1
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(f"🛡️ Synced {res['imported_count']} IOC(s) from {res['source']} (Total: {res['total_iocs']})")
             return 0
 
     if args.command == "doctor":

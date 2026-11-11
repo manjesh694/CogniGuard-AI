@@ -287,7 +287,10 @@
   <div class="log-table-container" style="margin-top: 24px; padding: 18px 20px;">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
       <span style="font-size:16px; font-weight:600;">🛡️ SHA-256 Threat Intelligence IOC Blocklist</span>
-      <span style="font-size:12px; color:var(--text-muted);">Synced with /api/v1/iocs</span>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:12px; color:var(--text-muted);">Synced with /api/v1/iocs</span>
+        <button type="button" class="btn" style="padding:6px 12px; font-size:12px; background:#0f766e;" onclick="syncCommunityIocFeed()">⚡ Sync Threat-Intel Feed</button>
+      </div>
     </div>
     <form onsubmit="addIocHash(event)" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
       <input id="ioc-sha-input" type="text" required pattern="[0-9a-fA-F]{64}" placeholder="64-char SHA-256 hex digest" style="flex:2; min-width:260px; background:#030712; border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:8px; font-size:12px; font-family:monospace;">
@@ -612,20 +615,22 @@
       }
     }
 
-    function runDefenseCouncilInvestigation() {
+    function runDefenseCouncilInvestigation(autoRemediate = false) {
       const renderTrace = data => (data.reasoning_trace || []).map(
         step => `<div style="color:#cbd5e1; margin-top:4px;">• <strong>${escapeHtml(step.agent)}:</strong> ${escapeHtml(step.summary)}</div>`
       ).join('');
       return runAuditPanel(
         '/api/v1/council/investigate',
-        '🧠 Dispatching Static, Runtime & Kill-Chain Defense Council...',
+        autoRemediate
+          ? '🛡️ Running Multi-Agent Auto-Containment & Verification...'
+          : '🧠 Dispatching Static, Runtime & Kill-Chain Defense Council...',
         data => `<strong style="color:var(--green);">✅ Defense Council Status: ${escapeHtml(data.status)}</strong>${renderTrace(data)}`,
-        data => `<strong style="color:var(--red);">🚨 Defense Council Alert: ${escapeHtml(data.status)}</strong>${renderTrace(data)}`,
+        data => `<strong style="color:var(--red);">🚨 Defense Council Alert: ${escapeHtml(data.status)}</strong>${renderTrace(data)}<div style="margin-top:8px;"><button class="btn btn-danger" style="padding:6px 12px; font-size:12px;" onclick="runDefenseCouncilInvestigation(true)">🛡️ Auto-Contain Flagged Threats</button></div>`,
         '[!] Start cogniguard bridge locally to run the Multi-Agent Defense Council.',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ window_seconds: 300, auto_remediate: false, include_runtime: true })
+          body: JSON.stringify({ window_seconds: 300, auto_remediate: autoRemediate, include_runtime: true })
         },
         data => data.status === 'OK' || data.status === 'CONTAINED_AND_VERIFIED'
       );
@@ -725,6 +730,17 @@
         document.getElementById('ioc-label-input').value = '';
         syncLiveLogsFromPython();
       }
+    }
+
+    async function syncCommunityIocFeed() {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/iocs/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({})
+        });
+        if (res.ok) syncLiveLogsFromPython();
+      } catch (e) {}
     }
 
     async function banQuarantineIoc(qid) {
