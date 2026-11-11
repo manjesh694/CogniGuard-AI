@@ -633,3 +633,42 @@ def test_network_audit_api_and_cli(isolated_storage, monkeypatch, capsys):
     cli_res = json.loads(capsys.readouterr().out)
     assert cli_res["status"] == "C2_DETECTED"
     assert cli_res["flagged"][0]["process_name"] == "reverse_shell.exe"
+
+
+def test_network_audit_terminate_cli_and_dashboard_sync(isolated_storage, monkeypatch, capsys):
+    import json
+    from types import SimpleNamespace
+    import psutil
+
+    terminated_pids = []
+    fake_conns = [
+        SimpleNamespace(
+            raddr=SimpleNamespace(ip="198.51.100.99", port=4444),
+            status="ESTABLISHED",
+            pid=9191,
+        )
+    ]
+
+    class FakeProc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def name(self):
+            return "c2_agent.exe"
+
+        def exe(self):
+            return "C:\\ProgramData\\c2_agent.exe"
+
+        def terminate(self):
+            terminated_pids.append(self.pid)
+
+    monkeypatch.setattr(psutil, "net_connections", lambda kind="inet": fake_conns)
+    monkeypatch.setattr(psutil, "Process", FakeProc)
+
+    assert cli.main(["network-audit", "--json", "--terminate"]) == 2
+    out = json.loads(capsys.readouterr().out)
+    assert terminated_pids == [9191]
+    assert out["remediation"] == [{"pid": 9191, "status": "TERMINATED"}]
+
+    dash_html = open(os.path.join(PROJECT_ROOT, "docs", "dashboard.html"), "r", encoding="utf-8").read()
+    assert "/api/v1/network/audit" in dash_html

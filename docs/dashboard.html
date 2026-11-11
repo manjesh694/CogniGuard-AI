@@ -169,6 +169,7 @@
     <button class="btn btn-danger" onclick="triggerIntrusionSim()">⚡ Simulate Fleet Attack (Test Corporate Alert)</button>
     <button class="btn" onclick="addDevLog()">💻 Simulate Normal Dev Workflow (VS Code)</button>
     <button class="btn" style="background: #0f766e;" onclick="runLiveProcessAudit()">🔍 Run Live Process Audit</button>
+    <button class="btn" style="background: #1d4ed8;" onclick="runLiveNetworkAudit()">🌐 Run C2 Network Audit</button>
     <a href="index.html" class="btn" style="background: #1f2937; text-decoration: none;">← Website Home</a>
     <input id="admin-api-key" type="password" placeholder="🔑 Admin X-API-Key (for Cloud)" onchange="saveAdminKey(this.value)" style="background: #030712; border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 12px; min-width: 220px;">
   </div>
@@ -584,32 +585,57 @@
       URL.revokeObjectURL(link.href);
     }
 
-    async function runLiveProcessAudit() {
+    async function runAuditPanel(endpoint, loadingMsg, formatCleanFn, formatFlaggedFn, offlineMsg) {
       const box = document.getElementById('process-audit-box');
       box.style.display = 'block';
       box.style.borderColor = 'var(--border)';
-      box.innerText = '🔍 Inspecting live OS processes via psutil...';
+      box.innerText = loadingMsg;
       try {
-        const res = await fetch(`${API_BASE}/api/v1/processes/audit`, { headers: authHeaders() });
+        const res = await fetch(`${API_BASE}${endpoint}`, { headers: authHeaders() });
         const data = await res.json();
         if (!res.ok) {
           box.style.borderColor = 'var(--yellow)';
-          box.innerText = `[!] ${data.detail || 'Unauthorized or unable to run process audit.'}`;
+          box.innerText = `[!] ${data.detail || 'Unauthorized or unable to run live audit.'}`;
           return;
         }
         const clean = data.flagged_count === 0;
         box.style.borderColor = clean ? 'var(--green)' : 'var(--red)';
-        const details = (data.flagged || []).map(
-          item => `<div style="color:#fca5a5; margin-top:4px;">• PID ${escapeHtml(item.pid)} (${escapeHtml(item.name)}) — ${escapeHtml(item.reason)}</div>`
-        ).join('');
-        box.innerHTML = `<strong style="color:${clean ? 'var(--green)' : 'var(--red)'};">${
-          clean ? '✅ Live Process Audit Clean' : `🚨 ${escapeHtml(data.flagged_count)} Suspicious Process(es) Flagged`
-        }</strong> — Inspected ${escapeHtml(data.processes_inspected)} running processes.${details}`;
+        box.innerHTML = clean ? formatCleanFn(data) : formatFlaggedFn(data);
         syncLiveLogsFromPython();
       } catch (e) {
         box.style.borderColor = 'var(--yellow)';
-        box.innerText = '[!] Start cogniguard bridge locally to run live psutil process audits.';
+        box.innerText = offlineMsg;
       }
+    }
+
+    function runLiveProcessAudit() {
+      return runAuditPanel(
+        '/api/v1/processes/audit',
+        '🔍 Inspecting live OS processes via psutil...',
+        data => `<strong style="color:var(--green);">✅ Live Process Audit Clean</strong> — Inspected ${escapeHtml(data.processes_inspected)} running processes.`,
+        data => {
+          const details = (data.flagged || []).map(
+            item => `<div style="color:#fca5a5; margin-top:4px;">• PID ${escapeHtml(item.pid)} (${escapeHtml(item.name)}) — ${escapeHtml(item.reason)}</div>`
+          ).join('');
+          return `<strong style="color:var(--red);">🚨 ${escapeHtml(data.flagged_count)} Suspicious Process(es) Flagged</strong> — Inspected ${escapeHtml(data.processes_inspected)} running processes.${details}`;
+        },
+        '[!] Start cogniguard bridge locally to run live psutil process audits.'
+      );
+    }
+
+    function runLiveNetworkAudit() {
+      return runAuditPanel(
+        '/api/v1/network/audit',
+        '🌐 Inspecting active outbound sockets via psutil...',
+        data => `<strong style="color:var(--green);">✅ C2 Network Socket Audit Clean</strong> — Inspected ${escapeHtml(data.connections_inspected)} outbound sockets.`,
+        data => {
+          const details = (data.flagged || []).map(
+            item => `<div style="color:#fca5a5; margin-top:4px;">• PID ${escapeHtml(item.pid)} (${escapeHtml(item.process_name)}) → ${escapeHtml(item.remote_ip)}:${escapeHtml(item.remote_port)} — ${escapeHtml(item.reason)}</div>`
+          ).join('');
+          return `<strong style="color:var(--red);">🚨 ${escapeHtml(data.flagged_count)} C2 Socket(s) Flagged</strong> — Inspected ${escapeHtml(data.connections_inspected)} outbound sockets.${details}`;
+        },
+        '[!] Start cogniguard bridge locally to run live C2 network audits.'
+      );
     }
 
     async function saveWebhookConfig(event) {

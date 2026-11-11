@@ -78,13 +78,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     sys_p = subparsers.add_parser(
         "system-scan",
-        help="Run a full-system disk audit for disguised executables",
+        help="Run a full-system disk audit for disguised executables and IOC matches",
     )
     sys_p.add_argument(
         "--max-files",
         type=int,
         default=500,
         help="Maximum files to inspect (default: 500)",
+    )
+    sys_p.add_argument(
+        "--quarantine",
+        action="store_true",
+        help="Automatically isolate flagged files in the SHA-256 quarantine vault",
     )
 
     q_p = subparsers.add_parser(
@@ -104,6 +109,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Audit live running OS processes via psutil for suspicious executions",
     )
     proc_p.add_argument("--json", action="store_true", help="Output process audit as JSON")
+    proc_p.add_argument("--terminate", action="store_true", help="Terminate flagged suspicious processes")
 
     hook_p = subparsers.add_parser(
         "install-hook",
@@ -136,6 +142,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Audit active outbound network sockets for C2 ports or temp-binary beacons",
     )
     net_p.add_argument("--json", action="store_true", help="Output network audit report as JSON")
+    net_p.add_argument("--terminate", action="store_true", help="Terminate processes owning flagged C2 sockets")
 
     return parser
 
@@ -177,7 +184,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     if args.command == "system-scan":
-        scanner = FullSystemGuardian()
+        store = CogniGuardStore()
+        mgr = QuarantineManager(store=store)
+        scanner = FullSystemGuardian(store=store, quarantine_manager=mgr, auto_quarantine=args.quarantine)
         scanner.scan_full_system(max_files=args.max_files)
         return 2 if scanner.flagged_threats else 0
 
@@ -207,6 +216,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "process-audit":
         agent = CogniGuardAgent()
         report = agent.audit_live_processes()
+        if args.terminate and report["flagged"]:
+            report["remediation"] = agent.terminate_flagged_processes(report["flagged"])
         if args.json:
             print(json.dumps(report, indent=2))
         else:
@@ -304,6 +315,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "network-audit":
         agent = CogniGuardAgent()
         result = agent.audit_network_connections()
+        if args.terminate and result["flagged"]:
+            result["remediation"] = agent.terminate_flagged_processes(result["flagged"])
         if args.json:
             print(json.dumps(result, indent=2))
         else:

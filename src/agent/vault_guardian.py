@@ -78,6 +78,24 @@ class CogniGuardAgent:
                 "reason": "Suspicious encoded or credential-dumping command line",
             }
 
+        lolbins = {
+            "certutil.exe", "certutil",
+            "mshta.exe", "mshta",
+            "bitsadmin.exe", "bitsadmin",
+            "regsvr32.exe", "regsvr32",
+            "rundll32.exe", "rundll32",
+        }
+        lolbin_flags = ("http://", "https://", "-urlcache", "javascript:", "vbscript:", "scrobj.dll", "/transfer")
+        exe_base = os.path.basename(lower_exe) if lower_exe else ""
+        if (lower_name in lolbins or exe_base in lolbins) and any(flag in cmd_str for flag in lolbin_flags):
+            return {
+                "pid": pid,
+                "name": name,
+                "exe": exe_path,
+                "threat_score": 0.96,
+                "reason": f"Suspicious LOLBin remote execution pattern ({name})",
+            }
+
         temp_markers = ("\\appdata\\local\\temp\\", "\\windows\\temp\\", "/tmp/", "/dev/shm/")
         if lower_exe and any(marker in lower_exe for marker in temp_markers):
             return {
@@ -211,6 +229,28 @@ class CogniGuardAgent:
             "flagged": flagged,
             "timestamp": datetime.now().isoformat(),
         }
+
+    def terminate_flagged_processes(self, flagged: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Safely terminate processes associated with flagged findings, skipping self and PID <= 0."""
+        if psutil is None:
+            raise RuntimeError("psutil is required for process termination")
+
+        results: List[Dict[str, Any]] = []
+        current_pid = os.getpid()
+        seen_pids = set()
+
+        for item in flagged:
+            pid = int(item.get("pid") or 0)
+            if pid <= 0 or pid == current_pid or pid in seen_pids:
+                continue
+            seen_pids.add(pid)
+            try:
+                proc = psutil.Process(pid)
+                proc.terminate()
+                results.append({"pid": pid, "status": "TERMINATED"})
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as exc:
+                results.append({"pid": pid, "status": "FAILED", "error": str(exc)})
+        return results
 
     def evaluate_access(self, process_name: str, target_vault: str, pid: int = 1337) -> Dict[str, Any]:
         """
