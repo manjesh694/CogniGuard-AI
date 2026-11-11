@@ -108,6 +108,12 @@
       </div>
     </div>
 
+    <!-- Live GitHub URL Scanner Bar -->
+    <form onsubmit="scanLiveGitHubRepo(event)" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; background:var(--card); border:1px solid var(--border); padding:14px; border-radius:10px;">
+      <input id="repoUrlInput" type="url" required placeholder="https://github.com/manjesh694/CogniGuard-AI" value="https://github.com/manjesh694/CogniGuard-AI" style="flex:1; min-width:240px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#030712; color:var(--text); font-size:13px;">
+      <button type="submit" style="background:var(--accent); color:#060911; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">⚡ Scan Live GitHub Repo</button>
+    </form>
+
     <!-- 20-Second Launch Video Demo -->
     <div class="terminal-box" style="text-align: center; margin-top: 8px;">
       <div class="term-header">
@@ -232,6 +238,73 @@
         • Finding 2: [SKILL.md] -> AI Prompt Injection Exfiltration
       `;
       speak("Critical warning! CogniGuard Repo Scanner found hidden backdoors and SSH credential stealers inside this AI skill. Risk score 100 out of 100. Verdict: Do not install.");
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function resolveApiBase() {
+      try {
+        const param = new URLSearchParams(window.location.search).get('api');
+        if (param && /^https?:\/\//i.test(param)) {
+          localStorage.setItem('cogniguard_api_base', param.replace(/\/+$/, ''));
+        }
+        return localStorage.getItem('cogniguard_api_base') || 'http://127.0.0.1:8765';
+      } catch (e) {
+        return 'http://127.0.0.1:8765';
+      }
+    }
+
+    async function scanLiveGitHubRepo(event) {
+      event.preventDefault();
+      const url = document.getElementById('repoUrlInput').value.trim();
+      shredBtn.style.display = 'none';
+      statusBadge.style.color = '#38bdf8';
+      statusBadge.innerText = '● CLONING & SCANNING REPO...';
+      term.innerHTML = `<span style="color:#38bdf8;">$ cogniguard scan ${escapeHtml(url)}</span><br>Connecting to CogniGuard Security Bridge (${escapeHtml(resolveApiBase())})...`;
+
+      try {
+        const res = await fetch(resolveApiBase() + '/api/v1/scan-repo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_dir: url })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          statusBadge.style.color = '#fbbf24';
+          statusBadge.innerText = '● SCAN REJECTED';
+          term.innerHTML = `<span style="color:#fbbf24;">[!] ${escapeHtml(data.detail || 'Unable to scan repository')}</span>`;
+          return;
+        }
+        const isSafe = data.verdict === 'SAFE_TO_INSTALL';
+        statusBadge.style.color = isSafe ? '#10b981' : '#ef4444';
+        statusBadge.innerText = `● VERDICT: ${data.verdict} (${data.risk_score}/100)`;
+        const findingsHtml = (data.findings || []).slice(0, 5).map(
+          item => `• [${escapeHtml(item.file)}] -> ${escapeHtml(item.threat)} (+${escapeHtml(item.score)} risk)`
+        ).join('<br>');
+        term.innerHTML = `
+          <span style="color:#38bdf8;">$ cogniguard scan ${escapeHtml(data.target)}</span><br>
+          Scanned ${escapeHtml(data.files_scanned)} files.<br><br>
+          <div style="border:1px solid ${isSafe ? '#10b981' : '#ef4444'}; background:rgba(${isSafe ? '16,185,129' : '239,68,68'},0.1); padding:10px; border-radius:6px;">
+            Risk score: <strong>${escapeHtml(data.risk_score)} / 100</strong><br>
+            Severity: <strong>${escapeHtml(data.severity)}</strong><br>
+            Verdict: <strong>${escapeHtml(data.verdict)}</strong>
+          </div><br>
+          ${findingsHtml || '<span style="color:#10b981;">🛡️ Clean repository: No hidden backdoors or credential stealers detected.</span>'}
+        `;
+      } catch (err) {
+        statusBadge.style.color = '#fbbf24';
+        statusBadge.innerText = '● BRIDGE OFFLINE (START LOCALLY)';
+        term.innerHTML = `
+          <span style="color:#fbbf24;">[!] CogniGuard API Bridge is not running at ${escapeHtml(resolveApiBase())}.</span><br><br>
+          Start it locally in 1 command to scan live GitHub URLs:<br>
+          <code style="color:#38bdf8;">python -m agent.cli bridge</code><br><br>
+          Or pass a hosted backend URL via <code style="color:#38bdf8;">?api=https://your-api.onrender.com</code>.
+        `;
+      }
     }
   </script>
 </body>

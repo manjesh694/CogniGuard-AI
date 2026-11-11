@@ -1,18 +1,21 @@
 """
-CogniGuard AI - Local Agent API Bridge & Telemetry Daemon
+CogniGuard AI - Local & Cloud Agent API Bridge & Telemetry Daemon
 Author: CogniGuard Engineering Team
 Description: Hardened FastAPI bridge connecting the Chrome extension, web portals,
              and CLI scanners to atomic SQLite WAL storage and lead telemetry.
 """
 
+from collections import defaultdict, deque
 import hmac
 import os
 import sys
+import threading
+import time
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, Optional
+from typing import Annotated, Any, Deque, Dict, List, Literal, Optional
 
 try:
-    from fastapi import Depends, FastAPI, Header, HTTPException, Query
+    from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
     import uvicorn
@@ -47,10 +50,46 @@ def get_allowed_origins() -> List[str]:
     return parsed if parsed else list(DEFAULT_ALLOWED_ORIGINS)
 
 
+class SlidingWindowRateLimiter:
+    """Thread-safe per-client sliding window rate limiter."""
+
+    def __init__(self, max_requests: int = 20, window_seconds: int = 60):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._hits: Dict[str, Deque[float]] = defaultdict(deque)
+        self._lock = threading.Lock()
+
+    def check(self, key: str) -> None:
+        now = time.monotonic()
+        cutoff = now - self.window_seconds
+        with self._lock:
+            bucket = self._hits[key]
+            while bucket and bucket[0] < cutoff:
+                bucket.popleft()
+            if len(bucket) >= self.max_requests:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Rate limit exceeded. Please retry in a minute.",
+                )
+            bucket.append(now)
+
+    def reset(self) -> None:
+        with self._lock:
+            self._hits.clear()
+
+
 store = CogniGuardStore()
+scan_rate_limiter = SlidingWindowRateLimiter(
+    max_requests=int(os.environ.get("COGNIGUARD_SCAN_RATE_LIMIT", "15")),
+    window_seconds=60,
+)
+lead_rate_limiter = SlidingWindowRateLimiter(
+    max_requests=int(os.environ.get("COGNIGUARD_LEAD_RATE_LIMIT", "20")),
+    window_seconds=60,
+)
 
 app = FastAPI(
-    title="CogniGuard AI Local Bridge",
+    title="CogniGuard AI Security Bridge",
     version=APP_VERSION,
     description="Hardened agentic security daemon & telemetry API for CogniGuard AI.",
 )
@@ -93,6 +132,12 @@ class LeadCaptureRequest(BaseModel):
     trial_key: Optional[str] = Field(default=None, max_length=64)
 
 
+def _client_key(request: Any) -> str:
+    if request and getattr(request, "client", None) and request.client.host:
+        return request.client.host
+    return "local"
+
+
 def require_api_key(x_api_key: Optional[str] = Header(default=None)) -> None:
     """Enforce X-API-Key authentication when COGNIGUARD_API_KEY is configured."""
     expected = os.environ.get("COGNIGUARD_API_KEY", "").strip()
@@ -120,6 +165,17 @@ def _validate_local_scan_path(target: str) -> str:
 def log_incident_to_disk(entry: Dict[str, Any]) -> None:
     """Persist incident records to atomic SQLite WAL storage."""
     store.record_audit_event(entry)
+
+
+@app.get("/")
+def root_status():
+    """Root status endpoint for cloud platform health checks."""
+    return {
+        "service": "CogniGuard AI Security Bridge",
+        "status": "OK",
+        "version": APP_VERSION,
+        "health": "/api/v1/health",
+    }
 
 
 @app.get("/api/v1/health")
@@ -154,8 +210,9 @@ def inspect_download(payload: InspectPayloadRequest):
 
 
 @app.post("/api/v1/scan-repo", dependencies=[Depends(require_api_key)])
-def scan_repo_endpoint(payload: RepoScanRequest):
+def scan_repo_endpoint(payload: RepoScanRequest, request: Request = None):  # type: ignore[assignment]
     """Run CogniGuard pre-install scanner on a local directory or public GitHub URL."""
+    scan_rate_limiter.check(_client_key(request))
     target = payload.target_dir.strip()
     is_remote = is_url_like(target)
     scan_arg = target if is_remote else _validate_local_scan_path(target)
@@ -186,8 +243,9 @@ def scan_repo_endpoint(payload: RepoScanRequest):
 
 
 @app.post("/api/v1/leads")
-def capture_lead(payload: LeadCaptureRequest):
+def capture_lead(payload: LeadCaptureRequest, request: Request = None):  # type: ignore[assignment]
     """Capture Pro Trial activation or Enterprise IT Fleet pilot requests."""
+    lead_rate_limiter.check(_client_key(request))
     record = store.record_lead(
         plan=payload.plan,
         email=payload.email,
@@ -225,16 +283,10 @@ def get_telemetry_summary():
 
 
 if __name__ == "__main__":
+    bind_host = os.environ.get("HOST") or ("0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
+    bind_port = int(os.environ.get("PORT", "8765"))
     print("=" * 65)
-    print("🛡️ Starting CogniGuard AI Local Security Bridge Daemon...")
-    print("📡 Listening at: http://127.0.0.1:8765")
-    print("🔒 Endpoints:")
-    print("   • GET  /api/v1/health            -> Operational status")
-    print("   • POST /api/v1/inspect           -> Pre-execution threat analysis")
-    print("   • POST /api/v1/scan-repo         -> Repo & AI-Skill scan API")
-    print("   • POST /api/v1/leads             -> Trial & Enterprise lead capture")
-    print("   • GET  /api/v1/leads             -> Paginated lead list")
-    print("   • GET  /api/v1/logs              -> Paginated SOC audit history")
-    print("   • GET  /api/v1/telemetry/summary -> Aggregated SOC & lead stats")
+    print("🛡️ Starting CogniGuard AI Security Bridge Daemon...")
+    print(f"📡 Listening at: http://{bind_host}:{bind_port}")
     print("=" * 65)
-    uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")
+    uvicorn.run(app, host=bind_host, port=bind_port, log_level="info")

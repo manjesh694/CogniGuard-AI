@@ -240,7 +240,18 @@
   </div>
 
   <script>
-    const API_BASE = 'http://127.0.0.1:8765';
+    function resolveApiBase() {
+      try {
+        const param = new URLSearchParams(window.location.search).get('api');
+        if (param && /^https?:\/\//i.test(param)) {
+          localStorage.setItem('cogniguard_api_base', param.replace(/\/+$/, ''));
+        }
+        return localStorage.getItem('cogniguard_api_base') || 'http://127.0.0.1:8765';
+      } catch (e) {
+        return 'http://127.0.0.1:8765';
+      }
+    }
+    const API_BASE = resolveApiBase();
     let blockedCount = 2;
 
     function escapeHtml(value) {

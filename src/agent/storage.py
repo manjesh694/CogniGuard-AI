@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DB_PATH = os.path.join(_AGENT_DIR, "cogniguard.db")
+DEFAULT_DB_PATH = os.environ.get("COGNIGUARD_DB_PATH") or os.path.join(_AGENT_DIR, "cogniguard.db")
 
 THREAT_VERDICTS = (
     "INTRUSION_DETECTED",
@@ -26,10 +26,10 @@ THREAT_VERDICTS = (
 class CogniGuardStore:
     """Thread-safe SQLite WAL store for audit logs and lead telemetry."""
 
-    def __init__(self, db_path: str = DEFAULT_DB_PATH):
-        self.db_path = db_path
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path or os.environ.get("COGNIGUARD_DB_PATH") or DEFAULT_DB_PATH
         self._lock = threading.Lock()
-        parent = os.path.dirname(os.path.abspath(db_path))
+        parent = os.path.dirname(os.path.abspath(self.db_path))
         if parent:
             os.makedirs(parent, exist_ok=True)
         self.init_schema()

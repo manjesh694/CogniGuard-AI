@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cogniguard-ai-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && pip install --no-deps .
+    startCommand: uvicorn agent.api_bridge:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: COGNIGUARD_CORS_ORIGINS
+        value: https://manjesh694.github.io
+      - key: COGNIGUARD_DB_PATH
+        value: /tmp/cogniguard.db

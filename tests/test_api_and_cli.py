@@ -19,6 +19,8 @@ def isolated_storage(tmp_path, monkeypatch):
     """Isolate SQLite storage to a temporary database."""
     test_store = CogniGuardStore(str(tmp_path / "test_cogniguard.db"))
     monkeypatch.setattr(api_bridge, "store", test_store)
+    api_bridge.scan_rate_limiter.reset()
+    api_bridge.lead_rate_limiter.reset()
     monkeypatch.delenv("COGNIGUARD_API_KEY", raising=False)
     monkeypatch.delenv("COGNIGUARD_ALLOWED_SCAN_ROOT", raising=False)
     return tmp_path
@@ -27,6 +29,7 @@ def isolated_storage(tmp_path, monkeypatch):
 def test_fastapi_routes_registered():
     paths = {route.path for route in api_bridge.app.routes}
     for expected in (
+        "/",
         "/api/v1/health",
         "/api/v1/inspect",
         "/api/v1/scan-repo",
@@ -37,7 +40,9 @@ def test_fastapi_routes_registered():
         assert expected in paths, f"Missing route: {expected}"
 
 
-def test_health_endpoint():
+def test_root_and_health_endpoint():
+    root_data = api_bridge.root_status()
+    assert root_data["status"] == "OK"
     data = api_bridge.health_check()
     assert data["status"] == "OK"
     assert data["version"] == api_bridge.APP_VERSION
@@ -223,3 +228,19 @@ def test_api_key_auth_cors_and_pagination(isolated_storage, monkeypatch):
             api_bridge.RepoScanRequest(target_dir=os.path.join(PROJECT_ROOT, "tests", "mock_infected_skill"))
         )
     assert outside_root.value.status_code == 403
+
+
+def test_rate_limiter_enforces_429_and_db_env(tmp_path, monkeypatch):
+    limiter = api_bridge.SlidingWindowRateLimiter(max_requests=2, window_seconds=60)
+    limiter.check("client-a")
+    limiter.check("client-a")
+    with pytest.raises(HTTPException) as limited:
+        limiter.check("client-a")
+    assert limited.value.status_code == 429
+    limiter.check("client-b")
+
+    env_db = str(tmp_path / "env_override.db")
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", env_db)
+    env_store = CogniGuardStore()
+    assert env_store.db_path == env_db
+    assert os.path.exists(env_db)
