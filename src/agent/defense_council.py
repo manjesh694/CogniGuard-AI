@@ -49,21 +49,24 @@ class AutonomousDefenseCouncil:
         }
 
     def _run_runtime_agent(self, include_runtime: bool) -> Dict[str, Any]:
-        """Inspect live processes, LOLBins, and outbound C2 sockets when enabled."""
+        """Inspect live processes, LOLBins, outbound C2 sockets, and memory injections when enabled."""
         if not include_runtime:
             return {
                 "executed": False,
                 "processes_flagged": [],
                 "network_flagged": [],
+                "injections_flagged": [],
             }
         proc_res = self.agent.audit_live_processes(store=self.store)
         net_res = self.agent.audit_network_connections(store=self.store)
+        inj_res = self.agent.audit_memory_injections(store=self.store)
         return {
             "executed": True,
             "processes_inspected": proc_res["processes_inspected"],
             "processes_flagged": proc_res["flagged"],
             "connections_inspected": net_res["connections_inspected"],
             "network_flagged": net_res["flagged"],
+            "injections_flagged": inj_res["flagged"],
         }
 
     def _execute_containment(
@@ -98,8 +101,10 @@ class AutonomousDefenseCouncil:
                     except OSError:
                         pass
 
-        flagged_procs = list(runtime_res.get("processes_flagged", [])) + list(
-            runtime_res.get("network_flagged", [])
+        flagged_procs = (
+            list(runtime_res.get("processes_flagged", []))
+            + list(runtime_res.get("network_flagged", []))
+            + list(runtime_res.get("injections_flagged", []))
         )
         if flagged_procs:
             for item in self.agent.terminate_flagged_processes(flagged_procs):

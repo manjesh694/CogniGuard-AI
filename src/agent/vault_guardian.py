@@ -78,6 +78,24 @@ class CogniGuardAgent:
                 "reason": "Suspicious encoded or credential-dumping command line",
             }
 
+        # Memory Dump & Process Injection Signatures
+        injection_patterns = (
+            r"comsvcs(?:\.dll)?\s*,?\s*(?:#24|minidump)",
+            r"(?:procdump(?:\.exe)?\s+.*-ma\s+lsass|-ma\s+lsass|lsass.*dump)",
+            r"\b(?:mimikatz|sekurlsa|safetykatz|pypykatz|nanodump|invoke-mimikatz)\b",
+            r"\b(?:createremotethread|virtualallocex|writeprocessmemory|queueuserapc)\b",
+            r"(?:rundll32(?:\.exe)?\s+.*(?:mini|dump)|ntdsutil.*ac\s+i\s+ntds)",
+        )
+        for pattern in injection_patterns:
+            if re.search(pattern, cmd_str):
+                return {
+                    "pid": pid,
+                    "name": name,
+                    "exe": exe_path,
+                    "threat_score": 0.99,
+                    "reason": "Critical memory dump or process injection signature detected",
+                }
+
         lolbins = {
             "certutil.exe", "certutil",
             "mshta.exe", "mshta",
@@ -145,6 +163,57 @@ class CogniGuardAgent:
 
         return {
             "status": "OK" if not flagged else "THREATS_DETECTED",
+            "processes_inspected": inspected,
+            "flagged_count": len(flagged),
+            "flagged": flagged,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def audit_memory_injections(self, store: Any = None, max_processes: int = 500) -> Dict[str, Any]:
+        """Inspect processes specifically for memory dump, injection flags, and unauthorized LSASS/SAM targeting."""
+        if psutil is None:
+            raise RuntimeError("psutil is required for memory injection auditing")
+
+        inspected = 0
+        flagged: List[Dict[str, Any]] = []
+
+        injection_regex = re.compile(
+            r"comsvcs(?:\.dll)?\s*,?\s*(?:#24|minidump)|procdump.*-ma|-ma\s+lsass|lsass.*dump|mimikatz|sekurlsa|safetykatz|"
+            r"pypykatz|nanodump|invoke-mimikatz|virtualallocex|writeprocessmemory|createremotethread|queueuserapc",
+            re.IGNORECASE,
+        )
+
+        for proc in psutil.process_iter(["pid", "name", "exe", "cmdline"]):
+            if inspected >= max_processes:
+                break
+            try:
+                info = proc.info
+                inspected += 1
+                cmd_str = " ".join(info.get("cmdline") or [])
+                if injection_regex.search(cmd_str):
+                    finding = {
+                        "pid": int(info.get("pid") or 0),
+                        "name": info.get("name") or "",
+                        "exe": info.get("exe") or "",
+                        "threat_score": 0.99,
+                        "reason": "Process injection or credential memory dump activity detected",
+                    }
+                    flagged.append(finding)
+                    if store is not None:
+                        store.record_audit_event({
+                            "status": "OK",
+                            "verdict": "INTRUSION_DETECTED",
+                            "threat_score": 0.99,
+                            "action_taken": "FLAGGED_INJECTION",
+                            "reason": finding["reason"],
+                            "filename": f"{finding['name']} (PID {finding['pid']})",
+                            "source_url": finding["exe"] or "Process Memory Injection",
+                        })
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+
+        return {
+            "status": "OK" if not flagged else "INJECTION_DETECTED",
             "processes_inspected": inspected,
             "flagged_count": len(flagged),
             "flagged": flagged,
@@ -257,8 +326,10 @@ class CogniGuardAgent:
         "QUARANTINE": "INGRESS",
         "DOWNLOAD_BLOCKED": "INGRESS",
         "FLAGGED_LIVE_PROCESS": "EXECUTION",
+        "FLAGGED_INJECTION": "EXECUTION",
         "LOLBIN_EXECUTION": "EXECUTION",
         "HONEYPOT_TRIGGERED": "CREDENTIAL_ACCESS",
+        "MEMORY_DUMP_BLOCKED": "CREDENTIAL_ACCESS",
         "PROCESS_KILLED_CONTAINED": "CREDENTIAL_ACCESS",
         "FLAGGED_C2_SOCKET": "EXFILTRATION",
     }

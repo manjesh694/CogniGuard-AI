@@ -184,6 +184,29 @@ def build_parser() -> argparse.ArgumentParser:
     st_group.add_argument("--remove", action="store_true", help="Remove launcher script from user startup folder")
     st_p.add_argument("--json", action="store_true", help="Output startup configuration result as JSON")
 
+    db_p = subparsers.add_parser(
+        "db",
+        help="Manage, backup, and optimize the CogniGuard SQLite threat & telemetry database",
+    )
+    db_sub = db_p.add_subparsers(dest="db_action", required=True)
+    db_stats = db_sub.add_parser("stats", help="Show database size, WAL status, and row counts")
+    db_stats.add_argument("--json", action="store_true", help="Output stats as JSON")
+
+    db_backup = db_sub.add_parser("backup", help="Perform atomic online point-in-time database backup")
+    db_backup.add_argument("destination", nargs="?", default=None, help="Optional destination backup path")
+    db_backup.add_argument("--json", action="store_true", help="Output backup summary as JSON")
+
+    db_vac = db_sub.add_parser("vacuum", help="Defragment and reclaim unused SQLite disk space")
+    db_vac.add_argument("--json", action="store_true", help="Output vacuum summary as JSON")
+
+    inj_p = subparsers.add_parser(
+        "injection-audit",
+        help="Audit live OS processes for memory dumping & process injection signatures",
+    )
+    inj_p.add_argument("--max-processes", type=int, default=500, help="Max processes to inspect (default: 500)")
+    inj_p.add_argument("--json", action="store_true", help="Output injection report as JSON")
+    inj_p.add_argument("--terminate", action="store_true", help="Terminate processes flagged for injection")
+
     return parser
 
 
@@ -465,6 +488,55 @@ def main(argv: Optional[List[str]] = None) -> int:
         else:
             print(f"CogniGuard Startup [{action}] ({args.mode}): {target_path}")
         return 0
+
+    if args.command == "db":
+        store = CogniGuardStore()
+        if args.db_action == "stats":
+            stats = store.get_db_stats()
+            if args.json:
+                print(json.dumps(stats, indent=2))
+            else:
+                print(f"CogniGuard Database: {stats['db_path']}")
+                print(f"DB Size: {stats['db_size_bytes']:,} bytes | WAL Size: {stats['wal_size_bytes']:,} bytes")
+                for tbl, cnt in stats["tables"].items():
+                    print(f"  • {tbl}: {cnt:,} rows")
+            return 0
+        if args.db_action == "backup":
+            res = store.backup_database(args.destination)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(f"✅ Database backed up: {res['backup_path']} ({res['size_bytes']:,} bytes)")
+            return 0
+        if args.db_action == "vacuum":
+            res = store.vacuum_database()
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(f"✅ Database vacuumed: reclaimed {res['bytes_reclaimed']:,} bytes")
+            return 0
+
+    if args.command == "injection-audit":
+        agent = CogniGuardAgent()
+        store = CogniGuardStore()
+        report = agent.audit_memory_injections(store=store, max_processes=args.max_processes)
+        if args.terminate and report.get("flagged"):
+            report["remediation"] = agent.terminate_flagged_processes(report["flagged"])
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            print("=" * 60)
+            print("💉 COGNIGUARD MEMORY & PROCESS INJECTION AUDIT")
+            print("=" * 60)
+            print(f"Processes Inspected: {report['processes_inspected']}")
+            print(f"Flagged Injections:  {report['flagged_count']}")
+            for item in report.get("flagged", []):
+                print(f"  🚨 PID {item['pid']} [{item['name']}]: {item['reason']}")
+            if args.terminate and report.get("remediation"):
+                for rem in report["remediation"]:
+                    print(f"  ⚡ Remediation PID {rem['pid']}: {rem['status']}")
+            print("=" * 60)
+        return 2 if report.get("flagged") else 0
 
     return 1
 

@@ -548,3 +548,108 @@ def test_threat_intel_feed_parsing_and_ssrf_guard(tmp_path):
     file_res = import_ioc_bundle(str(bundle_path), store)
     assert file_res["imported_count"] == 1
     assert store.get_ioc("c" * 64)["label"] == "Bundle_Trojan"
+
+
+def test_db_stats_backup_vacuum_and_event_broadcaster(tmp_path):
+    store = CogniGuardStore(str(tmp_path / "telemetry_test.db"))
+    broadcaster = store.get_broadcaster()
+    sub_q = broadcaster.subscribe()
+
+    # Record audit event and verify pub/sub broadcast
+    entry = store.record_audit_event({
+        "verdict": "INTRUSION_DETECTED",
+        "threat_score": 0.99,
+        "action_taken": "BLOCK_AND_QUARANTINE",
+        "filename": "trojan_stealer.exe",
+        "reason": "Test Broadcast",
+    })
+    broadcasted = sub_q.get(timeout=2.0)
+    assert broadcasted["filename"] == "trojan_stealer.exe"
+    assert broadcasted["verdict"] == "INTRUSION_DETECTED"
+    broadcaster.unsubscribe(sub_q)
+
+    # Verify db stats
+    stats = store.get_db_stats()
+    assert stats["status"] == "OK"
+    assert stats["tables"]["audit_logs"] >= 1
+    assert stats["db_size_bytes"] > 0
+
+    # Verify atomic online backup
+    backup_file = tmp_path / "backup.db"
+    backup_res = store.backup_database(str(backup_file))
+    assert backup_res["status"] == "OK"
+    assert os.path.isfile(backup_res["backup_path"])
+    assert backup_res["size_bytes"] > 0
+
+    # Verify vacuum
+    vac_res = store.vacuum_database()
+    assert vac_res["status"] == "OK"
+    assert vac_res["size_after_bytes"] > 0
+
+
+def test_memory_injection_heuristics_and_defense_council(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import psutil
+    from agent.defense_council import AutonomousDefenseCouncil
+
+    agent = CogniGuardAgent()
+    store = CogniGuardStore(str(tmp_path / "inj_test.db"))
+
+    # Test heuristic evaluate_process_info with injection signatures
+    mimikatz_finding = agent.evaluate_process_info(
+        pid=3333,
+        name="powershell.exe",
+        exe_path="C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        cmdline=["powershell.exe", "-nop", "Invoke-Mimikatz", "-dumpcreds"],
+    )
+    assert mimikatz_finding is not None
+    assert mimikatz_finding["threat_score"] == 0.99
+    assert "memory dump or process injection" in mimikatz_finding["reason"]
+
+    procdump_finding = agent.evaluate_process_info(
+        pid=4444,
+        name="procdump.exe",
+        exe_path="C:\\Tools\\procdump.exe",
+        cmdline=["procdump.exe", "-ma", "lsass.exe", "c:\\temp\\lsass.dmp"],
+    )
+    assert procdump_finding is not None
+    assert procdump_finding["threat_score"] == 0.99
+
+    clean_finding = agent.evaluate_process_info(
+        pid=5555,
+        name="code.exe",
+        exe_path="C:\\Users\\user\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+        cmdline=["code.exe", "src/agent/storage.py"],
+    )
+    assert clean_finding is None
+
+    # Test audit_memory_injections with simulated process iteration
+    fake_procs = [
+        SimpleNamespace(
+            info={
+                "pid": 8888,
+                "name": "rundll32.exe",
+                "exe": "C:\\Windows\\System32\\rundll32.exe",
+                "cmdline": ["rundll32.exe", "comsvcs.dll,#24", "123", "c:\\temp\\d.bin", "full"],
+            }
+        ),
+        SimpleNamespace(
+            info={
+                "pid": 9999,
+                "name": "python.exe",
+                "exe": "C:\\Python313\\python.exe",
+                "cmdline": ["python.exe", "main.py"],
+            }
+        ),
+    ]
+
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs: fake_procs)
+    inj_report = agent.audit_memory_injections(store=store)
+    assert inj_report["status"] == "INJECTION_DETECTED"
+    assert inj_report["flagged_count"] == 1
+    assert inj_report["flagged"][0]["pid"] == 8888
+
+    council = AutonomousDefenseCouncil(store=store, agent=agent)
+    council_res = council.investigate(auto_remediate=False, include_runtime=True)
+    assert council_res["status"] == "THREATS_DETECTED"
+    assert len(council_res["runtime"]["injections_flagged"]) == 1

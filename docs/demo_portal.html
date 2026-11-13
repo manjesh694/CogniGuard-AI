@@ -66,7 +66,7 @@
         </div>
       </div>
       <div class="term-body" id="term-text">
-        [SYSTEM INITIALIZED] CogniGuard AI v1.0.3 Standby.<br>
+        [SYSTEM INITIALIZED] CogniGuard AI v1.0.4 Standby.<br>
         • Zero-Entry Airlock: ARMED<br>
         • Intent Reverse-Engineer: ARMED<br>
         • Honeypot Trap Sensor: ACTIVE<br>
@@ -259,9 +259,15 @@
         if (param && /^https?:\/\//i.test(param)) {
           localStorage.setItem('cogniguard_api_base', param.replace(/\/+$/, ''));
         }
-        return localStorage.getItem('cogniguard_api_base') || 'http://127.0.0.1:8765';
+        return localStorage.getItem('cogniguard_api_base') || (
+          window.location.hostname.includes('github.io')
+            ? 'https://cogniguard-ai-api.onrender.com'
+            : 'http://127.0.0.1:8765'
+        );
       } catch (e) {
-        return 'http://127.0.0.1:8765';
+        return window.location.hostname.includes('github.io')
+          ? 'https://cogniguard-ai-api.onrender.com'
+          : 'http://127.0.0.1:8765';
       }
     }
 

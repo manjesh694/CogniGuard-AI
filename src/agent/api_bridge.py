@@ -5,6 +5,7 @@ Description: Hardened FastAPI bridge connecting the Chrome extension, web portal
              and CLI scanners to atomic SQLite WAL storage and lead telemetry.
 """
 
+import asyncio
 import base64
 import binascii
 from collections import defaultdict, deque
@@ -13,6 +14,7 @@ import hmac
 import io
 import json
 import os
+import queue
 import re
 import sys
 import threading
@@ -23,7 +25,7 @@ from typing import Annotated, Any, Deque, Dict, List, Literal, Optional
 try:
     from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import Response
+    from fastapi.responses import Response, StreamingResponse
     from pydantic import BaseModel, Field
     import uvicorn
 except ImportError:
@@ -56,7 +58,7 @@ from agent.threat_feed import (  # noqa: E402
 from agent.vault_guardian import CogniGuardAgent  # noqa: E402
 import requests  # noqa: E402
 
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 DEFAULT_ALLOWED_ORIGINS = [
     "https://manjesh694.github.io",
     "http://127.0.0.1:8765",
@@ -601,6 +603,67 @@ def shred_quarantine_item(qid: str):
     if not quarantine_manager.shred_file(qid):
         raise HTTPException(status_code=404, detail="Quarantined item not found")
     return {"status": "OK", "deleted_id": qid}
+
+
+class DbBackupRequest(BaseModel):
+    destination_path: Optional[str] = Field(None, description="Optional custom destination path for the backup")
+
+
+@app.get("/api/v1/db/stats", dependencies=[Depends(require_api_key)])
+def get_db_stats():
+    """Return database size, WAL size, and table row counts."""
+    return store.get_db_stats()
+
+
+@app.post("/api/v1/db/backup", dependencies=[Depends(require_api_key)])
+def backup_database_endpoint(req: DbBackupRequest = DbBackupRequest()):
+    """Create a non-blocking point-in-time SQLite backup."""
+    return store.backup_database(req.destination_path)
+
+
+@app.post("/api/v1/db/vacuum", dependencies=[Depends(require_api_key)])
+def vacuum_database_endpoint():
+    """Vacuum SQLite database to defragment and reclaim disk space."""
+    return store.vacuum_database()
+
+
+@app.get("/api/v1/injection/audit", dependencies=[Depends(require_api_key)])
+def audit_injection_endpoint(max_processes: int = Query(500, ge=1, le=2000)):
+    """Audit live processes for memory dumping and process injection signatures."""
+    agent = CogniGuardAgent()
+    return agent.audit_memory_injections(store=store, max_processes=max_processes)
+
+
+@app.get("/api/v1/events/stream")
+async def stream_events(request: Request):
+    """Stream live security telemetry and audit events via Server-Sent Events (SSE)."""
+    broadcaster = store.get_broadcaster()
+    sub_queue = broadcaster.subscribe()
+
+    async def event_generator():
+        try:
+            yield f"event: connected\ndata: {json.dumps({'status': 'CONNECTED', 'timestamp': datetime.now().isoformat()})}\n\n"
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    event = sub_queue.get_nowait()
+                    yield f"event: threat\ndata: {json.dumps(event)}\n\n"
+                except queue.Empty:
+                    await asyncio.sleep(1.0)
+                    yield f": heartbeat {time.time()}\n\n"
+        finally:
+            broadcaster.unsubscribe(sub_queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 if __name__ == "__main__":

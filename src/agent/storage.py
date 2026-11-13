@@ -6,6 +6,7 @@ Description: Concurrent-safe persistence for security audit logs,
 """
 
 import os
+import queue
 import sqlite3
 import threading
 import uuid
@@ -23,16 +24,53 @@ THREAT_VERDICTS = (
 )
 
 
+class SecurityEventBroadcaster:
+    """Thread-safe in-memory pub-sub channel for real-time threat streaming."""
+
+    def __init__(self, max_queue: int = 100):
+        self._subscribers: List[queue.Queue] = []
+        self._lock = threading.Lock()
+        self.max_queue = max_queue
+
+    def subscribe(self) -> queue.Queue:
+        q: queue.Queue = queue.Queue(maxsize=self.max_queue)
+        with self._lock:
+            self._subscribers.append(q)
+        return q
+
+    def unsubscribe(self, q: queue.Queue) -> None:
+        with self._lock:
+            if q in self._subscribers:
+                self._subscribers.remove(q)
+
+    def publish(self, event: Dict[str, Any]) -> None:
+        with self._lock:
+            for q in list(self._subscribers):
+                try:
+                    q.put_nowait(event)
+                except queue.Full:
+                    try:
+                        q.get_nowait()
+                        q.put_nowait(event)
+                    except Exception:
+                        pass
+
+
 class CogniGuardStore:
     """Thread-safe SQLite WAL store for audit logs and lead telemetry."""
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or os.environ.get("COGNIGUARD_DB_PATH") or DEFAULT_DB_PATH
         self._lock = threading.Lock()
+        self._broadcaster = SecurityEventBroadcaster()
         parent = os.path.dirname(os.path.abspath(self.db_path))
         if parent:
             os.makedirs(parent, exist_ok=True)
         self.init_schema()
+
+    def get_broadcaster(self) -> SecurityEventBroadcaster:
+        """Return the store's real-time event broadcaster."""
+        return self._broadcaster
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=10.0, check_same_thread=False)
@@ -150,6 +188,8 @@ class CogniGuardStore:
                         record["file_size"],
                     ),
                 )
+        if hasattr(self, "_broadcaster") and self._broadcaster:
+            self._broadcaster.publish(record)
         return record
 
     def list_audit_logs(
@@ -388,3 +428,82 @@ class CogniGuardStore:
             with self._connect() as conn:
                 cur = conn.execute("DELETE FROM iocs WHERE sha256 = ?", (clean_hash,))
         return cur.rowcount > 0
+
+    def get_db_stats(self) -> Dict[str, Any]:
+        """Return table row counts, file sizes, and WAL state for database health."""
+        with self._lock:
+            with self._connect() as conn:
+                def _count(table: str) -> int:
+                    try:
+                        row = conn.execute(f"SELECT COUNT(*) AS c FROM {table}").fetchone()
+                        return int(row["c"]) if row else 0
+                    except (sqlite3.OperationalError, Exception):
+                        return 0
+
+                counts = {
+                    "audit_logs": _count("audit_logs"),
+                    "leads": _count("leads"),
+                    "quarantine": _count("quarantine"),
+                    "settings": _count("settings"),
+                    "iocs": _count("iocs"),
+                }
+
+        db_size = os.path.getsize(self.db_path) if os.path.exists(self.db_path) else 0
+        wal_path = f"{self.db_path}-wal"
+        wal_size = os.path.getsize(wal_path) if os.path.exists(wal_path) else 0
+
+        return {
+            "status": "OK",
+            "db_path": os.path.abspath(self.db_path),
+            "db_size_bytes": db_size,
+            "wal_size_bytes": wal_size,
+            "tables": counts,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def backup_database(self, dest_path: Optional[str] = None) -> Dict[str, Any]:
+        """Perform an atomic point-in-time backup using SQLite's online backup API."""
+        if not dest_path:
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            parent = os.path.dirname(os.path.abspath(self.db_path))
+            dest_path = os.path.join(parent, f"cogniguard_backup_{timestamp_str}.db")
+
+        dest_abs = os.path.abspath(dest_path)
+        dest_parent = os.path.dirname(dest_abs)
+        if dest_parent:
+            os.makedirs(dest_parent, exist_ok=True)
+
+        with self._lock:
+            with self._connect() as src_conn:
+                dest_conn = sqlite3.connect(dest_abs)
+                try:
+                    src_conn.backup(dest_conn)
+                finally:
+                    dest_conn.close()
+
+        backup_size = os.path.getsize(dest_abs) if os.path.exists(dest_abs) else 0
+        return {
+            "status": "OK",
+            "backup_path": dest_abs,
+            "size_bytes": backup_size,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def vacuum_database(self) -> Dict[str, Any]:
+        """Reclaim unused pages, optimize B-trees, and compact storage."""
+        size_before = os.path.getsize(self.db_path) if os.path.exists(self.db_path) else 0
+        with self._lock:
+            conn = sqlite3.connect(self.db_path, timeout=30.0, check_same_thread=False)
+            try:
+                conn.execute("VACUUM;")
+            finally:
+                conn.close()
+
+        size_after = os.path.getsize(self.db_path) if os.path.exists(self.db_path) else 0
+        return {
+            "status": "OK",
+            "size_before_bytes": size_before,
+            "size_after_bytes": size_after,
+            "bytes_reclaimed": max(0, size_before - size_after),
+            "timestamp": datetime.now().isoformat(),
+        }

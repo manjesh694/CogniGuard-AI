@@ -784,3 +784,73 @@ def test_ioc_sync_api_and_cli(isolated_storage, monkeypatch, capsys):
     cli_res = json.loads(capsys.readouterr().out)
     assert cli_res["imported_count"] == 1
     assert api_bridge.store.get_ioc("d" * 64)["label"] == "Custom_Spyware"
+
+
+def test_db_api_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+
+    route_paths = {route.path for route in api_bridge.app.routes}
+    assert "/api/v1/db/stats" in route_paths
+    assert "/api/v1/db/backup" in route_paths
+    assert "/api/v1/db/vacuum" in route_paths
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", api_bridge.store.db_path)
+
+    stats = api_bridge.get_db_stats()
+    assert stats["status"] == "OK"
+    assert "audit_logs" in stats["tables"]
+
+    backup_dest = str(isolated_storage / "api_backup.db")
+    backup_res = api_bridge.backup_database_endpoint(api_bridge.DbBackupRequest(destination_path=backup_dest))
+    assert backup_res["status"] == "OK"
+    assert os.path.isfile(backup_dest)
+
+    vac_res = api_bridge.vacuum_database_endpoint()
+    assert vac_res["status"] == "OK"
+
+    # Test CLI commands
+    assert cli.main(["db", "stats", "--json"]) == 0
+    cli_stats = json.loads(capsys.readouterr().out)
+    assert cli_stats["status"] == "OK"
+
+    cli_dest = str(isolated_storage / "cli_backup.db")
+    assert cli.main(["db", "backup", cli_dest, "--json"]) == 0
+    cli_backup = json.loads(capsys.readouterr().out)
+    assert os.path.isfile(cli_backup["backup_path"])
+
+    assert cli.main(["db", "vacuum", "--json"]) == 0
+    cli_vac = json.loads(capsys.readouterr().out)
+    assert cli_vac["status"] == "OK"
+
+
+def test_injection_audit_api_and_cli(isolated_storage, monkeypatch, capsys):
+    import json
+    from types import SimpleNamespace
+    import psutil
+
+    route_paths = {route.path for route in api_bridge.app.routes}
+    assert "/api/v1/injection/audit" in route_paths
+    assert "/api/v1/events/stream" in route_paths
+    assert api_bridge.APP_VERSION == "1.0.4"
+    monkeypatch.setenv("COGNIGUARD_DB_PATH", api_bridge.store.db_path)
+
+    fake_procs = [
+        SimpleNamespace(
+            info={
+                "pid": 7171,
+                "name": "lsass_dumper.exe",
+                "exe": "C:\\Windows\\Temp\\lsass_dumper.exe",
+                "cmdline": ["lsass_dumper.exe", "-ma", "lsass", "dump.dmp"],
+            }
+        )
+    ]
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs: fake_procs)
+
+    api_res = api_bridge.audit_injection_endpoint(max_processes=50)
+    assert api_res["status"] == "INJECTION_DETECTED"
+    assert api_res["flagged_count"] == 1
+    assert api_res["flagged"][0]["pid"] == 7171
+
+    assert cli.main(["injection-audit", "--json"]) == 2
+    cli_res = json.loads(capsys.readouterr().out)
+    assert cli_res["status"] == "INJECTION_DETECTED"
+    assert cli_res["flagged_count"] == 1
