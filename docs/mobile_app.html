@@ -590,9 +590,7 @@
     async function scanMobileMessage() {
       if (!isVipActive && scansRemaining <= 0) {
         speak("Scan quota exhausted. Please watch 1 short ad to unlock 3 more URL scans.");
-        alert("⚠️ Scan Quota Exhausted!
-
-Watch 1 quick ad to unlock 3 more URL scans & 1-Hour VIP access!");
+        alert("⚠️ Scan Quota Exhausted! Watch 1 quick ad to unlock 3 more URL scans & 1-Hour VIP access!");
         openMobileVipModal();
         return;
       }
@@ -615,6 +613,7 @@ Watch 1 quick ad to unlock 3 more URL scans & 1-Hour VIP access!");
       }
 
       const scamRules = [
+        { pattern: /loan|disburs|fast approval|quick disbursal|credit card|instant.*(?:rs|inr|cash|\$)|loanzap/i, reason: 'Predatory Instant Loan Fraud & Unauthorized Disbursal Lure' },
         { pattern: /kyc|suspended|blocked/, reason: 'Fake Bank / Account Suspension Social Engineering' },
         { pattern: /pin|otp|password|cvv/, reason: 'Credential / OTP / PIN Harvesting Trap' },
         { pattern: /upi|collect|claim|lottery|prize|airdrop/, reason: 'Deceptive UPI / Financial Reward Fraud' },
