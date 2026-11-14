@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#060911">
@@ -94,46 +96,103 @@
       <span style="font-size: 12px; font-weight: 700; color: var(--accent); display:flex; align-items:center; gap:6px;">
         <span class="pulse"></span> Global Threat Radar
       </span>
-      <span style="font-size: 10px; color: var(--green); font-family: monospace;">9 NODES PROTECTED</span>
+      <span style="font-size: 10px; color: var(--green); font-family: monospace;">52 NODES SECURED</span>
     </div>
-    <svg viewBox="0 0 500 230" style="width:100%; height:auto; display:block; background:#030712; border-radius:8px;">
+    <svg viewBox="0 0 540 260" style="width:100%; height:auto; display:block; background:#081424; border-radius:10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
       <defs>
-        <filter id="m-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
+        <filter id="m-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.8" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
+        <style>
+          @keyframes ping {
+            0% { r: 3; opacity: 0.9; }
+            100% { r: 10; opacity: 0; }
+          }
+          .ping-ring { animation: ping 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
+        </style>
       </defs>
-      <!-- Realistic World Continents Outline -->
-      <path class="m-continent" d="M 16.7,24.1 L 20.8,32.1 L 27.8,38.6 L 38.9,35.4 L 44.4,32.1 L 55.6,32.1 L 62.5,41.8 L 76.4,49.8 L 77.8,56.2 L 77.8,67.5 L 83.3,73.9 L 87.5,77.1 L 90.3,82.0 L 97.2,91.6 L 101.4,93.2 L 104.2,96.4 L 115.3,98.0 L 122.2,102.9 L 127.8,102.9 L 133.3,112.5 L 134.7,114.1 L 138.9,115.7 L 143.1,115.7 L 136.1,106.1 L 127.8,94.8 L 125.0,94.8 L 115.3,86.8 L 118.1,82.0 L 125.0,80.4 L 133.3,80.4 L 136.1,88.4 L 138.9,88.4 L 138.9,83.6 L 137.5,78.8 L 145.8,72.3 L 147.2,64.3 L 152.8,61.1 L 156.9,57.9 L 161.1,56.2 L 166.7,53.0 L 158.3,48.2 L 166.7,40.2 L 161.1,32.1 L 145.8,28.9 L 140.3,27.3 L 138.9,45.0 L 127.8,45.0 L 122.2,37.0 L 118.1,28.9 L 131.9,22.5 L 122.2,16.1 L 90.3,17.7 L 69.4,16.1 L 55.6,16.1 L 34.7,14.5 L 20.8,20.9 L 16.7,24.1 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 143.1,115.7 L 150.0,110.9 L 155.6,109.3 L 165.3,112.5 L 173.6,120.5 L 180.6,128.6 L 188.9,131.8 L 197.2,135.0 L 201.4,136.6 L 201.4,143.0 L 195.8,152.7 L 193.1,162.3 L 188.9,165.5 L 183.3,173.6 L 176.4,181.6 L 170.8,189.6 L 163.9,194.5 L 159.7,204.1 L 156.9,215.4 L 151.4,215.4 L 147.2,208.9 L 147.2,200.9 L 150.0,184.8 L 151.4,173.6 L 151.4,155.9 L 144.4,151.1 L 138.9,139.8 L 137.5,135.0 L 140.3,123.8 L 143.1,115.7 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 188.9,32.1 L 201.4,24.1 L 222.2,16.1 L 225.0,6.4 L 215.3,-1.6 L 194.4,-4.8 L 173.6,-3.2 L 159.7,4.8 L 173.6,16.1 L 180.6,25.7 L 188.9,32.1 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 237.5,70.7 L 237.5,59.5 L 247.2,59.5 L 248.6,54.6 L 243.1,51.4 L 248.6,49.8 L 252.8,46.6 L 255.6,45.0 L 261.1,41.8 L 261.1,37.0 L 266.7,38.6 L 275.0,40.2 L 277.8,35.4 L 283.3,32.1 L 291.7,32.1 L 293.1,24.1 L 294.4,17.7 L 288.9,14.5 L 277.8,16.1 L 270.8,19.3 L 266.7,25.7 L 256.9,28.9 L 256.9,35.4 L 256.9,43.4 L 252.8,48.2 L 248.6,54.6 L 254.2,59.5 L 262.5,57.9 L 268.1,56.2 L 269.4,56.2 L 272.2,62.7 L 270.8,67.5 L 266.7,67.5 L 268.1,62.7 L 266.7,57.9 L 272.2,56.2 L 276.4,61.1 L 277.8,65.9 L 281.9,67.5 L 286.1,64.3 L 288.9,62.7 L 291.7,54.6 L 298.6,54.6 L 288.9,61.1 L 284.7,62.7 L 277.8,69.1 L 272.2,67.5 L 250.0,67.5 L 241.7,70.7 L 237.5,70.7 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 243.1,48.2 L 248.6,46.6 L 251.4,43.4 L 250.0,38.6 L 247.2,35.4 L 243.1,33.8 L 241.7,40.2 L 245.8,43.4 L 243.1,48.2 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 241.7,70.7 L 248.6,70.7 L 263.9,69.1 L 265.3,75.5 L 272.2,77.1 L 284.7,77.1 L 294.4,78.8 L 297.2,83.6 L 302.8,91.6 L 309.7,107.7 L 320.8,110.9 L 312.5,120.5 L 306.9,135.0 L 305.6,146.2 L 298.6,160.7 L 295.8,173.6 L 288.9,181.6 L 286.1,183.2 L 275.0,183.2 L 273.6,176.8 L 269.4,173.6 L 266.7,163.9 L 266.7,152.7 L 266.7,136.6 L 262.5,125.4 L 261.1,122.1 L 254.2,118.9 L 243.1,120.5 L 236.1,118.9 L 231.9,115.7 L 226.4,109.3 L 226.4,104.5 L 226.4,94.8 L 233.3,86.8 L 236.1,80.4 L 241.7,70.7 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 311.1,147.9 L 319.4,149.5 L 319.4,155.9 L 315.3,168.8 L 311.1,168.8 L 309.7,162.3 L 311.1,147.9 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 298.6,54.6 L 305.6,61.1 L 316.7,64.3 L 325.0,69.1 L 322.2,85.2 L 327.8,91.6 L 333.3,88.4 L 337.5,88.4 L 344.4,90.0 L 347.2,93.2 L 351.4,98.0 L 354.2,104.5 L 356.9,115.7 L 361.1,107.7 L 365.3,99.6 L 372.2,93.2 L 377.8,94.8 L 386.1,102.9 L 386.1,112.5 L 393.1,127.0 L 395.8,120.5 L 395.8,112.5 L 400.0,106.1 L 400.0,93.2 L 409.7,91.6 L 413.9,88.4 L 419.4,80.4 L 418.1,70.7 L 422.2,67.5 L 425.0,67.5 L 427.8,73.9 L 429.2,69.1 L 431.9,61.1 L 437.5,51.4 L 444.4,45.0 L 448.6,35.4 L 465.3,33.8 L 472.2,41.8 L 480.6,32.1 L 486.1,24.1 L 497.2,20.9 L 486.1,14.5 L 451.4,12.9 L 437.5,11.2 L 395.8,8.0 L 368.1,9.6 L 347.2,16.1 L 333.3,32.1 L 319.4,40.2 L 305.6,45.0 L 298.6,54.6 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 430.6,77.1 L 434.7,73.9 L 440.3,72.3 L 445.8,67.5 L 447.2,61.1 L 444.4,64.3 L 438.9,70.7 L 433.3,75.5 L 430.6,77.1 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 408.3,163.9 L 416.7,160.7 L 419.4,157.5 L 431.9,149.5 L 438.9,147.9 L 447.2,146.2 L 451.4,152.7 L 456.9,160.7 L 462.5,173.6 L 462.5,180.0 L 458.3,184.8 L 452.8,189.6 L 448.6,189.6 L 441.7,184.8 L 431.9,180.0 L 422.2,183.2 L 409.7,183.2 L 406.9,170.4 L 408.3,163.9 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <path class="m-continent" d="M 483.3,200.9 L 491.7,194.5 L 497.2,188.0 L 493.1,186.4 L 488.9,194.5 L 483.3,200.9 Z" fill="#0b1b36" stroke="#1d4ed8" stroke-width="0.8"/>
-      <!-- Active Endpoint Nodes Across Real Geography -->
-      <!-- San Francisco -->
-      <circle cx="80" cy="68" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- New York -->
-      <circle cx="147" cy="63" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- São Paulo -->
-      <circle cx="185" cy="166" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- London -->
-      <circle cx="250" cy="46" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- Frankfurt -->
-      <circle cx="262" cy="48" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- Bengaluru (Demo Host) -->
-      <circle cx="358" cy="108" r="4.5" fill="#38bdf8" filter="url(#m-glow)"/>
-      <!-- Singapore -->
-      <circle cx="394" cy="126" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- Tokyo -->
-      <circle cx="444" cy="71" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
-      <!-- Sydney -->
-      <circle cx="460" cy="183" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <!-- Continents (Silhouette Matching Octohide VPN Style) -->
+  <path class="m-continent" d="M 36.0,17.0 L 58.5,20.7 L 67.5,20.7 L 90.0,20.7 L 120.0,22.6 L 138.0,30.1 L 147.0,33.9 L 153.0,41.4 L 150.0,52.8 L 135.0,54.6 L 129.0,41.4 L 127.5,37.7 L 132.0,33.9 L 150.0,30.1 L 159.0,33.9 L 168.0,41.4 L 186.0,52.8 L 190.5,62.2 L 180.0,65.9 L 171.0,67.8 L 165.0,73.5 L 159.0,75.4 L 156.0,81.0 L 154.5,86.7 L 148.5,94.2 L 149.2,103.6 L 147.0,101.7 L 144.0,94.2 L 138.0,94.2 L 127.5,96.1 L 124.5,101.7 L 123.8,109.3 L 130.5,115.9 L 139.5,111.2 L 138.8,114.9 L 137.2,120.6 L 144.8,124.3 L 144.8,130.0 L 151.5,133.8 L 153.8,136.6 L 144.8,134.7 L 141.8,131.9 L 138.8,125.3 L 127.5,120.6 L 121.5,120.6 L 112.5,114.9 L 111.0,107.4 L 102.0,98.0 L 98.2,90.4 L 105.0,107.4 L 99.0,98.0 L 94.5,89.5 L 89.2,85.7 L 85.5,79.1 L 83.2,71.6 L 82.5,59.3 L 74.2,49.0 L 60.0,39.6 L 48.0,37.7 L 39.0,43.3 L 25.5,47.1 L 27.0,40.5 L 21.0,37.7 L 18.0,27.3 L 36.0,17.0 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 225.0,0.0 L 240.0,0.0 L 240.0,7.5 L 237.0,18.8 L 213.0,28.3 L 204.0,37.7 L 192.0,30.1 L 189.0,18.8 L 168.0,7.5 L 180.0,0.0 L 225.0,0.0 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 162.0,129.1 L 177.0,130.9 L 192.0,139.4 L 195.0,150.7 L 217.5,160.1 L 217.5,165.8 L 211.5,175.2 L 204.0,194.1 L 196.5,203.5 L 190.5,212.9 L 183.8,222.3 L 174.0,229.9 L 168.0,244.9 L 171.0,254.3 L 163.5,252.5 L 157.5,241.2 L 159.0,226.1 L 162.8,207.2 L 163.5,184.6 L 156.0,177.1 L 148.5,160.1 L 151.5,147.0 L 154.5,135.7 L 162.0,129.1 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 261.0,82.9 L 256.5,68.8 L 268.5,67.8 L 263.2,59.3 L 272.2,56.5 L 282.8,49.0 L 282.8,43.3 L 288.0,47.1 L 298.5,49.0 L 306.0,39.6 L 315.0,37.7 L 307.5,28.3 L 309.0,17.0 L 300.0,18.8 L 285.0,32.0 L 279.0,41.4 L 279.0,49.0 L 274.5,54.6 L 268.5,65.9 L 274.5,71.6 L 280.5,68.8 L 288.8,67.8 L 294.0,73.5 L 293.2,79.1 L 296.2,74.4 L 298.5,71.6 L 303.0,81.0 L 306.0,79.1 L 306.0,75.4 L 312.8,73.5 L 313.5,67.8 L 316.5,64.1 L 325.5,65.9 L 330.0,69.7 L 330.0,75.4 L 324.0,82.0 L 315.0,82.9 L 310.5,81.0 L 309.0,77.2 L 303.0,82.9 L 292.5,81.0 L 262.5,82.9 L 261.0,82.9 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 261.8,56.5 L 272.2,55.6 L 270.8,50.9 L 265.5,40.5 L 262.5,40.5 L 261.8,47.1 L 262.5,52.8 L 261.8,56.5 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 261.0,83.8 L 285.0,81.0 L 292.5,90.4 L 306.0,90.4 L 318.0,91.4 L 321.0,98.0 L 325.5,109.3 L 335.2,128.1 L 346.5,129.1 L 337.5,147.0 L 330.8,169.6 L 328.5,182.8 L 319.5,197.8 L 309.0,214.8 L 298.5,215.7 L 295.5,207.2 L 289.5,188.4 L 289.5,169.6 L 288.0,160.1 L 284.2,142.2 L 273.8,139.4 L 258.8,142.2 L 249.8,132.8 L 244.5,122.5 L 244.5,111.2 L 251.2,98.0 L 261.0,83.8 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 344.2,173.3 L 345.0,180.9 L 340.5,197.8 L 337.5,198.8 L 336.0,188.4 L 340.5,179.0 L 344.2,173.3 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 313.5,73.5 L 330.0,69.7 L 345.0,75.4 L 348.0,62.2 L 360.0,47.1 L 375.0,28.3 L 382.5,13.2 L 427.5,9.4 L 480.0,18.8 L 487.5,15.1 L 525.0,26.4 L 517.5,37.7 L 504.0,47.1 L 484.5,56.5 L 468.0,69.7 L 457.5,77.2 L 459.0,81.0 L 463.5,84.8 L 462.0,79.1 L 456.0,75.4 L 447.0,79.1 L 452.2,90.4 L 453.0,98.0 L 441.0,109.3 L 432.0,110.2 L 432.0,120.6 L 431.2,130.9 L 426.0,131.9 L 420.0,137.5 L 426.0,147.9 L 421.5,143.2 L 420.0,126.2 L 414.0,122.5 L 408.0,111.2 L 403.5,109.3 L 396.0,116.8 L 390.0,126.2 L 386.2,134.7 L 380.2,122.5 L 378.8,113.0 L 371.2,104.6 L 361.5,103.6 L 345.0,99.9 L 348.0,105.5 L 354.8,103.6 L 359.2,109.3 L 349.5,124.3 L 336.0,127.2 L 333.0,120.6 L 322.5,99.9 L 322.5,91.4 L 324.0,82.9 L 313.5,73.5 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 483.0,65.9 L 485.2,71.6 L 480.8,83.8 L 473.2,87.6 L 466.5,91.4 L 465.0,87.6 L 474.0,82.9 L 480.0,74.4 L 483.0,65.9 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 413.2,140.4 L 428.2,161.1 L 435.0,164.9 L 441.0,165.8 L 430.5,162.0 L 426.0,154.5 L 420.0,147.0 L 413.2,140.4 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 466.5,173.3 L 474.0,173.3 L 474.0,179.0 L 483.0,173.3 L 489.0,182.8 L 499.5,195.9 L 500.2,203.5 L 496.5,214.8 L 492.0,222.3 L 484.5,223.3 L 474.0,216.7 L 468.0,211.0 L 454.5,214.8 L 445.5,216.7 L 443.2,211.0 L 439.5,199.7 L 442.5,190.3 L 456.0,179.0 L 466.5,173.3 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+  <path class="m-continent" d="M 530.2,216.7 L 537.0,222.3 L 532.5,228.0 L 523.5,238.3 L 522.0,233.6 L 528.0,228.0 L 532.5,220.4 L 530.2,216.7 Z" fill="#0f3356" stroke="#1c4e80" stroke-width="0.8"/>
+      <!-- 52 Worldwide Threat Defense & VIP Fleet Nodes -->
+  <circle cx="85.4" cy="58.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Vancouver</title></circle>
+  <circle cx="86.6" cy="61.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Seattle</title></circle>
+  <circle cx="86.4" cy="79.7" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>San Francisco</title></circle>
+  <circle cx="92.7" cy="86.7" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Los Angeles</title></circle>
+  <circle cx="112.6" cy="75.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Denver</title></circle>
+  <circle cx="124.8" cy="89.1" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Dallas</title></circle>
+  <circle cx="138.6" cy="72.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Chicago</title></circle>
+  <circle cx="143.6" cy="87.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Atlanta</title></circle>
+  <circle cx="151.1" cy="68.6" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Toronto</title></circle>
+  <circle cx="159.0" cy="74.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>New York</title></circle>
+  <circle cx="149.9" cy="102.3" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Miami</title></circle>
+  <circle cx="121.4" cy="114.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Mexico City</title></circle>
+  <circle cx="159.0" cy="141.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Bogota</title></circle>
+  <circle cx="154.5" cy="173.3" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Lima</title></circle>
+  <circle cx="200.1" cy="195.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Sao Paulo</title></circle>
+  <circle cx="205.4" cy="193.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Rio</title></circle>
+  <circle cx="182.6" cy="215.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Buenos Aires</title></circle>
+  <circle cx="164.1" cy="213.7" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Santiago</title></circle>
+  <circle cx="260.7" cy="50.3" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Dublin</title></circle>
+  <circle cx="269.9" cy="53.7" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>London</title></circle>
+  <circle cx="266.7" cy="50.1" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Manchester</title></circle>
+  <circle cx="273.5" cy="58.8" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Paris</title></circle>
+  <circle cx="264.5" cy="74.6" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Madrid</title></circle>
+  <circle cx="256.4" cy="77.8" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Lisbon</title></circle>
+  <circle cx="277.4" cy="52.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Amsterdam</title></circle>
+  <circle cx="276.5" cy="55.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Brussels</title></circle>
+  <circle cx="282.9" cy="56.3" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Frankfurt</title></circle>
+  <circle cx="290.1" cy="51.8" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Berlin</title></circle>
+  <circle cx="282.8" cy="61.6" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Zurich</title></circle>
+  <circle cx="283.6" cy="65.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Milan</title></circle>
+  <circle cx="288.6" cy="71.8" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Rome</title></circle>
+  <circle cx="294.5" cy="59.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Vienna</title></circle>
+  <circle cx="301.5" cy="52.4" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Warsaw</title></circle>
+  <circle cx="291.6" cy="56.5" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Prague</title></circle>
+  <circle cx="297.0" cy="39.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Stockholm</title></circle>
+  <circle cx="286.0" cy="37.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Oslo</title></circle>
+  <circle cx="307.4" cy="37.5" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Helsinki</title></circle>
+  <circle cx="288.8" cy="46.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Copenhagen</title></circle>
+  <circle cx="313.4" cy="73.5" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Istanbul</title></circle>
+  <circle cx="316.8" cy="94.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Cairo</title></circle>
+  <circle cx="322.0" cy="90.4" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Tel Aviv</title></circle>
+  <circle cx="352.8" cy="103.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Dubai</title></circle>
+  <circle cx="340.0" cy="104.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Riyadh</title></circle>
+  <circle cx="275.0" cy="138.5" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Lagos</title></circle>
+  <circle cx="325.2" cy="153.0" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Nairobi</title></circle>
+  <circle cx="312.0" cy="200.1" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Johannesburg</title></circle>
+  <circle cx="297.6" cy="214.6" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Cape Town</title></circle>
+  <circle cx="379.2" cy="114.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Mumbai</title></circle>
+  <circle cx="385.8" cy="96.8" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Delhi</title></circle>
+  <circle cx="386.2" cy="126.4" r="4" fill="#38bdf8" filter="url(#m-glow)"><title>Bengaluru (HQ)</title></circle>
+  <circle cx="386.2" cy="126.4" r="7" fill="none" stroke="#38bdf8" stroke-width="0.8" opacity="0.6" class="ping-ring"/>
+  <circle cx="390.3" cy="126.2" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Chennai</title></circle>
+  <circle cx="425.7" cy="148.3" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Singapore</title></circle>
+  <circle cx="420.8" cy="124.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Bangkok</title></circle>
+  <circle cx="422.4" cy="144.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Kuala Lumpur</title></circle>
+  <circle cx="430.2" cy="162.4" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Jakarta</title></circle>
+  <circle cx="451.3" cy="123.4" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Manila</title></circle>
+  <circle cx="441.2" cy="108.7" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Hong Kong</title></circle>
+  <circle cx="452.2" cy="103.6" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Taipei</title></circle>
+  <circle cx="479.4" cy="83.7" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Tokyo</title></circle>
+  <circle cx="473.2" cy="85.5" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Osaka</title></circle>
+  <circle cx="460.3" cy="80.1" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Seoul</title></circle>
+  <circle cx="443.7" cy="210.8" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Perth</title></circle>
+  <circle cx="496.8" cy="214.4" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Sydney</title></circle>
+  <circle cx="487.3" cy="221.9" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Melbourne</title></circle>
+  <circle cx="499.5" cy="202.3" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Brisbane</title></circle>
+  <circle cx="532.0" cy="220.1" r="2.8" fill="#00f5c4" filter="url(#m-glow)"><title>Auckland</title></circle>
     </svg>
   </div>
 
