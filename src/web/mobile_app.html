@@ -63,24 +63,34 @@
 </head>
 <body>
 
-  <div class="app-header">
-    <div class="brand">
-      <img src="icons/icon48.png" alt="CogniGuard">
-      <span>CogniGuard Mobile</span>
+  <div class="app-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div class="brand" style="display:flex; align-items:center; gap:8px;">
+      <img src="icons/icon48.png" alt="CogniGuard" style="width:26px; height:26px; border-radius:6px;">
+      <span style="font-size:15px; font-weight:800; color:#f8fafc;">CogniGuard Mobile</span>
     </div>
-    <div class="status-pill" id="mobile-status">
-      <div class="pulse"></div>
-      <span>PROTECTED</span>
+    <div style="font-size:11px; font-family:monospace; color:#00f5c4; background:rgba(0,245,196,0.1); border:1px solid rgba(0,245,196,0.25); border-radius:12px; padding:3px 10px;">
+      ● MESH ONLINE
     </div>
   </div>
 
-  <!-- Top VIP Banner -->
-  <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <div style="font-size: 13px; font-weight: 700; color: #10b981;">🛡️ CogniGuard VIP Active</div>
-      <div style="font-size: 11px; color: var(--muted);">Worldwide threat-feed &amp; zero-entry radar</div>
+  <!-- Octohide Style Top Status & VIP Banner -->
+  <div style="background: #091524; border: 1px solid #162a42; border-radius: 18px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+    <!-- Centered Protection Pill Toggle -->
+    <div id="top-status-toggle" onclick="toggleShieldState()" style="background: #06101d; border: 1px solid #1a3655; border-radius: 12px; padding: 11px 16px; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; transition: all 0.25s ease;">
+      <span id="top-shield-icon" style="font-size: 16px;">🛡️</span>
+      <span id="top-shield-label" style="font-size: 15px; font-weight: 700; color: #f8fafc; letter-spacing: 0.3px;">Protected</span>
     </div>
-    <button class="btn" style="width: auto; padding: 6px 14px; font-size: 12px; background: #10b981; color: #060911;" onclick="openMobileVipModal()">Earn VIP</button>
+
+    <!-- Get VIP & Upgrade Action -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: 0.2px;">Get CogniGuard VIP</div>
+        <div style="font-size: 12px; color: #8ba0b8; margin-top: 2px;">Worldwide coverage and full access</div>
+      </div>
+      <button onclick="openMobileVipModal()" style="background: #00f5c4; color: #041421; font-weight: 800; font-size: 13px; border: none; border-radius: 24px; padding: 9px 22px; cursor: pointer; box-shadow: 0 0 16px rgba(0,245,196,0.35); transition: transform 0.15s ease;">
+        Upgrade
+      </button>
+    </div>
   </div>
 
   <!-- Shield Overview -->
@@ -506,6 +516,19 @@
     }
 
     async function scanMobileMessage() {
+      if (!isVipActive && scansRemaining <= 0) {
+        speak("Scan quota exhausted. Please watch 1 short ad to unlock 3 more URL scans.");
+        alert("⚠️ Scan Quota Exhausted!
+
+Watch 1 quick ad to unlock 3 more URL scans & 1-Hour VIP access!");
+        openMobileVipModal();
+        return;
+      }
+      if (!isVipActive) {
+        scansRemaining -= 1;
+        localStorage.setItem('cg_scans', scansRemaining.toString());
+        updateScanBadge();
+      }
       const raw = document.getElementById('msg-input').value.trim();
       const text = raw.toLowerCase();
       const resBox = document.getElementById('scan-result');
@@ -569,6 +592,18 @@
 
     let isShieldArmed = true;
     function toggleShieldState() {
+      const topLabel = document.getElementById('top-shield-label');
+      const topIcon = document.getElementById('top-shield-icon');
+      const topToggle = document.getElementById('top-status-toggle');
+      if (!isShieldArmed) {
+        if (topLabel) topLabel.innerText = 'Protected';
+        if (topIcon) topIcon.innerText = '🛡️';
+        if (topToggle) topToggle.style.borderColor = '#1a3655';
+      } else {
+        if (topLabel) topLabel.innerText = 'Unprotected';
+        if (topIcon) topIcon.innerText = '⚠️';
+        if (topToggle) topToggle.style.borderColor = '#ef4444';
+      }
       isShieldArmed = !isShieldArmed;
       const icon = document.getElementById('shield-icon');
       const title = document.getElementById('hero-title');
@@ -598,6 +633,93 @@
       }
     }
 
+    
+    // Scan Quota & Watch Ad State
+    let scansRemaining = parseInt(localStorage.getItem('cg_scans') || '3');
+    let isVipActive = localStorage.getItem('cg_vip') === 'true';
+
+    function updateScanBadge() {
+      const badge = document.getElementById('scan-credit-count');
+      const pill = document.getElementById('scan-credit-pill');
+      if (isVipActive) {
+        badge.innerText = '⭐ VIP Unlimited Scans Active';
+        pill.style.borderColor = '#00f5c4';
+        pill.style.color = '#00f5c4';
+      } else {
+        badge.innerText = `${scansRemaining} Free Scans Available`;
+        if (scansRemaining === 0) {
+          pill.style.borderColor = '#ef4444';
+          pill.style.color = '#ef4444';
+        } else {
+          pill.style.borderColor = '#00f5c4';
+          pill.style.color = '#00f5c4';
+        }
+      }
+    }
+    updateScanBadge();
+
+    // Ad Watch Runner
+    let currentAdCountdown = 5;
+    let adInterval = null;
+    let pendingRewardType = 1;
+
+    function startAdWatch(rewardType) {
+      closeMobileVipModal();
+      pendingRewardType = rewardType;
+      const modal = document.getElementById('ad-player-modal');
+      const timer = document.getElementById('ad-timer');
+      const bar = document.getElementById('ad-progress-bar');
+      modal.style.display = 'flex';
+      currentAdCountdown = 5;
+      timer.innerText = `Reward in 5s`;
+      bar.style.width = '0%';
+
+      if (adInterval) clearInterval(adInterval);
+      let elapsed = 0;
+      adInterval = setInterval(() => {
+        elapsed += 1;
+        currentAdCountdown -= 1;
+        bar.style.width = `${(elapsed / 5) * 100}%`;
+        if (currentAdCountdown > 0) {
+          timer.innerText = `Reward in ${currentAdCountdown}s`;
+        } else {
+          clearInterval(adInterval);
+          modal.style.display = 'none';
+          grantAdReward(pendingRewardType);
+        }
+      }, 1000);
+    }
+
+    function grantAdReward(type) {
+      if (type === 1) {
+        scansRemaining += 3;
+        isVipActive = true;
+        localStorage.setItem('cg_scans', scansRemaining.toString());
+        localStorage.setItem('cg_vip', 'true');
+        updateScanBadge();
+        speak("Sponsor ad completed. 3 link scans and 1-hour VIP access unlocked.");
+        alert("🎉 Congratulations! +3 Free URL Scans and 1-Hour VIP Access Granted!");
+      } else {
+        isVipActive = true;
+        localStorage.setItem('cg_vip', 'true');
+        updateScanBadge();
+        speak("Sponsor ads completed. 6-hour VIP access and unlimited link scans unlocked.");
+        alert("🎉 Congratulations! 6-Hour VIP Access & Unlimited Scans Activated!");
+      }
+    }
+
+    function upgradeToPermanentVip() {
+      const key = 'CG-PRO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const box = document.getElementById('vip-res-box');
+      if (box) box.style.display = 'block';
+      const txt = document.getElementById('vip-res-key');
+      if (txt) txt.innerText = key;
+      isVipActive = true;
+      localStorage.setItem('cg_vip', 'true');
+      updateScanBadge();
+      speak("Upgraded to CogniGuard VIP. Unlimited worldwide coverage active.");
+    }
+
     function openMobileVipModal() {
       document.getElementById('mobile-vip-modal').style.display = 'flex';
     }
@@ -623,49 +745,84 @@
     }
   </script>
 
-  <!-- VIP Bottom Sheet Modal (matching Octohide style) -->
-  <div id="mobile-vip-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:flex-end; justify-content:center;">
-    <div style="background:#090e1c; border-top:1px solid #1e293b; border-radius:22px 22px 0 0; max-width:480px; width:100%; padding:22px 20px 30px; box-shadow:0 -10px 40px rgba(0,0,0,0.8); animation:slideDown 0.25s ease;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="font-size:18px; font-weight:800; color:#f8fafc;">Earn VIP Access</h3>
-        <button onclick="closeMobileVipModal()" style="background:rgba(255,255,255,0.08); border:none; color:#94a3b8; font-size:14px; width:28px; height:28px; border-radius:50%; cursor:pointer;">✕</button>
+    <!-- VIP Bottom Sheet Modal (100% Octohide VIP Match) -->
+  <div id="mobile-vip-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:flex-end; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:#0a1727; border-top:1px solid #1c3654; border-radius:24px 24px 0 0; max-width:480px; width:100%; padding:24px 20px 32px; box-shadow:0 -12px 45px rgba(0,0,0,0.85); animation:slideDown 0.25s ease;">
+      <!-- Title & Close -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="font-size:20px; font-weight:800; color:#f8fafc; margin:0;">Earn VIP access</h3>
+        <button onclick="closeMobileVipModal()" style="background:rgba(255,255,255,0.08); border:none; color:#94a3b8; font-size:16px; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
       </div>
-      <p style="font-size:13px; color:#94a3b8; line-height:1.4; margin-bottom:18px;">
-        Support open-source cybersecurity! Earn VIP servers, zero-entry phone protection, and Multi-Agent Defense Council access.
+
+      <p style="font-size:13px; color:#8ba0b8; line-height:1.4; margin:0 0 20px;">
+        Take a few moments to watch ads and earn VIP access. You can also buy an ad-free version!
       </p>
 
-      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
-        <div onclick="earnViaStar()" style="background:#040711; border:1px solid #1e293b; border-radius:12px; padding:14px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-weight:700; font-size:14px; color:#10b981; display:flex; align-items:center; gap:6px;">
-              <span>⭐</span> Earn 30 Days of VIP Access
-            </div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Star CogniGuard-AI on GitHub and get VIP key</div>
+      <!-- Purple/Cyan Card Options -->
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+        <!-- Option 1: Watch 1 Ad -> 1 Hour VIP & +3 Scans -->
+        <div onclick="startAdWatch(1)" style="background:#0e2238; border:1px solid #1e3a5c; border-radius:14px; padding:15px 18px; cursor:pointer; display:flex; align-items:center; gap:14px; transition:all 0.2s ease;">
+          <div style="width:34px; height:34px; border-radius:50%; background:rgba(168,85,247,0.2); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+            💜
           </div>
-          <span style="font-size:18px; color:#10b981;">›</span>
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:14px; color:#ffffff;">Earn 1 hour of VIP access</div>
+            <div style="font-size:11px; color:#8ba0b8; margin-top:2px;">Watch 1 ad and get access to VIP servers (+3 Scans)</div>
+          </div>
         </div>
 
-        <div onclick="earnViaShare()" style="background:#040711; border:1px solid #1e293b; border-radius:12px; padding:14px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-weight:700; font-size:14px; color:#38bdf8; display:flex; align-items:center; gap:6px;">
-              <span>📢</span> Earn 90 Days of VIP Access
-            </div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Share with peers on LinkedIn / X</div>
+        <!-- Option 2: Watch 3 Ads -> 6 Hours VIP & Unlimited Scans -->
+        <div onclick="startAdWatch(3)" style="background:#0e2238; border:1px solid #1e3a5c; border-radius:14px; padding:15px 18px; cursor:pointer; display:flex; align-items:center; gap:14px; transition:all 0.2s ease;">
+          <div style="width:34px; height:34px; border-radius:50%; background:rgba(168,85,247,0.2); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+            💜
           </div>
-          <span style="font-size:18px; color:#38bdf8;">›</span>
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:14px; color:#ffffff;">Earn 6 hours of VIP access</div>
+            <div style="font-size:11px; color:#8ba0b8; margin-top:2px;">Watch 3 ads and get access to VIP servers (Unlimited)</div>
+          </div>
         </div>
       </div>
 
-      <div id="vip-res-box" style="display:none; background:rgba(16,185,129,0.12); border:1px solid var(--green); border-radius:10px; padding:12px; text-align:center; margin-bottom:14px;">
-        <div style="font-size:11px; color:var(--green); font-weight:700;">🎉 VIP KEY ISSUED:</div>
+      <!-- Result Key Box if generated -->
+      <div id="vip-res-box" style="display:none; background:rgba(0,245,196,0.12); border:1px solid #00f5c4; border-radius:10px; padding:12px; text-align:center; margin-bottom:14px;">
+        <div style="font-size:11px; color:#00f5c4; font-weight:700;">🎉 VIP KEY ISSUED:</div>
         <code id="vip-res-key" style="font-size:14px; font-weight:800; color:#fff;">CG-PRO-MOBILE</code>
       </div>
 
-      <button class="btn" style="background:#10b981; color:#060911; font-weight:800; font-size:15px; padding:14px;" onclick="closeMobileVipModal(); window.location.href='index.html#pricing';">
-        Upgrade to CogniGuard VIP
+      <!-- Upgrade to Octohide / CogniGuard VIP Pill Button -->
+      <button onclick="upgradeToPermanentVip()" style="width:100%; background:#00f5c4; color:#051624; border:none; border-radius:14px; padding:16px 20px; font-weight:800; font-size:15px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(0,245,196,0.3); transition:transform 0.15s ease;">
+        <span>Upgrade to CogniGuard VIP</span>
+        <span style="font-size:11px; font-weight:600; opacity:0.85; margin-top:2px;">Worldwide coverage and full access</span>
       </button>
-      <div style="text-align:center; font-size:11px; color:#64748b; margin-top:10px;">
-        Worldwide coverage and full access • $0 tool cost
+    </div>
+  </div>
+
+  <!-- Interactive Simulated Ad Player Overlay -->
+  <div id="ad-player-modal" style="display:none; position:fixed; inset:0; background:rgba(3,7,18,0.95); z-index:10000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(6px);">
+    <div style="background:#0b192c; border:1px solid #1c3654; border-radius:20px; max-width:440px; width:100%; padding:26px 22px; text-align:center; box-shadow:0 15px 50px rgba(0,0,0,0.9);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <span style="font-size:10px; font-family:monospace; background:rgba(168,85,247,0.2); color:#c084fc; border:1px solid rgba(168,85,247,0.35); border-radius:8px; padding:3px 8px; font-weight:700;">
+          SPONSORED ADVERTISEMENT
+        </span>
+        <span id="ad-timer" style="font-size:12px; font-weight:800; color:#00f5c4; font-family:monospace;">Reward in 5s</span>
+      </div>
+
+      <!-- Ad Creative -->
+      <div style="background:#071220; border:1px solid #193656; border-radius:14px; padding:20px 16px; margin-bottom:16px;">
+        <div style="font-size:36px; margin-bottom:10px;">🛡️</div>
+        <h4 style="font-size:16px; font-weight:800; color:#ffffff; margin:0 0 6px;">CogniGuard AI Enterprise</h4>
+        <p style="font-size:12px; color:#8ba0b8; line-height:1.4; margin:0;">
+          Autonomous Multi-Agent Defense for Cloud &amp; Developers. Pre-execution sandboxing stops zero-day payload execution.
+        </p>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="width:100%; height:6px; background:#1e293b; border-radius:3px; overflow:hidden; margin-bottom:16px;">
+        <div id="ad-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #a855f7, #00f5c4); transition:width 1s linear;"></div>
+      </div>
+
+      <div style="font-size:11px; color:#64748b;">
+        Please watch the full sponsor message to unlock your reward.
       </div>
     </div>
   </div>
