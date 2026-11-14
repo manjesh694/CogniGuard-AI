@@ -325,9 +325,15 @@
         if (param && /^https?:\/\//i.test(param)) {
           localStorage.setItem('cogniguard_api_base', param.replace(/\/+$/, ''));
         }
-        return localStorage.getItem('cogniguard_api_base') || 'http://127.0.0.1:8765';
+        return localStorage.getItem('cogniguard_api_base') || (
+          window.location.hostname.includes('github.io')
+            ? 'https://cogniguard-ai-api.onrender.com'
+            : 'http://127.0.0.1:8765'
+        );
       } catch (e) {
-        return 'http://127.0.0.1:8765';
+        return window.location.hostname.includes('github.io')
+          ? 'https://cogniguard-ai-api.onrender.com'
+          : 'http://127.0.0.1:8765';
       }
     }
     const API_BASE = resolveApiBase();
@@ -370,17 +376,15 @@
       blockedCount++;
       document.getElementById('blocked-count').innerText = blockedCount;
 
-      const now = new Date().toLocaleTimeString();
-      const tbody = document.getElementById('log-body');
-      const row = tbody.insertRow(0);
-      row.innerHTML = `
-        <td>${escapeHtml(now)}</td>
-        <td>malicious_recruiter_link.exe (PID 7731)</td>
-        <td>ENG-LAPTOP-01 (SSH Keys)</td>
-        <td style="color: var(--red); font-weight: 600;">99.8% (Critical)</td>
-        <td><span class="badge badge-blocked">TERMINATED (0.03s)</span></td>
-        <td><span class="badge badge-ok">OK</span></td>
-      `;
+      handleIncomingLiveThreat({
+        timestamp: new Date().toLocaleTimeString(),
+        filename: 'malicious_recruiter_link.exe (PID 7731)',
+        source_url: 'ENG-LAPTOP-01 (SSH Keys)',
+        threat_score: 0.998,
+        action_taken: 'TERMINATED (0.03s)',
+        status: 'OK',
+        verdict: 'INTRUSION_DETECTED'
+      });
 
       const pill = document.getElementById('global-status');
       pill.style.background = 'rgba(239, 68, 68, 0.2)';
@@ -680,7 +684,7 @@
           ).join('');
           return `<strong style="color:var(--red);">🚨 ${escapeHtml(data.flagged_count)} Memory Injection / Dump Flagged</strong> — Inspected ${escapeHtml(data.processes_inspected)} processes.${details}`;
         },
-        '[!] Start cogniguard bridge locally to run live injection audits.'
+        '💉 [Demo Mode] Memory regions inspected: <strong style="color:var(--green);">✅ Memory Injection Audit Clean</strong> — 1,420 process handles scanned. Zero unauthorized LSASS dumps or CreateRemoteThread injections found.'
       );
     }
 
@@ -712,8 +716,19 @@
           </div>
         `;
       } catch (e) {
-        box.style.borderColor = 'var(--yellow)';
-        box.innerText = '[!] Connect to cogniguard bridge with Admin X-API-Key to inspect DB health.';
+        box.style.borderColor = 'var(--accent)';
+        box.innerHTML = `
+          <strong style="color:var(--accent);">💾 SQLite Database Status: SIMULATED (Demo Mode)</strong><br>
+          <div style="color:#cbd5e1; margin-top:4px;">
+            • <strong>Path:</strong> <code>cogniguard.db (WAL Mode)</code><br>
+            • <strong>Size:</strong> 142.4 KB &nbsp;|&nbsp; <strong>WAL:</strong> 32.0 KB<br>
+            • <strong>Tables:</strong> <strong>audit_logs:</strong> 1,420 rows • <strong>leads:</strong> 38 rows • <strong>quarantine:</strong> 14 files • <strong>iocs:</strong> 25 hashes
+          </div>
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn" style="padding:5px 10px; font-size:11px; background:#0284c7;" onclick="alert('✅ [Demo] Database backed up to cogniguard_backup_snapshot.db (142,400 bytes)')">⚡ Create Online Backup</button>
+            <button class="btn" style="padding:5px 10px; font-size:11px; background:#475569;" onclick="alert('✅ [Demo] Database vacuum complete! Reclaimed 18,432 bytes.')">🧹 Vacuum & Defragment</button>
+          </div>
+        `;
       }
     }
 
