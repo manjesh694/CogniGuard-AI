@@ -223,6 +223,25 @@ def build_parser() -> argparse.ArgumentParser:
     se_p.add_argument("--attachment", action="append", default=[], help="Optional attachment filename (repeatable)")
     se_p.add_argument("--json", action="store_true", help="Output scan report as JSON")
 
+    explain_p = subparsers.add_parser(
+        "explain",
+        help="Deconstruct psychological manipulation and evasion vectors of a URL, SMS, or file",
+    )
+    explain_p.add_argument("content", help="Suspicious URL, SMS text, or file name to analyze")
+    explain_p.add_argument("--json", action="store_true", help="Output report as structured JSON")
+
+    tray_p = subparsers.add_parser(
+        "tray",
+        help="Launch the native Windows system-tray background guardian with clipboard & honeypot monitor",
+    )
+
+    alert_p = subparsers.add_parser(
+        "alert",
+        help="Dispatch an incident alert to configured Telegram, Discord, Slack, or SIEM webhooks",
+    )
+    alert_p.add_argument("--url", default=None, help="Optional webhook URL override")
+    alert_p.add_argument("--json", action="store_true", help="Output alert dispatch result as JSON")
+
     return parser
 
 
@@ -608,7 +627,60 @@ def main(argv: Optional[List[str]] = None) -> int:
             print("=" * 60)
         return 2 if report.get("threat_level") == "CRITICAL_PHISHING" else (1 if report.get("is_spam") else 0)
 
-    return 1
+    if args.command == "explain":
+        from agent.ai_explainer import AgenticThreatExplainer
+        explainer = AgenticThreatExplainer()
+        report = explainer.explain(args.content)
+        if args.json:
+            print(json.dumps(report.to_dict(), indent=2))
+        else:
+            print("=" * 60)
+            print("🧠 COGNIGUARD AGENTIC THREAT PSYCHOLOGY & DECEPTION ANALYSIS")
+            print("=" * 60)
+            print(f"Target:             {args.content}")
+            print(f"Category:           {report.category}")
+            print(f"Urgency Level:      {report.urgency_level}")
+            print(f"Exfiltration Risk:  {report.exfiltration_risk}")
+            print(f"Executive Summary:  {report.summary}")
+            print("\n🎭 Psychological Triggers Exploited:")
+            for pt in report.psychological_triggers:
+                print(f"  • {pt}")
+            print("\n🛡️ Defense Evasion Tactics:")
+            for et in report.evasion_tactics:
+                print(f"  • {et}")
+            print("\n⚡ Recommended Response Actions:")
+            for ra in report.recommended_actions:
+                print(f"  • {ra}")
+            print("=" * 60)
+        return 0
+
+    if args.command == "tray":
+        from agent.tray_daemon import main as run_tray
+        run_tray()
+        return 0
+
+    if args.command == "alert":
+        from agent.alerts import WebhookDispatcher
+        dispatcher = WebhookDispatcher()
+        event = {
+            "severity": "CRITICAL",
+            "filename": "apply.loanzap.in",
+            "reason": "Predatory Instant Loan Fraud & Unauthorized Disbursal Lure",
+            "threat_score": 0.99,
+            "action_taken": "PAYLOAD_NEUTRALIZED",
+            "source_url": "https://apply.loanzap.in/",
+            "timestamp": "2026-11-15 00:00:00",
+        }
+        ok, code, err = dispatcher.send_sync(event, override_url=args.url)
+        res = {"success": ok, "status_code": code, "error": err, "event": event}
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if ok:
+                print("✅ SOC Alert successfully dispatched across channels!")
+            else:
+                print(f"⚠️ Dispatch notice: {err}")
+        return 0 if ok else 1
 
     return 1
 

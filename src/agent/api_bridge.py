@@ -172,6 +172,10 @@ class WebhookConfigRequest(BaseModel):
     webhook_url: str = Field(..., min_length=8, max_length=2048)
 
 
+class ThreatExplainRequest(BaseModel):
+    content: str = Field(..., min_length=1, max_length=10000)
+
+
 class IocCreateRequest(BaseModel):
     sha256: str = Field(..., min_length=64, max_length=64)
     label: str = Field(..., min_length=1, max_length=200)
@@ -712,6 +716,16 @@ def scan_email_spam_endpoint(req: EmailSpamScanRequest):
             }
         )
     return result
+
+
+@app.post("/api/v1/threat/explain")
+def explain_threat_endpoint(req: ThreatExplainRequest):
+    """Deconstruct psychological manipulation and evasion vectors of a URL, SMS, or file."""
+    from agent.ai_explainer import AgenticThreatExplainer
+
+    explainer = AgenticThreatExplainer()
+    report = explainer.explain(req.content)
+    return report.to_dict()
 
 
 @app.get("/api/v1/events/stream")
