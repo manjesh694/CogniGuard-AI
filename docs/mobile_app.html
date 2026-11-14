@@ -72,11 +72,55 @@
     </div>
   </div>
 
+  <!-- Top VIP Banner -->
+  <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <div style="font-size: 13px; font-weight: 700; color: #10b981;">🛡️ CogniGuard VIP Active</div>
+      <div style="font-size: 11px; color: var(--muted);">Worldwide threat-feed &amp; zero-entry radar</div>
+    </div>
+    <button class="btn" style="width: auto; padding: 6px 14px; font-size: 12px; background: #10b981; color: #060911;" onclick="openMobileVipModal()">Earn VIP</button>
+  </div>
+
   <!-- Shield Overview -->
   <div class="shield-hero">
-    <div class="shield-circle" id="shield-icon">🛡️</div>
-    <h2 id="hero-title">Phone & Laptop Secured</h2>
-    <p id="hero-sub">Zero-Entry WhatsApp, SMS & UPI Guard Active</p>
+    <div class="shield-circle" id="shield-icon" onclick="toggleShieldState()" style="cursor:pointer;" title="Tap to toggle protection state">🛡️</div>
+    <h2 id="hero-title">Phone &amp; Laptop Secured</h2>
+    <p id="hero-sub">Zero-Entry WhatsApp, SMS &amp; UPI Guard Active (Tap to toggle)</p>
+  </div>
+
+  <!-- Mini Global Fleet Radar Map (like screenshot) -->
+  <div style="background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <span style="font-size: 12px; font-weight: 700; color: var(--accent); display:flex; align-items:center; gap:6px;">
+        <span class="pulse"></span> Global Threat Radar
+      </span>
+      <span style="font-size: 10px; color: var(--green); font-family: monospace;">9 NODES PROTECTED</span>
+    </div>
+    <svg viewBox="0 0 500 230" style="width:100%; height:auto; display:block; background:#030712; border-radius:8px;">
+      <defs>
+        <filter id="m-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <!-- Continents -->
+      <path d="M 60 40 Q 90 30 130 50 Q 150 70 140 100 Q 110 120 90 100 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1"/>
+      <path d="M 120 110 Q 150 130 170 170 Q 150 200 130 170 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1"/>
+      <path d="M 230 40 Q 280 40 290 70 Q 270 90 240 80 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1"/>
+      <path d="M 230 100 Q 280 110 270 160 Q 240 150 230 120 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1"/>
+      <path d="M 290 40 Q 380 40 430 80 Q 400 130 340 120 Q 300 90 290 60 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1"/>
+      <path d="M 390 150 Q 440 150 440 190 Q 400 190 390 160 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1"/>
+      <!-- Glowing Active Nodes -->
+      <circle cx="100" cy="80" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="140" cy="85" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="160" cy="170" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="250" cy="70" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="270" cy="75" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="350" cy="125" r="4.5" fill="#38bdf8" filter="url(#m-glow)"/>
+      <circle cx="390" cy="140" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="430" cy="90" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+      <circle cx="430" cy="180" r="3.5" fill="#10b981" filter="url(#m-glow)"/>
+    </svg>
   </div>
 
   <!-- WhatsApp / SMS / UPI Scam Scanner -->
@@ -231,6 +275,108 @@
         document.getElementById('laptop-state').innerText = '● Laptop Secured (Status: OK)';
       }, 4000);
     }
+
+    let isShieldArmed = true;
+    function toggleShieldState() {
+      isShieldArmed = !isShieldArmed;
+      const icon = document.getElementById('shield-icon');
+      const title = document.getElementById('hero-title');
+      const sub = document.getElementById('hero-sub');
+      const pill = document.getElementById('mobile-status');
+      if (isShieldArmed) {
+        icon.innerText = '🛡️';
+        icon.style.borderColor = 'var(--green)';
+        title.innerText = 'Phone & Laptop Secured';
+        sub.innerText = 'Zero-Entry WhatsApp, SMS & UPI Guard Active (Tap to toggle)';
+        pill.className = 'status-pill';
+        pill.style.background = 'rgba(16, 185, 129, 0.15)';
+        pill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        pill.style.color = 'var(--green)';
+        pill.innerHTML = '<div class="pulse"></div><span>PROTECTED</span>';
+        speak("Protection re-armed. Phone and laptop credential vaults secured.");
+      } else {
+        icon.innerText = '⚠️';
+        icon.style.borderColor = '#ef4444';
+        title.innerText = 'Protection Paused';
+        sub.innerText = 'Tripwires disengaged! Tap shield to re-arm immediately.';
+        pill.className = 'status-pill';
+        pill.style.background = 'rgba(239, 68, 68, 0.15)';
+        pill.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        pill.style.color = '#ef4444';
+        pill.innerHTML = '<div class="pulse" style="background:#ef4444; box-shadow:0 0 8px #ef4444;"></div><span>UNPROTECTED</span>';
+      }
+    }
+
+    function openMobileVipModal() {
+      document.getElementById('mobile-vip-modal').style.display = 'flex';
+    }
+    function closeMobileVipModal() {
+      document.getElementById('mobile-vip-modal').style.display = 'none';
+    }
+    function earnViaStar() {
+      window.open('https://github.com/manjesh694/CogniGuard-AI', '_blank');
+      const key = 'CG-PRO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const box = document.getElementById('vip-res-box');
+      if (box) box.style.display = 'block';
+      const txt = document.getElementById('vip-res-key');
+      if (txt) txt.innerText = key;
+    }
+    function earnViaShare() {
+      const text = encodeURIComponent("🛡️ Testing CogniGuard AI Zero-Entry Autonomous Cyber Defense — Pre-execution airlocks for AI agents and developer credentials. Check it out: https://manjesh694.github.io/CogniGuard-AI/");
+      window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent('https://manjesh694.github.io/CogniGuard-AI/') + '&summary=' + text, '_blank');
+      const key = 'CG-PRO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const box = document.getElementById('vip-res-box');
+      if (box) box.style.display = 'block';
+      const txt = document.getElementById('vip-res-key');
+      if (txt) txt.innerText = key;
+    }
   </script>
+
+  <!-- VIP Bottom Sheet Modal (matching Octohide style) -->
+  <div id="mobile-vip-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:flex-end; justify-content:center;">
+    <div style="background:#090e1c; border-top:1px solid #1e293b; border-radius:22px 22px 0 0; max-width:480px; width:100%; padding:22px 20px 30px; box-shadow:0 -10px 40px rgba(0,0,0,0.8); animation:slideDown 0.25s ease;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:18px; font-weight:800; color:#f8fafc;">Earn VIP Access</h3>
+        <button onclick="closeMobileVipModal()" style="background:rgba(255,255,255,0.08); border:none; color:#94a3b8; font-size:14px; width:28px; height:28px; border-radius:50%; cursor:pointer;">✕</button>
+      </div>
+      <p style="font-size:13px; color:#94a3b8; line-height:1.4; margin-bottom:18px;">
+        Support open-source cybersecurity! Earn VIP servers, zero-entry phone protection, and Multi-Agent Defense Council access.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+        <div onclick="earnViaStar()" style="background:#040711; border:1px solid #1e293b; border-radius:12px; padding:14px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:700; font-size:14px; color:#10b981; display:flex; align-items:center; gap:6px;">
+              <span>⭐</span> Earn 30 Days of VIP Access
+            </div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Star CogniGuard-AI on GitHub and get VIP key</div>
+          </div>
+          <span style="font-size:18px; color:#10b981;">›</span>
+        </div>
+
+        <div onclick="earnViaShare()" style="background:#040711; border:1px solid #1e293b; border-radius:12px; padding:14px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:700; font-size:14px; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+              <span>📢</span> Earn 90 Days of VIP Access
+            </div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Share with peers on LinkedIn / X</div>
+          </div>
+          <span style="font-size:18px; color:#38bdf8;">›</span>
+        </div>
+      </div>
+
+      <div id="vip-res-box" style="display:none; background:rgba(16,185,129,0.12); border:1px solid var(--green); border-radius:10px; padding:12px; text-align:center; margin-bottom:14px;">
+        <div style="font-size:11px; color:var(--green); font-weight:700;">🎉 VIP KEY ISSUED:</div>
+        <code id="vip-res-key" style="font-size:14px; font-weight:800; color:#fff;">CG-PRO-MOBILE</code>
+      </div>
+
+      <button class="btn" style="background:#10b981; color:#060911; font-weight:800; font-size:15px; padding:14px;" onclick="closeMobileVipModal(); window.location.href='index.html#pricing';">
+        Upgrade to CogniGuard VIP
+      </button>
+      <div style="text-align:center; font-size:11px; color:#64748b; margin-top:10px;">
+        Worldwide coverage and full access • $0 tool cost
+      </div>
+    </div>
+  </div>
 </body>
 </html>

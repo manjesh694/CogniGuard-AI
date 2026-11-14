@@ -74,9 +74,14 @@
         <p>Multi-Team Fleet Endpoint & Human-Layer Risk Management</p>
       </div>
     </div>
-    <div class="status-pill" id="global-status">
-      <div class="pulse-dot"></div>
-      <span>FLEET STATUS: OK (100% SECURE)</span>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669); font-weight:700; display:flex; align-items:center; gap:6px; box-shadow: 0 0 15px rgba(16,185,129,0.3);" onclick="openVipModal()">
+        <span>💎</span> Earn Pro VIP Access
+      </button>
+      <div class="status-pill" id="global-status">
+        <div class="pulse-dot"></div>
+        <span>FLEET STATUS: OK (100% SECURE)</span>
+      </div>
     </div>
   </div>
 
@@ -106,6 +111,115 @@
       <div class="card-title">Trials & Enterprise Leads</div>
       <div class="card-value" id="leads-count" style="color: #60a5fa;">0</div>
       <div class="card-sub" id="leads-breakdown">Waiting for local bridge (:8765)</div>
+    </div>
+  </div>
+
+  <!-- Global Protected Fleet Radar Map -->
+  <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <h2 style="font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <span class="pulse-dot"></span>
+          <span>🌍 Global Enterprise Protected Fleet &amp; Threat Radar</span>
+        </h2>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+          9 Autonomous Endpoints Online across 5 Continents • Multi-Agent Tripwires Active
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(16, 185, 129, 0.12); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600;">
+          ● 0 Active Breaches
+        </span>
+        <button class="btn" style="padding: 6px 12px; font-size: 11px; background: #1e293b;" onclick="triggerAttackFlash('blr')">
+          ⚡ Ping Threat Radar
+        </button>
+      </div>
+    </div>
+
+    <!-- SVG World Map Container -->
+    <div style="width: 100%; position: relative; background: #030712; border: 1px solid #111827; border-radius: 10px; overflow: hidden;">
+      <svg id="world-fleet-map" viewBox="0 0 1000 450" style="width: 100%; height: auto; display: block;">
+        <defs>
+          <filter id="glow-green" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+          <pattern id="radar-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(56, 189, 248, 0.05)" stroke-width="0.8"/>
+          </pattern>
+        </defs>
+
+        <rect width="1000" height="450" fill="#030712"/>
+        <rect width="1000" height="450" fill="url(#radar-grid)"/>
+
+        <!-- Continents Geometry -->
+        <path d="M 120 70 Q 180 50 250 80 Q 290 110 270 160 Q 220 200 190 190 Q 160 170 130 140 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1.2"/>
+        <path d="M 230 200 Q 280 230 330 270 Q 360 330 320 390 Q 280 410 270 340 Q 250 270 220 220 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1.2"/>
+        <path d="M 450 70 Q 530 60 560 90 Q 540 140 480 160 Q 440 140 430 100 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1.2"/>
+        <path d="M 450 170 Q 540 180 570 230 Q 550 320 500 370 Q 460 340 440 250 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1.2"/>
+        <path d="M 570 70 Q 750 50 870 100 Q 890 180 820 240 Q 730 260 670 220 Q 600 170 560 120 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1.2"/>
+        <path d="M 780 300 Q 870 290 890 340 Q 870 390 800 380 Q 770 340 780 300 Z" fill="#0b172a" stroke="#1e293b" stroke-width="1.2"/>
+
+        <!-- Telemetry Network Lines -->
+        <path d="M 190 150 Q 340 100 490 120 T 700 230" fill="none" stroke="rgba(56, 189, 248, 0.2)" stroke-width="1.2" stroke-dasharray="4 4"/>
+        <path d="M 490 120 Q 600 160 700 230 T 790 260 T 840 330" fill="none" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+        <!-- Nodes -->
+        <g class="fleet-node" id="node-sf" transform="translate(190, 150)">
+          <circle class="ring" r="14" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">ENG-SF (99%)</text>
+        </g>
+        <g class="fleet-node" id="node-ny" transform="translate(270, 145)">
+          <circle class="ring" r="12" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">FIN-NY (98%)</text>
+        </g>
+        <g class="fleet-node" id="node-sao" transform="translate(320, 320)">
+          <circle class="ring" r="12" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="4.5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">DEV-SAO (97%)</text>
+        </g>
+        <g class="fleet-node" id="node-lon" transform="translate(485, 125)">
+          <circle class="ring" r="14" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">DEV-LON (98%)</text>
+        </g>
+        <g class="fleet-node" id="node-fra" transform="translate(520, 135)">
+          <circle class="ring" r="12" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">SEC-FRA (99%)</text>
+        </g>
+        <g class="fleet-node" id="node-blr" transform="translate(700, 230)">
+          <circle class="attack-ripple" id="ripple-blr" r="24" fill="none" stroke="var(--green)" stroke-width="2" opacity="0.8"/>
+          <circle class="ring" r="15" fill="none" stroke="var(--green)" stroke-width="2" opacity="0.9"/>
+          <circle class="core" id="core-blr" r="6" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="14" y="4" fill="#38bdf8" font-size="11" font-weight="700" font-family="monospace">ENG-BLR (Lead Dev)</text>
+        </g>
+        <g class="fleet-node" id="node-sin" transform="translate(775, 255)">
+          <circle class="ring" r="12" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">SRE-SIN (99%)</text>
+        </g>
+        <g class="fleet-node" id="node-tyo" transform="translate(850, 160)">
+          <circle class="ring" r="12" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">OPS-TYO (98%)</text>
+        </g>
+        <g class="fleet-node" id="node-syd" transform="translate(860, 350)">
+          <circle class="ring" r="12" fill="none" stroke="var(--green)" stroke-width="1.5" opacity="0.6"/>
+          <circle class="core" r="5" fill="var(--green)" filter="url(#glow-green)"/>
+          <text x="12" y="4" fill="#94a3b8" font-size="10" font-family="monospace">DEV-SYD (96%)</text>
+        </g>
+      </svg>
+      <div id="radar-toast" style="position: absolute; bottom: 12px; left: 16px; font-size: 12px; font-family: monospace; color: var(--green); background: rgba(3,7,18,0.85); padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;">
+        <span class="pulse-dot"></span>
+        <span id="radar-toast-text">Fleet Telemetry Connected • 9/9 Nodes Encrypted (0.04s SLA)</span>
+      </div>
     </div>
   </div>
 
@@ -375,6 +489,8 @@
       banner.style.display = 'block';
       blockedCount++;
       document.getElementById('blocked-count').innerText = blockedCount;
+
+      triggerAttackFlash('blr');
 
       handleIncomingLiveThreat({
         timestamp: new Date().toLocaleTimeString(),
@@ -882,9 +998,121 @@
       });
       syncLiveLogsFromPython();
     }
+    function triggerAttackFlash(nodeId = 'blr') {
+      const core = document.getElementById(`core-${nodeId}`);
+      const ripple = document.getElementById(`ripple-${nodeId}`);
+      const toast = document.getElementById('radar-toast-text');
+      if (core && ripple) {
+        core.setAttribute('fill', '#ef4444');
+        core.setAttribute('filter', 'url(#glow-red)');
+        ripple.setAttribute('stroke', '#ef4444');
+        ripple.setAttribute('r', '36');
+        ripple.setAttribute('stroke-width', '3');
+        if (toast) toast.innerHTML = '<span style="color:#ef4444;">🚨 INTRUSION INTERCEPTED & CONTAINED ON ENG-BLR (0.04s)</span>';
+        setTimeout(() => {
+          core.setAttribute('fill', 'var(--green)');
+          core.setAttribute('filter', 'url(#glow-green)');
+          ripple.setAttribute('stroke', 'var(--green)');
+          ripple.setAttribute('r', '24');
+          ripple.setAttribute('stroke-width', '2');
+          if (toast) toast.innerHTML = 'Fleet Telemetry Connected • 9/9 Nodes Encrypted (0.04s SLA)';
+        }, 2400);
+      }
+    }
+
+    function openVipModal() {
+      document.getElementById('vip-modal').style.display = 'flex';
+    }
+    function closeVipModal() {
+      document.getElementById('vip-modal').style.display = 'none';
+    }
+    function earnViaStar() {
+      window.open('https://github.com/manjesh694/CogniGuard-AI', '_blank');
+      const key = 'CG-PRO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      saveAdminKey(key);
+      const box = document.getElementById('vip-key-box');
+      if (box) box.style.display = 'block';
+      const txt = document.getElementById('vip-key-text');
+      if (txt) txt.innerText = key;
+      syncLiveLogsFromPython();
+    }
+    function earnViaShare() {
+      const text = encodeURIComponent("🛡️ Testing CogniGuard AI Zero-Entry Autonomous Cyber Defense — Pre-execution airlocks for AI agents and developer credentials. Check it out: https://manjesh694.github.io/CogniGuard-AI/");
+      window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent('https://manjesh694.github.io/CogniGuard-AI/') + '&summary=' + text, '_blank');
+      const key = 'CG-PRO-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      saveAdminKey(key);
+      const box = document.getElementById('vip-key-box');
+      if (box) box.style.display = 'block';
+      const txt = document.getElementById('vip-key-text');
+      if (txt) txt.innerText = key;
+      syncLiveLogsFromPython();
+    }
+    function earnViaPilot() {
+      closeVipModal();
+      window.location.href = 'index.html#pricing';
+    }
+
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();
     initLiveSseStream();
   </script>
+
+  <!-- VIP Access Modal -->
+  <div id="vip-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0b1329; border:1px solid #1e293b; border-radius:18px; max-width:520px; width:100%; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.9); animation:slideDown 0.25s ease;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:22px;">💎</span>
+          <h3 style="font-size:18px; font-weight:800; color:#f8fafc;">Unlock CogniGuard Pro Access</h3>
+        </div>
+        <button onclick="closeVipModal()" style="background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer;">✕</button>
+      </div>
+      <p style="font-size:13px; color:#94a3b8; line-height:1.5; margin-bottom:18px;">
+        Support open-source autonomous cyber defense! Unlock the Multi-Agent Defense Council, automated Threat-Intel feeds, and Kill-Chain correlation ($0 cost).
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+        <div style="background:#030712; border:1px solid #1e293b; border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div>
+            <div style="font-weight:700; font-size:14px; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+              <span>⭐</span> Star on GitHub (Earn 1 Month Pro)
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:3px;">Star manjesh694/CogniGuard-AI to generate your Pro trial key.</div>
+          </div>
+          <button class="btn" style="background:#10b981; padding:9px 14px; font-size:12px; white-space:nowrap;" onclick="earnViaStar()">Star &amp; Unlock</button>
+        </div>
+
+        <div style="background:#030712; border:1px solid #1e293b; border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div>
+            <div style="font-weight:700; font-size:14px; color:#a78bfa; display:flex; align-items:center; gap:6px;">
+              <span>📢</span> Share on LinkedIn / X (Earn 3 Months)
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:3px;">Share with developer &amp; security peers to unlock Team Pro.</div>
+          </div>
+          <button class="btn" style="background:#7c3aed; padding:9px 14px; font-size:12px; white-space:nowrap;" onclick="earnViaShare()">Share &amp; Earn</button>
+        </div>
+
+        <div style="background:#030712; border:1px solid #1e293b; border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div>
+            <div style="font-weight:700; font-size:14px; color:#f59e0b; display:flex; align-items:center; gap:6px;">
+              <span>🏢</span> Enterprise Fleet Pilot (50+ Seats)
+            </div>
+            <div style="font-size:12px; color:#94a3b8; margin-top:3px;">Central SOC console, webhook dispatch &amp; custom SIEM compliance.</div>
+          </div>
+          <button class="btn" style="background:#d97706; padding:9px 14px; font-size:12px; white-space:nowrap;" onclick="earnViaPilot()">Start Pilot</button>
+        </div>
+      </div>
+
+      <div id="vip-key-box" style="display:none; background:rgba(16,185,129,0.12); border:1px solid var(--green); border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;">
+        <div style="font-size:12px; color:var(--green); font-weight:700; margin-bottom:4px;">🎉 PRO LICENSE KEY ISSUED &amp; ARMED:</div>
+        <code id="vip-key-text" style="font-size:15px; font-weight:800; color:#fff; letter-spacing:1px;">CG-PRO-STAR88</code>
+        <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Saved to admin key — All pro endpoints unlocked!</div>
+      </div>
+
+      <div style="text-align:center; font-size:12px; color:#64748b;">
+        CogniGuard AI is 100% Zero-Entry Cyber Defense. Free &amp; Open-Source.
+      </div>
+    </div>
+  </div>
 </body>
 </html>
