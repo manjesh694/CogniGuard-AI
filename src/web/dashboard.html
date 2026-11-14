@@ -171,6 +171,8 @@
     <button class="btn" style="background: #0f766e;" onclick="runLiveProcessAudit()">🔍 Run Live Process Audit</button>
     <button class="btn" style="background: #1d4ed8;" onclick="runLiveNetworkAudit()">🌐 Run C2 Network Audit</button>
     <button class="btn" style="background: #7c3aed;" onclick="runDefenseCouncilInvestigation()">🧠 Run Defense Council &amp; Kill-Chain</button>
+    <button class="btn" style="background: #be123c;" onclick="runMemoryInjectionAudit()">💉 Run Memory Injection Audit</button>
+    <button class="btn" style="background: #334155;" onclick="showDbHealth()">💾 SQLite Database Health</button>
     <a href="index.html" class="btn" style="background: #1f2937; text-decoration: none;">← Website Home</a>
     <input id="admin-api-key" type="password" placeholder="🔑 Admin X-API-Key (for Cloud)" onchange="saveAdminKey(this.value)" style="background: #030712; border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 12px; min-width: 220px;">
   </div>
@@ -182,6 +184,7 @@
       <span>Real-Time Enterprise Audit Log</span>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <span id="bridge-status-label" style="font-size: 12px; color: var(--text-muted);">Synced with Local Python API</span>
+        <span id="sse-pill" style="font-size: 11px; padding: 3px 8px; border-radius: 12px; background: rgba(56, 189, 248, 0.12); color: var(--accent); font-weight: 600;">⚡ SSE Stream Ready</span>
         <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="exportAuditCsv()">⬇ Export Audit CSV</button>
       </div>
     </div>
@@ -666,6 +669,109 @@
       );
     }
 
+    function runMemoryInjectionAudit() {
+      return runAuditPanel(
+        '/api/v1/injection/audit',
+        '💉 Auditing OS processes for memory dumping & code injection signatures...',
+        data => `<strong style="color:var(--green);">✅ Memory & Process Injection Audit Clean</strong> — Inspected ${escapeHtml(data.processes_inspected)} processes.`,
+        data => {
+          const details = (data.flagged || []).map(
+            item => `<div style="color:#fca5a5; margin-top:4px;">• PID ${escapeHtml(item.pid)} (${escapeHtml(item.name)}) — ${escapeHtml(item.reason)}</div>`
+          ).join('');
+          return `<strong style="color:var(--red);">🚨 ${escapeHtml(data.flagged_count)} Memory Injection / Dump Flagged</strong> — Inspected ${escapeHtml(data.processes_inspected)} processes.${details}`;
+        },
+        '[!] Start cogniguard bridge locally to run live injection audits.'
+      );
+    }
+
+    async function showDbHealth() {
+      const box = document.getElementById('process-audit-box');
+      box.style.display = 'block';
+      box.style.borderColor = 'var(--border)';
+      box.innerText = '💾 Fetching SQLite database stats...';
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/db/stats`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) {
+          box.style.borderColor = 'var(--yellow)';
+          box.innerText = `[!] ${data.detail || 'Enter Admin X-API-Key to inspect DB health.'}`;
+          return;
+        }
+        const tbls = Object.entries(data.tables || {}).map(([k, v]) => `<strong>${k}:</strong> ${v} rows`).join(' • ');
+        box.style.borderColor = 'var(--green)';
+        box.innerHTML = `
+          <strong style="color:var(--green);">💾 SQLite Database Status: ${escapeHtml(data.status)}</strong><br>
+          <div style="color:#cbd5e1; margin-top:4px;">
+            • <strong>Path:</strong> <code>${escapeHtml(data.db_path)}</code><br>
+            • <strong>Size:</strong> ${(data.db_size_bytes / 1024).toFixed(1)} KB &nbsp;|&nbsp; <strong>WAL:</strong> ${(data.wal_size_bytes / 1024).toFixed(1)} KB<br>
+            • <strong>Tables:</strong> ${tbls}
+          </div>
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn" style="padding:5px 10px; font-size:11px; background:#0284c7;" onclick="triggerDbBackup()">⚡ Create Online Backup</button>
+            <button class="btn" style="padding:5px 10px; font-size:11px; background:#475569;" onclick="triggerDbVacuum()">🧹 Vacuum & Defragment</button>
+          </div>
+        `;
+      } catch (e) {
+        box.style.borderColor = 'var(--yellow)';
+        box.innerText = '[!] Connect to cogniguard bridge with Admin X-API-Key to inspect DB health.';
+      }
+    }
+
+    async function triggerDbBackup() {
+      const res = await fetch(`${API_BASE}/api/v1/db/backup`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({}) });
+      const data = await res.json();
+      alert(res.ok ? `✅ Database backed up to: ${data.backup_path} (${data.size_bytes} bytes)` : `[!] Failed: ${data.detail}`);
+      showDbHealth();
+    }
+
+    async function triggerDbVacuum() {
+      const res = await fetch(`${API_BASE}/api/v1/db/vacuum`, { method: 'POST', headers: authHeaders() });
+      const data = await res.json();
+      alert(res.ok ? `✅ Database vacuumed! Reclaimed ${data.bytes_reclaimed} bytes.` : `[!] Failed: ${data.detail}`);
+      showDbHealth();
+    }
+
+    function handleIncomingLiveThreat(entry) {
+      if (!entry) return;
+      const tbody = document.getElementById('log-body');
+      if (!tbody) return;
+      const isThreat = entry.verdict !== 'SAFE' && entry.verdict !== 'SAFE_TO_INSTALL';
+      const scorePct = ((Number(entry.threat_score) || 0) * 100).toFixed(1);
+      const row = tbody.insertRow(0);
+      row.innerHTML = `
+        <td>${escapeHtml(entry.timestamp || 'Just now')}</td>
+        <td>${escapeHtml(entry.filename || 'Live Threat')}</td>
+        <td>${entry.source_url ? escapeHtml(entry.source_url) : 'System Vault'}</td>
+        <td style="color: ${isThreat ? 'var(--red)' : 'var(--green)'}; font-weight: 600;">
+          ${scorePct}% (${isThreat ? 'High' : 'Safe'})
+        </td>
+        <td><span class="badge ${isThreat ? 'badge-blocked' : 'badge-ok'}">${escapeHtml(entry.action_taken || 'BLOCKED')}</span></td>
+        <td><span class="badge badge-ok">${escapeHtml(entry.status || 'OK')}</span></td>
+      `;
+      if (isThreat) {
+        const blockedEl = document.getElementById('blocked-count');
+        if (blockedEl) blockedEl.innerText = Number(blockedEl.innerText || 0) + 1;
+      }
+    }
+
+    function initLiveSseStream() {
+      try {
+        const es = new EventSource(`${API_BASE}/api/v1/events/stream`);
+        const pill = document.getElementById('sse-pill');
+        es.addEventListener('threat', event => {
+          try {
+            handleIncomingLiveThreat(JSON.parse(event.data));
+          } catch (e) {}
+        });
+        es.addEventListener('connected', () => {
+          if (pill) pill.innerHTML = '<span style="color:var(--green)">⚡ SSE REALTIME STREAM ACTIVE</span>';
+        });
+        es.onerror = () => {
+          if (pill) pill.innerHTML = '<span style="color:var(--text-muted)">⚡ Polling mode</span>';
+        };
+      } catch (e) {}
+    }
+
     async function saveWebhookConfig(event) {
       event.preventDefault();
       const url = document.getElementById('webhook-url-input').value.trim();
@@ -763,6 +869,7 @@
     }
     setInterval(syncLiveLogsFromPython, 3000);
     syncLiveLogsFromPython();
+    initLiveSseStream();
   </script>
 </body>
 </html>
