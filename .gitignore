@@ -39,3 +39,9 @@ leads.json
 *.db-shm
 .quarantine/
 .pytest_cache/
+*.mp4
+*.mov
+*.avi
+*.pdf
+!docs/*.mp4
+
