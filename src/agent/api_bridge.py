@@ -178,6 +178,22 @@ class IocCreateRequest(BaseModel):
     severity: Literal["CRITICAL", "HIGH", "MEDIUM"] = "CRITICAL"
 
 
+class EmailVerificationSendRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=254)
+
+
+class EmailVerificationVerifyRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=254)
+    code: str = Field(..., min_length=6, max_length=12)
+
+
+class EmailSpamScanRequest(BaseModel):
+    sender: str = Field(..., min_length=1, max_length=512)
+    subject: str = Field(default="", max_length=1024)
+    body: str = Field(default="", max_length=200000)
+    attachments: Optional[List[str]] = Field(default_factory=list)
+
+
 class IocSyncRequest(BaseModel):
     source_url: Optional[str] = Field(default=None, max_length=2048)
     entries: Optional[List[IocCreateRequest]] = None
@@ -632,6 +648,70 @@ def audit_injection_endpoint(max_processes: int = Query(500, ge=1, le=2000)):
     """Audit live processes for memory dumping and process injection signatures."""
     agent = CogniGuardAgent()
     return agent.audit_memory_injections(store=store, max_processes=max_processes)
+
+
+@app.post("/api/v1/auth/send-code")
+def send_auth_code_endpoint(req: EmailVerificationSendRequest):
+    """Dispatch 6-digit verification code to target Gmail address."""
+    from agent.email_scanner import send_gmail_verification_code
+
+    res = send_gmail_verification_code(req.email)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("error", "Failed to send verification code."))
+
+    store.get_broadcaster().publish(
+        {
+            "type": "OTP_DISPATCHED",
+            "email": req.email,
+            "mode": res.get("mode"),
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
+    return res
+
+
+@app.post("/api/v1/auth/verify-code")
+def verify_auth_code_endpoint(req: EmailVerificationVerifyRequest):
+    """Validate 6-digit verification code."""
+    from agent.email_scanner import verify_email_otp
+
+    res = verify_email_otp(req.email, req.code)
+    if not res.get("valid"):
+        raise HTTPException(status_code=400, detail=res.get("error", "Invalid or expired code."))
+
+    store.get_broadcaster().publish(
+        {
+            "type": "OTP_VERIFIED",
+            "email": req.email,
+            "vip_token": res.get("vip_token"),
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
+    return res
+
+
+@app.post("/api/v1/email/scan-spam")
+def scan_email_spam_endpoint(req: EmailSpamScanRequest):
+    """Analyze incoming Gmail or corporate email for spoofing, phishing, and malware attachments."""
+    from agent.email_scanner import scan_email_spam_and_phishing
+
+    result = scan_email_spam_and_phishing(
+        sender=req.sender,
+        subject=req.subject,
+        body=req.body,
+        attachments=req.attachments,
+    )
+    if result.get("is_spam") and result.get("threat_level") == "CRITICAL_PHISHING":
+        store.get_broadcaster().publish(
+            {
+                "type": "PHISHING_INTERCEPTED",
+                "sender": req.sender,
+                "subject": req.subject,
+                "risk_score": result.get("risk_score"),
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+    return result
 
 
 @app.get("/api/v1/events/stream")

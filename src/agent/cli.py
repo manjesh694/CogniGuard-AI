@@ -207,6 +207,22 @@ def build_parser() -> argparse.ArgumentParser:
     inj_p.add_argument("--json", action="store_true", help="Output injection report as JSON")
     inj_p.add_argument("--terminate", action="store_true", help="Terminate processes flagged for injection")
 
+    sc_p = subparsers.add_parser("send-code", help="Dispatch 6-digit OTP verification code to target Gmail")
+    sc_p.add_argument("email", help="Target email address to receive code")
+    sc_p.add_argument("--json", action="store_true", help="Output result as JSON")
+
+    vc_p = subparsers.add_parser("verify-code", help="Validate 6-digit verification code")
+    vc_p.add_argument("email", help="Target email address")
+    vc_p.add_argument("code", help="6-digit verification code")
+    vc_p.add_argument("--json", action="store_true", help="Output result as JSON")
+
+    se_p = subparsers.add_parser("scan-email", help="Scan email for phishing, brand spoofing, and malware attachments")
+    se_p.add_argument("--sender", required=True, help="Sender email address (e.g., security@accounts-google.com)")
+    se_p.add_argument("--subject", default="", help="Email subject line")
+    se_p.add_argument("--body", default="", help="Email body content or link")
+    se_p.add_argument("--attachment", action="append", default=[], help="Optional attachment filename (repeatable)")
+    se_p.add_argument("--json", action="store_true", help="Output scan report as JSON")
+
     return parser
 
 
@@ -537,6 +553,62 @@ def main(argv: Optional[List[str]] = None) -> int:
                     print(f"  ⚡ Remediation PID {rem['pid']}: {rem['status']}")
             print("=" * 60)
         return 2 if report.get("flagged") else 0
+
+    if args.command == "send-code":
+        from agent.email_scanner import send_gmail_verification_code
+        res = send_gmail_verification_code(args.email)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(f"✅ {res['message']}")
+                if res.get("simulated_code"):
+                    print(f"🔑 Developer OTP: {res['simulated_code']} (Valid for 10 minutes)")
+            else:
+                print(f"❌ Failed: {res.get('error')}")
+        return 0 if res.get("success") else 1
+
+    if args.command == "verify-code":
+        from agent.email_scanner import verify_email_otp
+        res = verify_email_otp(args.email, args.code)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("valid"):
+                print(f"✅ {res['message']}")
+                print(f"🛡️ VIP Token: {res['vip_token']}")
+            else:
+                print(f"❌ Verification failed: {res.get('error')}")
+        return 0 if res.get("valid") else 1
+
+    if args.command == "scan-email":
+        from agent.email_scanner import scan_email_spam_and_phishing
+        report = scan_email_spam_and_phishing(
+            sender=args.sender,
+            subject=args.subject,
+            body=args.body,
+            attachments=args.attachment,
+        )
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            print("=" * 60)
+            print("📧 COGNIGUARD GMAIL & ENTERPRISE PHISHING/SPAM RADAR")
+            print("=" * 60)
+            print(f"Sender:             {report['sender']}")
+            print(f"Subject:            {report['subject']}")
+            print(f"Threat Level:       {report['threat_level']}")
+            print(f"Risk Score:         {report['risk_score']}/100")
+            print(f"Is Spam:            {report['is_spam']}")
+            print(f"Recommended Action: {report['recommended_action']}")
+            if report.get("findings"):
+                print("Findings:")
+                for f in report["findings"]:
+                    print(f"  • {f}")
+            print("=" * 60)
+        return 2 if report.get("threat_level") == "CRITICAL_PHISHING" else (1 if report.get("is_spam") else 0)
+
+    return 1
 
     return 1
 
