@@ -146,3 +146,27 @@ def test_cli_email_commands(capsys):
     s_out = capsys.readouterr().out
     s_data = json.loads(s_out)
     assert s_data["threat_level"] == "CRITICAL_PHISHING"
+
+
+def test_darkweb_scan_endpoint():
+    # 1. Compromised phone scan
+    req_phone_leak = api_bridge.DarkWebScanRequest(query="+91 98234 11209", query_type="phone")
+    res_phone = api_bridge.darkweb_scan_endpoint(req_phone_leak)
+    assert res_phone["status"] == "COMPROMISED"
+    assert res_phone["severity"] == "CRITICAL"
+    assert res_phone["breaches_count"] >= 3
+    assert len(res_phone["exposed_data_types"]) > 0
+
+    # 2. Clean phone scan
+    req_phone_clean = api_bridge.DarkWebScanRequest(query="+91 9108481365", query_type="phone")
+    res_clean = api_bridge.darkweb_scan_endpoint(req_phone_clean)
+    assert res_clean["status"] == "CLEAN"
+    assert res_clean["severity"] == "LOW"
+    assert res_clean["breaches_count"] == 0
+
+    # 3. Compromised email scan
+    req_email_leak = api_bridge.DarkWebScanRequest(query="victim-test@gmail.com", query_type="email")
+    res_email = api_bridge.darkweb_scan_endpoint(req_email_leak)
+    assert res_email["status"] == "COMPROMISED"
+    assert res_email["breaches_count"] == 3
+
