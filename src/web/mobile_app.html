@@ -61,205 +61,269 @@
     .lock-btn { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
   
     /* ===================================================
-       COGNIGUARD PRO — CINEMATIC OPENING INTERFACE & HUD
+       IRON MAN / JARVIS ARC REACTOR HUD OPENING INTERFACE
        =================================================== */
-    .pro-boot-overlay {
+    .ironman-overlay {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at 50% 32%, #0d1e38 0%, #050b16 55%, #020409 100%);
+      background: radial-gradient(circle at 50% 40%, #061528 0%, #030a14 50%, #010408 100%);
       z-index: 999999;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 16px;
-      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-      overflow-y: auto;
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
     }
-    .pro-boot-overlay.dismissed {
+    .ironman-overlay.dismissed {
       opacity: 0;
-      transform: scale(1.06);
+      transform: scale(1.1);
       pointer-events: none;
     }
-    .pro-boot-modal {
-      background: rgba(10, 20, 36, 0.95);
-      border: 1px solid rgba(0, 245, 196, 0.4);
-      box-shadow: 0 0 80px rgba(0, 245, 196, 0.25), 0 0 35px rgba(168, 85, 247, 0.2), inset 0 0 30px rgba(0, 245, 196, 0.06);
+    .ironman-hud-modal {
+      background: rgba(4, 12, 24, 0.94);
+      border: 1px solid rgba(0, 245, 255, 0.5);
+      box-shadow: 0 0 100px rgba(0, 245, 255, 0.3), 0 0 40px rgba(59, 130, 246, 0.25), inset 0 0 35px rgba(0, 245, 255, 0.08);
       border-radius: 28px;
       max-width: 440px;
       width: 100%;
-      padding: 32px 22px 26px;
+      padding: 30px 22px 24px;
       text-align: center;
       position: relative;
       backdrop-filter: blur(16px);
       overflow: hidden;
     }
-    .pro-bg-grid {
+
+    /* Iron Man HUD Reticle & Corner Brackets */
+    .hud-corner {
       position: absolute;
-      inset: 0;
-      background-image: 
-        linear-gradient(rgba(0, 245, 196, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 245, 196, 0.04) 1px, transparent 1px);
-      background-size: 22px 22px;
+      width: 16px;
+      height: 16px;
+      border-color: #00f5ff;
+      border-style: solid;
       pointer-events: none;
-      opacity: 0.7;
     }
-    .pro-emblem-wrap {
+    .hud-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+    .hud-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+    .hud-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+    .hud-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+    /* Animated Iron Man Arc Reactor */
+    .arc-reactor-wrap {
       position: relative;
-      width: 110px;
-      height: 110px;
+      width: 140px;
+      height: 140px;
       margin: 0 auto 16px;
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
     }
-    .pro-radar-ring {
+    .arc-outer-hud {
       position: absolute;
       inset: 0;
-      border: 2px dashed rgba(0, 245, 196, 0.75);
+      border: 2px dashed rgba(0, 245, 255, 0.8);
       border-radius: 50%;
-      animation: spin-ring 9s linear infinite;
+      animation: spin-clockwise 10s linear infinite;
     }
-    .pro-inner-ring {
+    .arc-turbine-ring {
       position: absolute;
-      inset: 10px;
-      border: 1.5px dotted rgba(168, 85, 247, 0.75);
+      inset: 12px;
+      border: 2px dotted rgba(59, 130, 246, 0.9);
       border-radius: 50%;
-      animation: spin-ring-rev 6s linear infinite;
+      animation: spin-counter 5s linear infinite;
     }
-    .pro-pulse-wave {
+    .arc-energy-wave {
       position: absolute;
-      inset: -8px;
-      border: 1.5px solid rgba(0, 245, 196, 0.4);
+      inset: -12px;
+      border: 1.5px solid rgba(0, 245, 255, 0.35);
       border-radius: 50%;
-      animation: pulse-wave 2.2s ease-out infinite;
+      animation: reactor-pulse 2s ease-out infinite;
     }
-    .pro-laser-scanner {
-      position: absolute;
-      top: 0;
-      left: 8%;
-      right: 8%;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, #00f5c4, #38bdf8, transparent);
-      box-shadow: 0 0 14px #00f5c4;
-      opacity: 0;
-      pointer-events: none;
-    }
-    .pro-laser-scanner.scanning {
-      opacity: 1;
-      animation: laser-sweep-vertical 1.5s ease-in-out infinite;
-    }
-    .pro-shield-emblem {
-      width: 76px;
-      height: 76px;
+    .arc-core-triangle {
+      width: 86px;
+      height: 86px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(0, 245, 196, 0.22), rgba(168, 85, 247, 0.22));
-      border: 2px solid #00f5c4;
+      background: radial-gradient(circle, #ffffff 15%, #00f5ff 55%, #0284c7 90%);
+      border: 3px solid #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 38px;
-      box-shadow: 0 0 35px rgba(0, 245, 196, 0.55);
-      cursor: pointer;
-      transition: transform 0.2s ease;
-      z-index: 2;
+      font-size: 40px;
+      box-shadow: 0 0 45px rgba(0, 245, 255, 0.8), 0 0 80px rgba(0, 245, 255, 0.4), inset 0 0 20px #ffffff;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      z-index: 5;
     }
-    .pro-shield-emblem:hover {
+    .arc-reactor-wrap:hover .arc-core-triangle {
       transform: scale(1.08);
+      box-shadow: 0 0 60px rgba(0, 245, 255, 1), 0 0 110px rgba(0, 245, 255, 0.6);
     }
-    .pro-brand-gradient {
+    .arc-core-triangle.charging {
+      animation: core-overdrive 0.3s ease-in-out infinite alternate;
+    }
+
+    /* Iron Man Helmet HUD Laser Sweep */
+    .hud-vertical-laser {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      top: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00f5ff, #ffffff, #00f5ff, transparent);
+      box-shadow: 0 0 16px #00f5ff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-vertical-laser.scanning {
+      opacity: 1;
+      animation: ironman-laser-sweep 1.4s ease-in-out infinite;
+    }
+
+    /* Iron Man Typography & Badges */
+    .jarvis-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 245, 255, 0.12);
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      color: #00f5ff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      font-family: monospace;
+    }
+    .ironman-title {
       font-size: 24px;
       font-weight: 900;
-      letter-spacing: 1.2px;
-      background: linear-gradient(135deg, #ffffff 20%, #00f5c4 70%, #a855f7 100%);
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #ffffff 20%, #00f5ff 60%, #38bdf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: block;
       margin-bottom: 4px;
     }
-    .pro-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(0, 245, 196, 0.12);
-      border: 1px solid rgba(0, 245, 196, 0.35);
-      color: #00f5c4;
+    .ironman-sub {
       font-size: 11px;
-      font-weight: 800;
+      color: #94a3b8;
+      font-family: monospace;
       letter-spacing: 0.5px;
-      border-radius: 20px;
-      padding: 4px 14px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .pro-hud-box {
-      background: #060e19;
-      border: 1px solid #162c45;
+
+    /* Iron Man / Jarvis Terminal HUD Readout */
+    .jarvis-terminal-box {
+      background: #020914;
+      border: 1px solid #102d4d;
       border-radius: 12px;
       padding: 12px 14px;
       text-align: left;
-      font-family: monospace;
+      font-family: 'Courier New', Courier, monospace;
       font-size: 11px;
-      color: #94a3b8;
+      color: #64748b;
       margin-bottom: 16px;
-      min-height: 98px;
+      min-height: 102px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 5px;
+      box-shadow: inset 0 0 15px rgba(0, 245, 255, 0.05);
     }
-    .hud-line {
-      opacity: 0.25;
+    .j-line {
+      opacity: 0.3;
       transition: all 0.25s ease;
     }
-    .hud-line.active {
+    .j-line.active {
       opacity: 1;
-      color: #38bdf8;
+      color: #00f5ff;
       font-weight: 700;
+      text-shadow: 0 0 8px rgba(0, 245, 255, 0.6);
     }
-    .hud-line.complete {
+    .j-line.complete {
       opacity: 1;
-      color: #00f5c4;
+      color: #10b981;
     }
-    .pro-progress-bar-wrap {
+
+    /* Arc Reactor Power Bar */
+    .arc-power-bar-wrap {
       width: 100%;
-      height: 6px;
-      background: #111f33;
-      border-radius: 3px;
+      height: 7px;
+      background: #06182c;
+      border: 1px solid #14385f;
+      border-radius: 4px;
       overflow: hidden;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.8);
     }
-    .pro-progress-bar-fill {
+    .arc-power-bar-fill {
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #a855f7, #38bdf8, #00f5c4);
-      box-shadow: 0 0 12px #00f5c4;
+      background: linear-gradient(90deg, #3b82f6, #00f5ff, #ffffff);
+      box-shadow: 0 0 14px #00f5ff;
       transition: width 0.3s ease;
     }
-    .btn-engage-pro {
+
+    /* Arc Reactor Power-Up Action Button */
+    .btn-arc-trigger {
       width: 100%;
-      background: linear-gradient(135deg, #00f5c4 0%, #0284c7 100%);
-      color: #041421;
+      background: linear-gradient(135deg, #00f5ff 0%, #0284c7 100%);
+      color: #010814;
       font-weight: 900;
       font-size: 14px;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       border: none;
       border-radius: 12px;
-      padding: 13px 20px;
+      padding: 14px 20px;
       cursor: pointer;
-      box-shadow: 0 0 25px rgba(0, 245, 196, 0.45);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.55), inset 0 0 10px rgba(255,255,255,0.4);
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      font-family: monospace;
+      text-transform: uppercase;
     }
-    .btn-engage-pro:hover {
+    .btn-arc-trigger:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 35px rgba(0, 245, 196, 0.6);
+      box-shadow: 0 0 45px rgba(0, 245, 255, 0.8);
     }
-    .btn-engage-pro.armed {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    .btn-arc-trigger.powered {
+      background: linear-gradient(135deg, #10b981 0%, #00f5ff 100%);
       color: #ffffff;
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 40px rgba(0, 245, 255, 0.8);
+    }
+
+    @keyframes spin-clockwise {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spin-counter {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+    @keyframes reactor-pulse {
+      0% { transform: scale(0.92); opacity: 0.8; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    @keyframes core-overdrive {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.12); filter: brightness(1.4); }
+    }
+    @keyframes ironman-laser-sweep {
+      0% { top: 2%; opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { top: 96%; opacity: 0; }
+    }
+    @keyframes radar-sweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     /* Live Animated Cockpit Ticker */
@@ -283,28 +347,6 @@
     @keyframes ticker-slide {
       0% { transform: translateX(0%); }
       100% { transform: translateX(-50%); }
-    }
-    @keyframes spin-ring {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes spin-ring-rev {
-      from { transform: rotate(360deg); }
-      to { transform: rotate(0deg); }
-    }
-    @keyframes pulse-wave {
-      0% { transform: scale(0.9); opacity: 0.8; }
-      100% { transform: scale(1.3); opacity: 0; }
-    }
-    @keyframes laser-sweep-vertical {
-      0% { top: 0%; opacity: 0; }
-      20% { opacity: 1; }
-      80% { opacity: 1; }
-      100% { top: 95%; opacity: 0; }
-    }
-    @keyframes radar-sweep {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
     }
 
     /* Radar laser sweep overlay on world map */
@@ -330,55 +372,59 @@
 </head>
 <body>
 
-  <!-- Pro Opening Splash Sequence Overlay -->
-  <div id="pro-boot-screen" class="pro-boot-overlay">
-    <div class="pro-boot-modal">
-      <div class="pro-bg-grid"></div>
+  <!-- Pro Opening Splash Sequence Overlay (Iron Man Arc Reactor / Jarvis HUD) -->
+  <div id="pro-boot-screen" class="ironman-overlay">
+    <div class="ironman-hud-modal">
+      <!-- HUD Corner Targeting Brackets -->
+      <div class="hud-corner hud-tl"></div>
+      <div class="hud-corner hud-tr"></div>
+      <div class="hud-corner hud-bl"></div>
+      <div class="hud-corner hud-br"></div>
+      <div id="hud-laser-line" class="hud-vertical-laser"></div>
 
       <!-- Quick skip link in corner -->
-      <div style="display:flex; justify-content:flex-end; margin-bottom:4px; position:relative; z-index:5;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; position:relative; z-index:5;">
+        <span style="font-size:10px; color:#00f5ff; font-family:monospace; font-weight:700;">STARK OS v10.4 // MARK-LXXXV</span>
         <button onclick="dismissProBoot(true)" style="background:none; border:none; color:#64748b; font-size:11px; font-weight:700; cursor:pointer; font-family:monospace;">
-          SKIP INTRO ✕
+          BYPASS HUD ✕
         </button>
       </div>
 
-      <!-- 3D Holographic Shield with Laser Scanner -->
-      <div class="pro-emblem-wrap">
-        <div class="pro-radar-ring"></div>
-        <div class="pro-inner-ring"></div>
-        <div class="pro-pulse-wave"></div>
-        <div id="pro-laser" class="pro-laser-scanner"></div>
-        <div class="pro-shield-emblem" onclick="engageProSequence()" title="Tap to Activate Defense">🛡️</div>
+      <!-- Glowing Arc Reactor Core with Dual Gyroscope HUD Rings -->
+      <div class="arc-reactor-wrap" onclick="initiateJarvisProtocol()" title="Tap Arc Reactor to Engage">
+        <div class="arc-outer-hud"></div>
+        <div class="arc-turbine-ring"></div>
+        <div class="arc-energy-wave"></div>
+        <div id="arc-core-glyph" class="arc-core-triangle">⚡</div>
       </div>
       
-      <div class="pro-brand-title">
-        <span class="pro-brand-gradient">COGNIGUARD PRO</span>
-        <div class="pro-status-badge">
-          <span>💎</span> VIP ZERO-ENTRY DEFENSE SUITE
-        </div>
+      <div class="ironman-title">COGNIGUARD // JARVIS</div>
+      <div class="jarvis-badge">
+        <span>⚙️</span> ARC REACTOR OUTPUT: 100% ONLINE
+      </div>
+      <div class="ironman-sub">AUTONOMOUS ZERO-ENTRY CYBER AIRLOCK &amp; THREAT RADAR</div>
+
+      <!-- Jarvis Diagnostic HUD Telemetry Readout -->
+      <div class="jarvis-terminal-box">
+        <div id="j-line-1" class="j-line active">&gt;&gt; [JARVIS] "Good day, Sir. Initiating Zero-Entry Protocol..."</div>
+        <div id="j-line-2" class="j-line">&gt;&gt; [REACTOR] Output: 8.5 GJ/s (Arc Turbine Calibrated)</div>
+        <div id="j-line-3" class="j-line">&gt;&gt; [SATELLITES] 70 Global Fleet Nodes Synchronized</div>
+        <div id="j-line-4" class="j-line">&gt;&gt; [DEFENSE] Mark Vault Tripwires Armed. Zero Leaks.</div>
       </div>
 
-      <!-- Live Terminal HUD Telemetry -->
-      <div class="pro-hud-box">
-        <div id="hud-line-1" class="hud-line active">● [01/04] 🔐 INITIALIZING ZERO-ENTRY ENGINE...</div>
-        <div id="hud-line-2" class="hud-line">● [02/04] 🌐 CONNECTING 70 GLOBAL SOC FLEET NODES...</div>
-        <div id="hud-line-3" class="hud-line">● [03/04] ⚡ ENGAGING 24/7 CREDENTIAL TRIPWIRES...</div>
-        <div id="hud-line-4" class="hud-line">● [04/04] 🛡️ 100% ARMED: PRO DEFENSE ACTIVE</div>
+      <!-- Arc Power Progress Bar -->
+      <div class="arc-power-bar-wrap">
+        <div id="arc-power-bar" class="arc-power-bar-fill"></div>
       </div>
 
-      <!-- Neon Progress Bar -->
-      <div class="pro-progress-bar-wrap">
-        <div id="pro-boot-bar" class="pro-progress-bar-fill"></div>
-      </div>
-
-      <!-- Interactive Biometric Launch Button -->
-      <button id="btn-engage-pro" onclick="engageProSequence()" class="btn-engage-pro">
-        🛡️ ENGAGE ZERO-ENTRY DEFENSE
+      <!-- Interactive Arc Reactor Initiation Button -->
+      <button id="btn-jarvis-trigger" onclick="initiateJarvisProtocol()" class="btn-arc-trigger">
+        ⚡ INITIATE JARVIS PROTOCOL
       </button>
 
       <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-top:14px; position:relative; z-index:2;">
-        <span style="font-size:11px; color:#64748b; font-family:monospace;">LATENCY: 0.04s • 0 BYTES LEAKED</span>
-        <span style="font-size:11px; color:#00f5c4; font-family:monospace; font-weight:700;">AES-256 AIRLOCK</span>
+        <span style="font-size:10px; color:#64748b; font-family:monospace;">REPULSOR CAPACITORS: FULL</span>
+        <span style="font-size:10px; color:#00f5ff; font-family:monospace; font-weight:700;">AES-256 AIRLOCK ACTIVE</span>
       </div>
     </div>
   </div>
@@ -392,8 +438,8 @@
       <button id="sfx-toggle-btn" onclick="toggleSoundFx()" title="Toggle Cyber Audio Feedback" style="background:#091524; border:1px solid #1a3655; color:#38bdf8; border-radius:20px; padding:3px 9px; font-size:11px; cursor:pointer; font-weight:700;">
         🔊 SFX
       </button>
-      <button onclick="triggerProBoot()" title="Replay Pro Opening Sequence" style="background:#091524; border:1px solid #1a3655; color:#00f5c4; border-radius:20px; padding:3px 9px; font-size:11px; cursor:pointer; font-weight:700;">
-        ⚡ Pro Opening
+      <button onclick="triggerJarvisOpening()" title="Replay Pro Opening Sequence" style="background:#091524; border:1px solid #1a3655; color:#00f5c4; border-radius:20px; padding:3px 9px; font-size:11px; cursor:pointer; font-weight:700;">
+        ⚡ Jarvis HUD
       </button>
       <div style="font-size:11px; font-family:monospace; color:#00f5c4; background:rgba(0,245,196,0.1); border:1px solid rgba(0,245,196,0.25); border-radius:12px; padding:3px 8px; font-weight:700;">
         ● ONLINE
@@ -1084,10 +1130,10 @@
     let deferredInstallPrompt = null;
 
     
-    // --- CogniGuard Pro Cyber Audio & Interactive Opening Engine ---
+    // --- CogniGuard Iron Man / Jarvis Arc Reactor Audio & HUD Engine ---
     let isAudioEnabled = true;
     let audioCtx = null;
-    let isProArmed = false;
+    let isJarvisEngaged = false;
 
     function getAudioContext() {
       if (!audioCtx) {
@@ -1107,63 +1153,91 @@
         btn.innerText = isAudioEnabled ? '🔊 SFX' : '🔇 Muted';
         btn.style.color = isAudioEnabled ? '#38bdf8' : '#64748b';
       }
-      if (isAudioEnabled) playLaserScanSound();
+      if (isAudioEnabled) playRepulsorBlastSound();
     }
 
-    function playProPowerUpSound() {
+    // Iconic Iron Man Repulsor Charging Whine (Sweeps from low drone to high-frequency laser whine)
+    function playRepulsorChargeSound() {
       if (!isAudioEnabled) return;
       try {
         const ctx = getAudioContext();
         if (!ctx) return;
         const now = ctx.currentTime;
-        // Sci-Fi Power Up Chord: Sub-bass swell into high tech chord
-        const oscBass = ctx.createOscillator();
-        const gainBass = ctx.createGain();
-        oscBass.type = 'sawtooth';
-        oscBass.frequency.setValueAtTime(65, now);
-        oscBass.frequency.exponentialRampToValueAtTime(130, now + 0.6);
-        gainBass.gain.setValueAtTime(0.01, now);
-        gainBass.gain.exponentialRampToValueAtTime(0.08, now + 0.3);
-        gainBass.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-        oscBass.connect(gainBass);
-        gainBass.connect(ctx.destination);
-        oscBass.start(now);
-        oscBass.stop(now + 0.95);
 
-        // Futuristic Multi-Tone Sweep
-        [440, 554.37, 659.25, 880, 1108.73].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-          gain.gain.setValueAtTime(0.001, now + idx * 0.1);
-          gain.gain.exponentialRampToValueAtTime(0.07, now + idx * 0.1 + 0.04);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + idx * 0.1);
-          osc.stop(now + 1.45);
-        });
+        // Rising turbine oscillator
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(2600, now + 1.2);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.09, now + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+
+        // Sub-bass resonance filter
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(200, now);
+        filter.frequency.exponentialRampToValueAtTime(2800, now + 1.2);
+        filter.Q.value = 3.0;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 1.35);
+
+        // Arc reactor high-voltage hum
+        const hum = ctx.createOscillator();
+        const humGain = ctx.createGain();
+        hum.type = 'sine';
+        hum.frequency.setValueAtTime(60, now);
+        hum.frequency.exponentialRampToValueAtTime(180, now + 1.0);
+        humGain.gain.setValueAtTime(0.06, now);
+        humGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+        hum.connect(humGain);
+        humGain.connect(ctx.destination);
+        hum.start(now);
+        hum.stop(now + 1.15);
       } catch (e) {}
     }
 
-    function playCyberLockSound() {
+    // Iconic Iron Man Repulsor Blast & Mechanical Latch Impact
+    function playRepulsorBlastSound() {
       if (!isAudioEnabled) return;
       try {
         const ctx = getAudioContext();
         if (!ctx) return;
         const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(1200, now);
-        osc.frequency.exponentialRampToValueAtTime(2400, now + 0.08);
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.16);
+
+        // Blast impact thump (60Hz down to 25Hz)
+        const boom = ctx.createOscillator();
+        const boomGain = ctx.createGain();
+        boom.type = 'triangle';
+        boom.frequency.setValueAtTime(120, now);
+        boom.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+
+        boomGain.gain.setValueAtTime(0.18, now);
+        boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        boom.connect(boomGain);
+        boomGain.connect(ctx.destination);
+        boom.start(now);
+        boom.stop(now + 0.42);
+
+        // Metallic suit servo ring (High frequency resonance)
+        const servo = ctx.createOscillator();
+        const servoGain = ctx.createGain();
+        servo.type = 'sine';
+        servo.frequency.setValueAtTime(1800, now);
+        servo.frequency.exponentialRampToValueAtTime(3200, now + 0.1);
+        servoGain.gain.setValueAtTime(0.08, now);
+        servoGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+        servo.connect(servoGain);
+        servoGain.connect(ctx.destination);
+        servo.start(now);
+        servo.stop(now + 0.28);
       } catch (e) {}
     }
 
@@ -1176,8 +1250,8 @@
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(1400, now + 0.16);
+        osc.frequency.setValueAtTime(350, now);
+        osc.frequency.exponentialRampToValueAtTime(1600, now + 0.16);
         gain.gain.setValueAtTime(0.05, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         osc.connect(gain);
@@ -1196,11 +1270,11 @@
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.setValueAtTime(660, now + 0.12);
-        osc.frequency.setValueAtTime(880, now + 0.24);
-        osc.frequency.setValueAtTime(660, now + 0.36);
-        gain.gain.setValueAtTime(0.06, now);
+        osc.frequency.setValueAtTime(950, now);
+        osc.frequency.setValueAtTime(700, now + 0.12);
+        osc.frequency.setValueAtTime(950, now + 0.24);
+        osc.frequency.setValueAtTime(700, now + 0.36);
+        gain.gain.setValueAtTime(0.07, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -1215,7 +1289,7 @@
         const ctx = getAudioContext();
         if (!ctx) return;
         const now = ctx.currentTime;
-        [587.33, 880.00].forEach((freq, i) => {
+        [659.25, 987.77, 1318.51].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
@@ -1231,78 +1305,86 @@
       } catch (e) {}
     }
 
-    function triggerProBoot() {
+    // Trigger Jarvis Arc Reactor Initiation
+    function triggerJarvisOpening() {
       const overlay = document.getElementById('pro-boot-screen');
-      const bar = document.getElementById('pro-boot-bar');
-      const laser = document.getElementById('pro-laser');
-      const btn = document.getElementById('btn-engage-pro');
+      const bar = document.getElementById('arc-power-bar');
+      const laser = document.getElementById('hud-laser-line');
+      const core = document.getElementById('arc-core-glyph');
+      const btn = document.getElementById('btn-jarvis-trigger');
       if (!overlay) return;
 
       overlay.classList.remove('dismissed');
       overlay.style.display = 'flex';
       if (bar) bar.style.width = '0%';
       if (laser) laser.classList.remove('scanning');
+      if (core) core.classList.remove('charging');
       if (btn) {
-        btn.classList.remove('armed');
-        btn.innerHTML = '🛡️ ENGAGE ZERO-ENTRY DEFENSE';
+        btn.classList.remove('powered');
+        btn.innerHTML = '⚡ INITIATE JARVIS PROTOCOL';
       }
 
       for (let i = 1; i <= 4; i++) {
-        const line = document.getElementById('hud-line-' + i);
+        const line = document.getElementById('j-line-' + i);
         if (line) {
-          line.className = 'hud-line' + (i === 1 ? ' active' : '');
+          line.className = 'j-line' + (i === 1 ? ' active' : '');
         }
       }
-      isProArmed = false;
+      isJarvisEngaged = false;
     }
 
-    function engageProSequence() {
-      if (isProArmed) {
+    function initiateJarvisProtocol() {
+      if (isJarvisEngaged) {
         dismissProBoot(true);
         return;
       }
 
-      const bar = document.getElementById('pro-boot-bar');
-      const laser = document.getElementById('pro-laser');
-      const btn = document.getElementById('btn-engage-pro');
+      const bar = document.getElementById('arc-power-bar');
+      const laser = document.getElementById('hud-laser-line');
+      const core = document.getElementById('arc-core-glyph');
+      const btn = document.getElementById('btn-jarvis-trigger');
 
       if (laser) laser.classList.add('scanning');
-      if (btn) btn.innerHTML = '⚡ ARMED IN PROGRESS...';
+      if (core) core.classList.add('charging');
+      if (btn) btn.innerHTML = '⚡ CHARGING ARC CAPACITORS...';
 
-      playProPowerUpSound();
+      playRepulsorChargeSound();
+      speak("Jarvis online. Zero-entry defense engaged.");
 
       setTimeout(() => {
         if (bar) bar.style.width = '35%';
-        const l1 = document.getElementById('hud-line-1');
-        const l2 = document.getElementById('hud-line-2');
-        if (l1) l1.className = 'hud-line complete';
-        if (l2) l2.className = 'hud-line active';
+        const l1 = document.getElementById('j-line-1');
+        const l2 = document.getElementById('j-line-2');
+        if (l1) l1.className = 'j-line complete';
+        if (l2) l2.className = 'j-line active';
       }, 350);
 
       setTimeout(() => {
         if (bar) bar.style.width = '70%';
-        const l2 = document.getElementById('hud-line-2');
-        const l3 = document.getElementById('hud-line-3');
-        if (l2) l2.className = 'hud-line complete';
-        if (l3) l3.className = 'hud-line active';
+        const l2 = document.getElementById('j-line-2');
+        const l3 = document.getElementById('j-line-3');
+        if (l2) l2.className = 'j-line complete';
+        if (l3) l3.className = 'j-line active';
       }, 750);
 
       setTimeout(() => {
         if (bar) bar.style.width = '100%';
-        const l3 = document.getElementById('hud-line-3');
-        const l4 = document.getElementById('hud-line-4');
-        if (l3) l3.className = 'hud-line complete';
-        if (l4) l4.className = 'hud-line active complete';
+        const l3 = document.getElementById('j-line-3');
+        const l4 = document.getElementById('j-line-4');
+        if (l3) l3.className = 'j-line complete';
+        if (l4) l4.className = 'j-line active complete';
 
         if (laser) laser.classList.remove('scanning');
+        if (core) core.classList.remove('charging');
         if (btn) {
-          btn.classList.add('armed');
-          btn.innerHTML = '✅ SYSTEM ARMED — ENTER DASHBOARD →';
+          btn.classList.add('powered');
+          btn.innerHTML = '🚀 SUIT ARMED — DEPLOY COCKPIT →';
         }
-        isProArmed = true;
-        playCyberLockSound();
+        isJarvisEngaged = true;
 
-        // Automatically transition into the cockpit after 1.2s
+        playRepulsorBlastSound();
+
+        // Visor deployment into dashboard
         setTimeout(() => {
           dismissProBoot(false);
         }, 1200);
@@ -1315,10 +1397,10 @@
         overlay.classList.add('dismissed');
         setTimeout(() => {
           overlay.style.display = 'none';
-        }, 600);
+        }, 650);
       }
       if (manual) {
-        playLaserScanSound();
+        playRepulsorBlastSound();
       }
     }
 
@@ -1978,7 +2060,7 @@
     }
   
     window.addEventListener('DOMContentLoaded', () => {
-      triggerProBoot();
+      triggerJarvisOpening();
     });
 
   </script>
