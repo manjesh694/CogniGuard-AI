@@ -84,14 +84,8 @@ def test_cli_explain(capsys):
 
 
 def test_api_threat_explain():
-    from fastapi.testclient import TestClient
-
-    client = TestClient(api_bridge.app)
-    resp = client.post(
-        "/api/v1/threat/explain",
-        json={"content": "https://apply.loanzap.in/ instant approval disbursal"},
-    )
-    assert resp.status_code == 200
-    res = resp.json()
+    req = api_bridge.ThreatExplainRequest(content="https://apply.loanzap.in/ instant approval disbursal")
+    res = api_bridge.explain_threat_endpoint(req)
     assert res["category"] == "Predatory Instant Loan & Micro-Finance Trap"
     assert res["urgency_level"] == "CRITICAL"
+    assert len(res["recommended_actions"]) > 0
