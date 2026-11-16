@@ -1811,18 +1811,39 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
       <span style="font-size: 13px; font-weight: 800; color: #00f5ff; display:flex; align-items:center; gap:7px; letter-spacing:0.5px;">
-        <span class="pulse"></span> 🛰️ Global Threat Radar
+        <span class="pulse"></span> 🛰️ Global Threat Radar &amp; 3D Cyber Globe
       </span>
       <span style="font-size: 10px; color: #00f5c4; font-family: monospace; font-weight:800; background:rgba(0,245,196,0.1); border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:2px 8px;">70 NODES ACTIVE</span>
     </div>
 
-    <!-- Live Telemetry Subheader -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-family:monospace; font-size:9.5px; color:#64748b;">
-      <span>GRID: 42-ALPHA // COORD: 12.97°N, 77.59°E</span>
-      <span>DOWNLINK: 1.2 GBPS</span>
+    <!-- Mode Selector: 3D Holographic Globe vs 2D Matrix -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; gap:6px;">
+        <button id="btn-radar-3d" onclick="setRadarMode('3d')" class="sms-filter-btn active" style="font-size:10.5px; padding:4px 12px;">
+          🌐 3D Interactive Cyber Globe
+        </button>
+        <button id="btn-radar-2d" onclick="setRadarMode('2d')" class="sms-filter-btn" style="font-size:10.5px; padding:4px 12px;">
+          🗺️ 2D Fleet Matrix
+        </button>
+      </div>
+      <div style="font-family:monospace; font-size:9.5px; color:#64748b;">
+        <span>DOWNLINK: 1.2 GBPS</span>
+      </div>
     </div>
 
-    <div class="radar-container" style="position:relative; border-radius:12px; overflow:hidden; border:1px solid rgba(0,245,255,0.25); box-shadow:0 0 20px rgba(0,0,0,0.7), inset 0 0 25px rgba(0,245,255,0.06);">
+    <!-- 3D Holographic Cyber Globe Container -->
+    <div id="radar-3d-wrap" style="position:relative; width:100%; height:320px; border-radius:12px; overflow:hidden; border:1px solid rgba(0,245,255,0.3); background:radial-gradient(circle at 50% 50%, #06182e 0%, #020812 85%, #010408 100%); box-shadow:0 0 30px rgba(0,245,255,0.15), inset 0 0 35px rgba(0,245,255,0.08); margin-bottom:10px;">
+      <canvas id="cyber-globe-canvas" style="width:100%; height:100%; display:block; cursor:grab; touch-action:none;"></canvas>
+      <div style="position:absolute; bottom:8px; left:10px; font-size:9px; color:#00f5c4; font-family:monospace; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:6px; border:1px solid rgba(0,245,196,0.3); pointer-events:none;">
+        👆 DRAG TO ROTATE &bull; TOUCH / MOUSE 3D
+      </div>
+      <div id="globe-intercept-badge" style="position:absolute; top:8px; right:10px; font-size:9px; color:#38bdf8; font-family:monospace; background:rgba(0,0,0,0.65); padding:3px 8px; border-radius:6px; border:1px solid rgba(56,189,248,0.3); pointer-events:none;">
+        INTERCEPT: TOKYO &rarr; MUMBAI [ONLINE]
+      </div>
+    </div>
+
+    <!-- 2D Fleet Matrix View -->
+    <div id="radar-2d-wrap" class="radar-container" style="display:none; position:relative; border-radius:12px; overflow:hidden; border:1px solid rgba(0,245,255,0.25); box-shadow:0 0 20px rgba(0,0,0,0.7), inset 0 0 25px rgba(0,245,255,0.06);">
       <div class="radar-sweep-beam"></div>
       <svg viewBox="0 0 2000 1001" style="width:100%; height:auto; display:block; background:#081424; border-radius:12px; box-shadow: inset 0 0 35px rgba(0,0,0,0.65);">
       <defs>
@@ -2204,17 +2225,30 @@
       </div>
     </div>
 
+    <!-- Channel Tabs: SMS vs WhatsApp vs Telegram -->
+    <div style="display:flex; gap:8px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;">
+      <button id="channel-tab-sms" onclick="switchChannel('sms')" class="sms-filter-btn active" style="font-size:11.5px; padding:6px 14px; font-weight:800;">
+        📱 SMS Messages (10)
+      </button>
+      <button id="channel-tab-whatsapp" onclick="switchChannel('whatsapp')" class="sms-filter-btn" style="font-size:11.5px; padding:6px 14px; font-weight:800; border-color:rgba(37,211,102,0.4); color:#a7f3d0;">
+        💬 WhatsApp Airlock (4)
+      </button>
+      <button id="channel-tab-telegram" onclick="switchChannel('telegram')" class="sms-filter-btn" style="font-size:11.5px; padding:6px 14px; font-weight:800; border-color:rgba(0,136,204,0.4); color:#7dd3fc;">
+        ✈️ Telegram Airlock (3)
+      </button>
+    </div>
+
     <!-- Filter Bar & Search -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
       <div class="sms-filter-bar">
         <button id="sms-filter-all" onclick="filterSmsMessages('all')" class="sms-filter-btn active">
-          All (10)
+          All
         </button>
         <button id="sms-filter-fake" onclick="filterSmsMessages('fake')" class="sms-filter-btn fake-tab">
-          🔴 Fake / Scams (3)
+          🔴 Fake / Scams
         </button>
         <button id="sms-filter-orig" onclick="filterSmsMessages('original')" class="sms-filter-btn orig-tab">
-          🟢 Original / Safe (7)
+          🟢 Original / Safe
         </button>
       </div>
       <div style="font-size:10px; color:#64748b; font-family:monospace;">
@@ -2226,7 +2260,7 @@
     <div id="sms-inbox-list" class="sms-inbox-container">
 
       <!-- 1. Mangaluru (ORIGINAL - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="mangaluru" onclick="inspectSmsItem('mangaluru')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="mangaluru" onclick="inspectSmsItem('mangaluru')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#9333ea;">M</div>
         <div class="sms-msg-content">
@@ -2242,7 +2276,7 @@
       </div>
 
       <!-- 2. Shantavva. G (ORIGINAL - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="shantavva" onclick="inspectSmsItem('shantavva')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="shantavva" onclick="inspectSmsItem('shantavva')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#ea580c;">S</div>
         <div class="sms-msg-content">
@@ -2258,7 +2292,7 @@
       </div>
 
       <!-- 3. Jio BestPlan (ORIGINAL - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="jio_bestplan" onclick="inspectSmsItem('jio_bestplan')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="jio_bestplan" onclick="inspectSmsItem('jio_bestplan')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#e11d48; font-size:12px; font-weight:900; letter-spacing:0.5px;">Jio</div>
         <div class="sms-msg-content">
@@ -2274,7 +2308,7 @@
       </div>
 
       <!-- 4. JM-JIOMRT-P (FAKE / SCAM - RED) -->
-      <div class="sms-inbox-card sms-fake" data-category="fake" data-id="jiomrt" onclick="inspectSmsItem('jiomrt')">
+      <div class="sms-inbox-card sms-fake" data-channel="sms" data-category="fake" data-id="jiomrt" onclick="inspectSmsItem('jiomrt')">
         <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
         <div class="sms-avatar-circle" style="background:#dc2626;">👤</div>
         <div class="sms-msg-content">
@@ -2294,7 +2328,7 @@
       </div>
 
       <!-- 5. VA-PWAALA-P (FAKE / SCAM - RED) -->
-      <div class="sms-inbox-card sms-fake" data-category="fake" data-id="pwaala" onclick="inspectSmsItem('pwaala')">
+      <div class="sms-inbox-card sms-fake" data-channel="sms" data-category="fake" data-id="pwaala" onclick="inspectSmsItem('pwaala')">
         <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
         <div class="sms-avatar-circle" style="background:#ea580c;">👤</div>
         <div class="sms-msg-content">
@@ -2314,7 +2348,7 @@
       </div>
 
       <!-- 6. VA-KBLBNK-T (ORIGINAL BANK - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="kblbank_1" onclick="inspectSmsItem('kblbank_1')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="kblbank_1" onclick="inspectSmsItem('kblbank_1')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#16a34a;">👤</div>
         <div class="sms-msg-content">
@@ -2330,7 +2364,7 @@
       </div>
 
       <!-- 7. AD-KBLBNK-T (ORIGINAL BANK - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="kblbank_2" onclick="inspectSmsItem('kblbank_2')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="kblbank_2" onclick="inspectSmsItem('kblbank_2')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#16a34a;">👤</div>
         <div class="sms-msg-content">
@@ -2346,7 +2380,7 @@
       </div>
 
       <!-- 8. 56767952 (ORIGINAL GITHUB 2FA - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="github_config" onclick="inspectSmsItem('github_config')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="github_config" onclick="inspectSmsItem('github_config')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#9333ea;">👤</div>
         <div class="sms-msg-content">
@@ -2362,7 +2396,7 @@
       </div>
 
       <!-- 9. 59039465 (ORIGINAL GITHUB OTP - GREEN) -->
-      <div class="sms-inbox-card sms-orig" data-category="original" data-id="github_otp" onclick="inspectSmsItem('github_otp')">
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="github_otp" onclick="inspectSmsItem('github_otp')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#ea580c;">👤</div>
         <div class="sms-msg-content">
@@ -2378,7 +2412,7 @@
       </div>
 
       <!-- 10. TZ-FATAKM-P (FAKE / SCAM - RED) -->
-      <div class="sms-inbox-card sms-fake" data-category="fake" data-id="fatakm" onclick="inspectSmsItem('fatakm')">
+      <div class="sms-inbox-card sms-fake" data-channel="sms" data-category="fake" data-id="fatakm" onclick="inspectSmsItem('fatakm')">
         <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
         <div class="sms-avatar-circle" style="background:#dc2626;">👤</div>
         <div class="sms-msg-content">
@@ -2395,6 +2429,144 @@
           </div>
         </div>
         <div class="sms-unread-pill" style="background:#ef4444;">1</div>
+      </div>
+
+      <!-- ==============================================
+           WHATSAPP AIRLOCK MESSAGES (4 ITEMS)
+           ============================================== -->
+      <!-- WA 1. Electricity Bill Scam (RED) -->
+      <div class="sms-inbox-card sms-fake" data-channel="whatsapp" data-category="fake" data-id="wa_electricity" onclick="inspectSmsItem('wa_electricity')" style="display:none;">
+        <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
+        <div class="sms-avatar-circle" style="background:#25d366;">⚡</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name" style="color:#fca5a5;">+91 98234 11209 (Electricity Dept ⚡)</span>
+            <span class="sms-msg-time">10:15 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            Dear Consumer, power will be disconnected tonight at 9:30 PM. Update bill via APK:
+            <div style="margin-top:4px;">
+              <span class="sms-neutralized-url">http://bescom-pay.apk</span>
+              <span class="sms-neutralized-tag">BLOCKED APK</span>
+            </div>
+          </div>
+        </div>
+        <div class="sms-unread-pill" style="background:#ef4444;">1</div>
+      </div>
+
+      <!-- WA 2. Part-Time Job Scam (RED) -->
+      <div class="sms-inbox-card sms-fake" data-channel="whatsapp" data-category="fake" data-id="wa_job_sneha" onclick="inspectSmsItem('wa_job_sneha')" style="display:none;">
+        <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
+        <div class="sms-avatar-circle" style="background:#25d366;">💼</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name" style="color:#fca5a5;">Sneha - Amazon HR (Part-Time Job 💼)</span>
+            <span class="sms-msg-time">9:42 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            Earn ₹3,500 to ₹8,000 daily liking YouTube videos. Work from home:
+            <div style="margin-top:4px;">
+              <span class="sms-neutralized-url">https://t.me/sneha_vip_earn</span>
+              <span class="sms-neutralized-tag">BLOCKED LINK</span>
+            </div>
+          </div>
+        </div>
+        <div class="sms-unread-pill" style="background:#ef4444;">3</div>
+      </div>
+
+      <!-- WA 3. Safe Family Chat (GREEN) -->
+      <div class="sms-inbox-card sms-orig" data-channel="whatsapp" data-category="original" data-id="wa_family" onclick="inspectSmsItem('wa_family')" style="display:none;">
+        <div class="sms-corner-tag tag-orig">🟢 100% SAFE</div>
+        <div class="sms-avatar-circle" style="background:#25d366;">👨‍💼</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name">Family Group (Papa 👨‍💼)</span>
+            <span class="sms-msg-time">8:30 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            Good morning beta! Reached office safely. Have a productive and great day ahead.
+          </div>
+        </div>
+        <div class="sms-unread-pill">1</div>
+      </div>
+
+      <!-- WA 4. Fake Wedding Card APK (RED) -->
+      <div class="sms-inbox-card sms-fake" data-channel="whatsapp" data-category="fake" data-id="wa_wedding" onclick="inspectSmsItem('wa_wedding')" style="display:none;">
+        <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
+        <div class="sms-avatar-circle" style="background:#25d366;">💌</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name" style="color:#fca5a5;">Wedding Invitation (Unknown)</span>
+            <span class="sms-msg-time">Yesterday</span>
+          </div>
+          <div class="sms-body-snippet">
+            Dear friend, please come to my sister wedding on 24th Nov. Digital wedding card:
+            <div style="margin-top:4px;">
+              <span class="sms-neutralized-url">wedding_card.apk</span>
+              <span class="sms-neutralized-tag">BLOCKED APK</span>
+            </div>
+          </div>
+        </div>
+        <div class="sms-unread-pill" style="background:#ef4444;">1</div>
+      </div>
+
+      <!-- ==============================================
+           TELEGRAM AIRLOCK MESSAGES (3 ITEMS)
+           ============================================== -->
+      <!-- TG 1. Crypto Multiplier Fraud (RED) -->
+      <div class="sms-inbox-card sms-fake" data-channel="telegram" data-category="fake" data-id="tg_crypto" onclick="inspectSmsItem('tg_crypto')" style="display:none;">
+        <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
+        <div class="sms-avatar-circle" style="background:#0088cc;">🚀</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name" style="color:#fca5a5;">Crypto VIP Signals 500% 🚀</span>
+            <span class="sms-msg-time">11:20 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            Guaranteed 500% profit in 2 hours! Deposit ₹2,000 get ₹10,000:
+            <div style="margin-top:4px;">
+              <span class="sms-neutralized-url">crypto-scam@ybl</span>
+              <span class="sms-neutralized-tag">FLAGGED UPI</span>
+            </div>
+          </div>
+        </div>
+        <div class="sms-unread-pill" style="background:#ef4444;">12</div>
+      </div>
+
+      <!-- TG 2. Official Python Security (GREEN) -->
+      <div class="sms-inbox-card sms-orig" data-channel="telegram" data-category="original" data-id="tg_python" onclick="inspectSmsItem('tg_python')" style="display:none;">
+        <div class="sms-corner-tag tag-orig">🟢 VERIFIED</div>
+        <div class="sms-avatar-circle" style="background:#0088cc;">🐍</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name">Official Python Broadcast 🐍</span>
+            <span class="sms-msg-time">Yesterday</span>
+          </div>
+          <div class="sms-body-snippet">
+            Python 3.13 is now available with experimental free-threaded mode and JIT compiler preview.
+          </div>
+        </div>
+        <div class="sms-unread-pill">5</div>
+      </div>
+
+      <!-- TG 3. Instant Cash Loan Shark (RED) -->
+      <div class="sms-inbox-card sms-fake" data-channel="telegram" data-category="fake" data-id="tg_loan" onclick="inspectSmsItem('tg_loan')" style="display:none;">
+        <div class="sms-corner-tag tag-fake">🔴 FAKE / SCAM</div>
+        <div class="sms-avatar-circle" style="background:#0088cc;">💸</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name" style="color:#fca5a5;">Fast Cash Instant Approval 💸</span>
+            <span class="sms-msg-time">2 days ago</span>
+          </div>
+          <div class="sms-body-snippet">
+            Get ₹5,00,000 instant cash loan in 5 minutes! No CIBIL check:
+            <div style="margin-top:4px;">
+              <span class="sms-neutralized-url">http://cash-instant.live/app</span>
+              <span class="sms-neutralized-tag">BLOCKED APK</span>
+            </div>
+          </div>
+        </div>
+        <div class="sms-unread-pill" style="background:#ef4444;">2</div>
       </div>
 
     </div>
@@ -4018,6 +4190,104 @@
         statusText: "⚠️ <strong>UNTRUSTED LOAN APK:</strong> Dangerous predatory loan APK with excessive permission demands. Neutralized offline.",
         isFake: true,
         threatReason: "Untrusted side-load APK masquerading as micro-finance app."
+      },
+      // WhatsApp Airlock Data Items
+      wa_electricity: {
+        sender: "+91 98234 11209 (Electricity Dept ⚡)",
+        category: "fake",
+        header: "Rogue APK Side-Loading Trap",
+        avatarBg: "#25d366",
+        avatarText: "⚡",
+        time: "10:15 AM",
+        unread: "1",
+        body: "Dear Consumer, power will be disconnected tonight at 9:30 PM. Update bill via APK: <span class='sms-neutralized-url'>http://bescom-pay.apk</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        badgeText: "🔴 FAKE / SCAM",
+        statusText: "⚠️ <strong>CRITICAL TROJAN ATTACHMENT:</strong> Malicious APK side-loader impersonating electricity authority. Offline airlock quarantined the package.",
+        isFake: true,
+        threatReason: "Unauthorized APK payload side-loading threat disguised as municipal bill payment."
+      },
+      wa_job_sneha: {
+        sender: "Sneha - Amazon HR (Part-Time Job 💼)",
+        category: "fake",
+        header: "Work-From-Home Task Phishing Trap",
+        avatarBg: "#25d366",
+        avatarText: "💼",
+        time: "9:42 AM",
+        unread: "3",
+        body: "Earn ₹3,500 to ₹8,000 daily liking YouTube videos. Work from home: <span class='sms-neutralized-url'>https://t.me/sneha_vip_earn</span> <span class='sms-neutralized-tag'>BLOCKED LINK</span>",
+        badgeText: "🔴 FAKE / SCAM",
+        statusText: "⚠️ <strong>CRITICAL TELEGRAM PRETEXTING:</strong> Classic task-scam phishing lure steering victims to untrusted crypto telegram channels. Neutralized offline.",
+        isFake: true,
+        threatReason: "Unsolicited recruiter pretexting leading to illicit Telegram money mules."
+      },
+      wa_family: {
+        sender: "Family Group (Papa 👨‍💼)",
+        category: "original",
+        header: "Verified End-to-End Contact",
+        avatarBg: "#25d366",
+        avatarText: "👨‍💼",
+        time: "8:30 AM",
+        unread: "1",
+        body: "Good morning beta! Reached office safely. Have a productive and great day ahead.",
+        badgeText: "🟢 100% SAFE",
+        statusText: "🛡️ <strong>AUTHENTIC CONVERSATION:</strong> Verified contact. No links, trackers, or malicious payloads detected.",
+        isFake: false
+      },
+      wa_wedding: {
+        sender: "Wedding Invitation (Unknown)",
+        category: "fake",
+        header: "Wedding Trojan APK Dropper",
+        avatarBg: "#25d366",
+        avatarText: "💌",
+        time: "Yesterday",
+        unread: "1",
+        body: "Dear friend, please come to my sister wedding on 24th Nov. Digital wedding card: <span class='sms-neutralized-url'>wedding_card.apk</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        badgeText: "🔴 FAKE / SCAM",
+        statusText: "⚠️ <strong>BANKING TROJAN DROPPER:</strong> Weaponized wedding invitation APK designed to install SMS-stealing spyware and intercept bank OTPs. Neutralized.",
+        isFake: true,
+        threatReason: "Dangerous .apk file payload disguised as wedding invitation card."
+      },
+      // Telegram Airlock Data Items
+      tg_crypto: {
+        sender: "Crypto VIP Signals 500% 🚀",
+        category: "fake",
+        header: "Ponzi Multiplier Fraud Syndicate",
+        avatarBg: "#0088cc",
+        avatarText: "🚀",
+        time: "11:20 AM",
+        unread: "12",
+        body: "Guaranteed 500% profit in 2 hours! Deposit ₹2,000 get ₹10,000: <span class='sms-neutralized-url'>crypto-scam@ybl</span> <span class='sms-neutralized-tag'>FLAGGED UPI</span>",
+        badgeText: "🔴 FAKE / SCAM",
+        statusText: "⚠️ <strong>FRAUDULENT UPI ADDRESS:</strong> Flagged money laundering UPI address on National Cyber Crime Reporting Portal registry. Blocked.",
+        isFake: true,
+        threatReason: "Flagged illicit UPI payment handle associated with crypto doubling scam."
+      },
+      tg_python: {
+        sender: "Official Python Broadcast 🐍",
+        category: "original",
+        header: "Python Software Foundation Official",
+        avatarBg: "#0088cc",
+        avatarText: "🐍",
+        time: "Yesterday",
+        unread: "5",
+        body: "Python 3.13 is now available with experimental free-threaded mode and JIT compiler preview.",
+        badgeText: "🟢 VERIFIED",
+        statusText: "🛡️ <strong>VERIFIED OFFICIAL CHANNEL:</strong> Official developer release bulletin from Python Software Foundation.",
+        isFake: false
+      },
+      tg_loan: {
+        sender: "Fast Cash Instant Approval 💸",
+        category: "fake",
+        header: "Predatory Extortion Syndicate",
+        avatarBg: "#0088cc",
+        avatarText: "💸",
+        time: "2 days ago",
+        unread: "2",
+        body: "Get ₹5,00,000 instant cash loan in 5 minutes! No CIBIL check: <span class='sms-neutralized-url'>http://cash-instant.live/app</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        badgeText: "🔴 FAKE / SCAM",
+        statusText: "⚠️ <strong>EXTORTION SPYWARE:</strong> Blacklisted loan shark application demanding full gallery, SMS, and contact access for extortion. Neutralized.",
+        isFake: true,
+        threatReason: "Unregistered rogue finance APK containing intrusive spyware payloads."
       }
     };
 
@@ -4048,27 +4318,425 @@
       alert("✅ SMS Protection Permission Granted!\n\nCogniGuard is now actively monitoring incoming messages on your phone:\n• Scams flagged with RED corner marks\n• Authentic messages verified with GREEN corner marks\n• Malicious links neutralized with zero bytes leaked.");
     }
 
-    function filterSmsMessages(category) {
-      const buttons = {
-        all: document.getElementById('sms-filter-all'),
-        fake: document.getElementById('sms-filter-fake'),
-        original: document.getElementById('sms-filter-orig')
-      };
-      Object.keys(buttons).forEach(k => {
-        if (buttons[k]) buttons[k].classList.remove('active');
-      });
-      if (buttons[category]) buttons[category].classList.add('active');
+    let currentSmsChannel = 'sms';
+    let currentSmsCategory = 'all';
 
-      const items = document.querySelectorAll('#sms-inbox-list .sms-inbox-card');
-      items.forEach(card => {
-        const cat = card.getAttribute('data-category');
-        if (category === 'all' || cat === category) {
+    function switchChannel(channel) {
+      currentSmsChannel = channel;
+      const tabSms = document.getElementById('channel-tab-sms');
+      const tabWa = document.getElementById('channel-tab-whatsapp');
+      const tabTg = document.getElementById('channel-tab-telegram');
+
+      if (tabSms) tabSms.classList.toggle('active', channel === 'sms');
+      if (tabWa) tabWa.classList.toggle('active', channel === 'whatsapp');
+      if (tabTg) tabTg.classList.toggle('active', channel === 'telegram');
+
+      applySmsInboxFilters();
+
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+      if (channel === 'sms') {
+        speak("SMS Messages inbox active.");
+      } else if (channel === 'whatsapp') {
+        speak("WhatsApp Chat Airlock active. Neutralizing rogue APK attachments and malicious links.");
+      } else if (channel === 'telegram') {
+        speak("Telegram Chat Airlock active. Intercepting fraudulent crypto and unverified loan channels.");
+      }
+    }
+
+    function filterSmsMessages(category) {
+      currentSmsCategory = category;
+      const btnAll = document.getElementById('sms-filter-all');
+      const btnFake = document.getElementById('sms-filter-fake');
+      const btnOrig = document.getElementById('sms-filter-orig');
+
+      if (btnAll) btnAll.classList.toggle('active', category === 'all');
+      if (btnFake) btnFake.classList.toggle('active', category === 'fake');
+      if (btnOrig) btnOrig.classList.toggle('active', category === 'original');
+
+      applySmsInboxFilters();
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+    }
+
+    function applySmsInboxFilters() {
+      const cards = document.querySelectorAll('#sms-inbox-list .sms-inbox-card');
+      cards.forEach(card => {
+        const cardChannel = card.getAttribute('data-channel') || 'sms';
+        const cardCategory = card.getAttribute('data-category');
+        const channelMatches = (cardChannel === currentSmsChannel);
+        const categoryMatches = (currentSmsCategory === 'all' || cardCategory === currentSmsCategory);
+
+        if (channelMatches && categoryMatches) {
           card.style.display = 'flex';
         } else {
           card.style.display = 'none';
         }
       });
-      if (typeof playSuccessChime === 'function') playSuccessChime();
+    }
+
+    function setRadarMode(mode) {
+      const wrap3d = document.getElementById('radar-3d-wrap');
+      const wrap2d = document.getElementById('radar-2d-wrap');
+      const btn3d = document.getElementById('btn-radar-3d');
+      const btn2d = document.getElementById('btn-radar-2d');
+
+      if (mode === '3d') {
+        if (wrap3d) wrap3d.style.display = 'block';
+        if (wrap2d) wrap2d.style.display = 'none';
+        if (btn3d) btn3d.classList.add('active');
+        if (btn2d) btn2d.classList.remove('active');
+        if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+        speak("3D Holographic Cyber Globe engaged.");
+      } else {
+        if (wrap3d) wrap3d.style.display = 'none';
+        if (wrap2d) wrap2d.style.display = 'block';
+        if (btn2d) btn2d.classList.add('active');
+        if (btn3d) btn3d.classList.remove('active');
+        if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+        speak("2D Fleet Matrix engaged.");
+      }
+    }
+
+    // ===================================================
+    // TASK 4: 3D HOLOGRAPHIC THREAT CYBER GLOBE ENGINE
+    // ===================================================
+    let cyberGlobeAnimationId = null;
+    function initCyberGlobe() {
+      const canvas = document.getElementById('cyber-globe-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const badge = document.getElementById('globe-intercept-badge');
+
+      // Global Defense Hubs (Nodes)
+      const DEFENSE_NODES = [
+        { name: "TOKYO", lat: 35.6762, lon: 139.6503, color: "#00f5c4", status: "PACIFIC HUB // 0 THREATS" },
+        { name: "MUMBAI", lat: 19.0760, lon: 72.8777, color: "#00f5ff", status: "SOUTH ASIA SHIELD // 100% ONLINE" },
+        { name: "FRANKFURT", lat: 50.1109, lon: 8.6821, color: "#38bdf8", status: "EU-CENTRAL AIRLOCK // SECURE" },
+        { name: "LONDON", lat: 51.5074, lon: -0.1278, color: "#a78bfa", status: "UK DEFENSE GATEWAY // ACTIVE" },
+        { name: "NEW YORK", lat: 40.7128, lon: -74.0060, color: "#f43f5e", status: "US-EAST NODE // 2 ATTACKS BLOCKED" },
+        { name: "SYDNEY", lat: -33.8688, lon: 151.2093, color: "#fbbf24", status: "OCEANIA SATELLITE RELAY" },
+        { name: "SINGAPORE", lat: 1.3521, lon: 103.8198, color: "#34d399", status: "ASEAN TELEMETRY MESH" },
+        { name: "SAO PAULO", lat: -23.5505, lon: -46.6333, color: "#fb923c", status: "LATAM DEFENSE OUTPOST" }
+      ];
+
+      // Attack Intercept Arcs between nodes
+      const ARCS = [
+        { from: 0, to: 1, color: "#00f5c4" }, // Tokyo -> Mumbai
+        { from: 2, to: 3, color: "#38bdf8" }, // Frankfurt -> London
+        { from: 4, to: 2, color: "#f43f5e" }, // New York -> Frankfurt
+        { from: 5, to: 6, color: "#fbbf24" }  // Sydney -> Singapore
+      ];
+
+      // Generate surface points for globe continents / land clusters
+      const SURFACE_POINTS = [];
+      const numPoints = 380;
+      for (let i = 0; i < numPoints; i++) {
+        const phi = Math.acos(-1 + (2 * i) / numPoints);
+        const theta = Math.sqrt(numPoints * Math.PI) * phi;
+        SURFACE_POINTS.push({
+          x: Math.cos(theta) * Math.sin(phi),
+          y: Math.sin(theta) * Math.sin(phi),
+          z: Math.cos(phi)
+        });
+      }
+
+      let rotX = 0.22;
+      let rotY = -1.2;
+      let isDragging = false;
+      let lastPointerX = 0;
+      let lastPointerY = 0;
+      let autoRotate = true;
+      let pulseTime = 0;
+
+      function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // Convert Lat / Lon to 3D Sphere coordinates
+      function latLonTo3D(lat, lon) {
+        const phi = (lat * Math.PI) / 180;
+        const lambda = (lon * Math.PI) / 180;
+        return {
+          x: Math.cos(phi) * Math.sin(lambda),
+          y: -Math.sin(phi),
+          z: Math.cos(phi) * Math.cos(lambda)
+        };
+      }
+
+      // 3D Rotation Transform
+      function rotatePoint(p, rx, ry) {
+        // Rotate around Y axis
+        const cosY = Math.cos(ry);
+        const sinY = Math.sin(ry);
+        const x1 = p.x * cosY + p.z * sinY;
+        const z1 = -p.x * sinY + p.z * cosY;
+
+        // Rotate around X axis
+        const cosX = Math.cos(rx);
+        const sinX = Math.sin(rx);
+        const y2 = p.y * cosX - z1 * sinX;
+        const z2 = p.y * sinX + z1 * cosX;
+
+        return { x: x1, y: y2, z: z2 };
+      }
+
+      // Pointer Event Handlers for Dragging
+      canvas.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        autoRotate = false;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+        canvas.style.cursor = 'grabbing';
+
+        // Check if node clicked
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const radius = Math.min(cx, cy) * 0.74;
+
+        let clickedNode = null;
+        DEFENSE_NODES.forEach(node => {
+          const p3 = latLonTo3D(node.lat, node.lon);
+          const pr = rotatePoint(p3, rotX, rotY);
+          if (pr.z > 0.05) {
+            const px = cx + pr.x * radius;
+            const py = cy + pr.y * radius;
+            const dist = Math.hypot(clickX - px, clickY - py);
+            if (dist < 22) {
+              clickedNode = node;
+            }
+          }
+        });
+
+        if (clickedNode) {
+          if (badge) {
+            badge.innerText = `NODE: ${clickedNode.name} // ${clickedNode.status}`;
+            badge.style.color = clickedNode.color;
+            badge.style.borderColor = clickedNode.color;
+          }
+          if (typeof playLaserScanSound === 'function') playLaserScanSound();
+          speak(`Defense Node ${clickedNode.name} selected. ${clickedNode.status}`);
+        }
+      });
+
+      window.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - lastPointerX;
+        const dy = e.clientY - lastPointerY;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+
+        rotY += dx * 0.006;
+        rotX += dy * 0.006;
+        rotX = Math.max(-1.1, Math.min(1.1, rotX));
+      });
+
+      window.addEventListener('pointerup', () => {
+        if (isDragging) {
+          isDragging = false;
+          canvas.style.cursor = 'grab';
+          setTimeout(() => { autoRotate = true; }, 3000);
+        }
+      });
+
+      function render() {
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        if (w === 0 || h === 0) {
+          cyberGlobeAnimationId = requestAnimationFrame(render);
+          return;
+        }
+
+        ctx.clearRect(0, 0, w, h);
+
+        const cx = w / 2;
+        const cy = h / 2;
+        const radius = Math.min(cx, cy) * 0.74;
+
+        pulseTime += 0.015;
+        if (autoRotate && !isDragging) {
+          rotY += 0.0035;
+        }
+
+        // 1. Atmosphere Backlight & Radial Glow
+        const haloGrad = ctx.createRadialGradient(cx, cy, radius * 0.7, cx, cy, radius * 1.25);
+        haloGrad.addColorStop(0, 'rgba(0, 245, 255, 0.08)');
+        haloGrad.addColorStop(0.5, 'rgba(0, 245, 255, 0.03)');
+        haloGrad.addColorStop(1, 'rgba(0, 245, 255, 0)');
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 1.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Base Sphere Rim & Dark Shading
+        const sphereGrad = ctx.createRadialGradient(cx - radius * 0.35, cy - radius * 0.35, radius * 0.1, cx, cy, radius);
+        sphereGrad.addColorStop(0, '#0a2342');
+        sphereGrad.addColorStop(0.65, '#041224');
+        sphereGrad.addColorStop(1, '#020710');
+        ctx.fillStyle = sphereGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Atmosphere Rim Outline
+        ctx.strokeStyle = 'rgba(0, 245, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = '#00f5ff';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // 4. Latitude Rings (Wireframe)
+        ctx.lineWidth = 0.8;
+        const latBands = [-50, -25, 0, 25, 50];
+        latBands.forEach(lat => {
+          ctx.beginPath();
+          let first = true;
+          for (let lon = 0; lon <= 360; lon += 8) {
+            const p3 = latLonTo3D(lat, lon);
+            const pr = rotatePoint(p3, rotX, rotY);
+            if (pr.z > 0.02) {
+              const px = cx + pr.x * radius;
+              const py = cy + pr.y * radius;
+              if (first) {
+                ctx.moveTo(px, py);
+                first = false;
+              } else {
+                ctx.lineTo(px, py);
+              }
+            } else {
+              first = true;
+            }
+          }
+          ctx.strokeStyle = lat === 0 ? 'rgba(0, 245, 255, 0.35)' : 'rgba(0, 245, 255, 0.12)';
+          ctx.stroke();
+        });
+
+        // 5. Surface Points (Landmass Grid Dots)
+        SURFACE_POINTS.forEach(p => {
+          const pr = rotatePoint(p, rotX, rotY);
+          if (pr.z > 0) {
+            const px = cx + pr.x * radius;
+            const py = cy + pr.y * radius;
+            const alpha = Math.min(1, Math.max(0.1, pr.z * 1.1));
+            ctx.fillStyle = `rgba(0, 245, 255, ${alpha * 0.75})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 1.2 + pr.z * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        // 6. Draw Animated Attack Intercept Arcs
+        ARCS.forEach((arc, arcIdx) => {
+          const fromNode = DEFENSE_NODES[arc.from];
+          const toNode = DEFENSE_NODES[arc.to];
+          const pFrom = latLonTo3D(fromNode.lat, fromNode.lon);
+          const pTo = latLonTo3D(toNode.lat, toNode.lon);
+
+          const samples = 24;
+          const arcCoords = [];
+          for (let s = 0; s <= samples; s++) {
+            const t = s / samples;
+            let mx = pFrom.x * (1 - t) + pTo.x * t;
+            let my = pFrom.y * (1 - t) + pTo.y * t;
+            let mz = pFrom.z * (1 - t) + pTo.z * t;
+            const mag = Math.hypot(mx, my, mz) || 1;
+            const elevate = 1 + 0.18 * Math.sin(t * Math.PI);
+            mx = (mx / mag) * elevate;
+            my = (my / mag) * elevate;
+            mz = (mz / mag) * elevate;
+
+            const pr = rotatePoint({ x: mx, y: my, z: mz }, rotX, rotY);
+            arcCoords.push(pr);
+          }
+
+          // Draw the arc curve
+          ctx.beginPath();
+          let started = false;
+          arcCoords.forEach(p => {
+            if (p.z > -0.1) {
+              const px = cx + p.x * radius;
+              const py = cy + p.y * radius;
+              if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+              } else {
+                ctx.lineTo(px, py);
+              }
+            } else {
+              started = false;
+            }
+          });
+          ctx.strokeStyle = arc.color;
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+
+          // Animated energy pulse traveling along the arc
+          const pulseProgress = (pulseTime * 0.5 + arcIdx * 0.25) % 1;
+          const pIndex = Math.min(samples, Math.floor(pulseProgress * samples));
+          const currentPoint = arcCoords[pIndex];
+          if (currentPoint && currentPoint.z > -0.1) {
+            const px = cx + currentPoint.x * radius;
+            const py = cy + currentPoint.y * radius;
+            ctx.shadowColor = arc.color;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        });
+
+        // 7. Global Defense Hubs (Nodes)
+        DEFENSE_NODES.forEach(node => {
+          const p3 = latLonTo3D(node.lat, node.lon);
+          const pr = rotatePoint(p3, rotX, rotY);
+          if (pr.z > 0.05) {
+            const px = cx + pr.x * radius;
+            const py = cy + pr.y * radius;
+
+            // Concentric Pulsing Ring
+            const pulseRadius = 4 + (Math.sin(pulseTime * 3) + 1) * 3;
+            ctx.strokeStyle = node.color;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(px, py, pulseRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Core Node Dot
+            ctx.fillStyle = node.color;
+            ctx.shadowColor = node.color;
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // City Label
+            ctx.font = '800 9px monospace';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(node.name, px + 7, py - 4);
+          }
+        });
+
+        cyberGlobeAnimationId = requestAnimationFrame(render);
+      }
+
+      render();
     }
 
     function inspectSmsItem(id) {
@@ -4330,6 +4998,8 @@
     window.addEventListener('DOMContentLoaded', () => {
       triggerJarvisOpening();
       checkSmsAppPermissionStatus();
+      initCyberGlobe();
+      applySmsInboxFilters();
     });
 
   </script>
