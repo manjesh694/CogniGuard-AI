@@ -941,6 +941,246 @@
       backdrop-filter: blur(20px);
     }
 
+    /* ===================================================
+       PHONE SMS INBOX GUARD & CORNER BADGES (RED/GREEN)
+       =================================================== */
+    .inbox-guard-wrap {
+      margin-bottom: 18px;
+    }
+    .inbox-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .inbox-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #00f5ff;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .inbox-filter-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-bottom: 12px;
+    }
+    .inbox-filter-chip {
+      background: rgba(4, 15, 30, 0.8);
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      color: #94a3b8;
+      font-size: 10.5px;
+      font-weight: 700;
+      font-family: monospace;
+      padding: 5px 11px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .inbox-filter-chip.active, .inbox-filter-chip:hover {
+      background: rgba(0, 245, 255, 0.2);
+      border-color: #00f5ff;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.3);
+    }
+    .inbox-filter-chip.chip-scam.active {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+    .inbox-filter-chip.chip-safe.active {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10b981;
+      color: #6ee7b7;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .msg-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg-card {
+      position: relative;
+      background: rgba(5, 14, 28, 0.85);
+      border-radius: 16px;
+      padding: 12px 14px;
+      transition: all 0.25s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg-card.fake {
+      border: 1.5px solid rgba(239, 68, 68, 0.55);
+      background: linear-gradient(135deg, rgba(38, 10, 18, 0.75) 0%, rgba(14, 5, 12, 0.9) 100%);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.1);
+    }
+    .msg-card.original {
+      border: 1.5px solid rgba(16, 185, 129, 0.45);
+      background: linear-gradient(135deg, rgba(6, 26, 20, 0.75) 0%, rgba(4, 15, 16, 0.9) 100%);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.08);
+    }
+    .msg-card:hover {
+      transform: translateY(-1.5px);
+    }
+    .msg-card.fake:hover {
+      border-color: #ef4444;
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.18);
+    }
+    .msg-card.original:hover {
+      border-color: #10b981;
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35), inset 0 0 20px rgba(16, 185, 129, 0.12);
+    }
+
+    /* Top Corner Badge (RED for Fake/Scam, GREEN for Original/Safe) */
+    .msg-corner-badge {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 9.5px;
+      font-weight: 900;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+    .msg-corner-badge.badge-fake {
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+      animation: alert-pulse 1.8s infinite;
+    }
+    .msg-corner-badge.badge-original {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #6ee7b7;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    @keyframes alert-pulse {
+      0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.8); }
+      100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+    }
+
+    .msg-main-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding-right: 95px; /* Leave space for corner badge */
+    }
+    .msg-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #ffffff;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    .msg-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .msg-sender-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .msg-time {
+      font-size: 10px;
+      font-family: monospace;
+      color: #64748b;
+      margin-left: auto;
+    }
+    .msg-text-snippet {
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.45;
+      margin-top: 3px;
+      word-break: break-word;
+    }
+    .scam-url-flagged {
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px dashed #ef4444;
+      color: #fca5a5;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 10.5px;
+      text-decoration: line-through;
+      display: inline-block;
+      margin: 2px 0;
+    }
+    .safe-otp-highlight {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #a7f3d0;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .msg-status-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: monospace;
+      font-size: 10px;
+    }
+    .msg-action-btn {
+      background: rgba(0, 245, 255, 0.12);
+      border: 1px solid rgba(0, 245, 255, 0.35);
+      color: #00f5ff;
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .msg-action-btn:hover {
+      background: rgba(0, 245, 255, 0.25);
+      color: #ffffff;
+    }
+
+    /* Permission Banner High-Tech Card */
+    .sms-airlock-card {
+      background: linear-gradient(135deg, rgba(10, 24, 44, 0.95), rgba(4, 12, 24, 0.98));
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 245, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
   </style>
 </head>
 <body>
@@ -1453,7 +1693,188 @@
     </div>
   </div>
 
-      <!-- System Push Notification Permission Card -->
+  <!-- SMS & Phone Message Airlock Guardian Module -->
+  <div class="pro-hud-card" id="sms-guardian-module">
+    <div class="pro-card-corner pcc-tl"></div>
+    <div class="pro-card-corner pcc-tr"></div>
+    <div class="pro-card-corner pcc-bl"></div>
+    <div class="pro-card-corner pcc-br"></div>
+
+    <!-- Header -->
+    <div class="inbox-header-row">
+      <div class="inbox-title">
+        <span class="radar-ping-dot"></span>
+        <span>📱 Phone Messages Sentinel (SMS &amp; Links)</span>
+      </div>
+      <span id="sms-stream-badge" style="font-size:10px; color:#00f5c4; font-family:monospace; background:rgba(0,245,196,0.1); border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:2px 8px; font-weight:800;">6 MESSAGES GUARDED</span>
+    </div>
+
+    <!-- Permission Airlock Bar -->
+    <div id="sms-airlock-banner" class="sms-airlock-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:34px; height:34px; border-radius:50%; background:rgba(0,245,255,0.15); border:1px solid #00f5ff; display:flex; align-items:center; justify-content:center; font-size:16px;">
+            🛡️
+          </div>
+          <div>
+            <div id="sms-airlock-title" style="font-size:12.5px; font-weight:800; color:#ffffff;">SMS &amp; Notification Interceptor Airlock</div>
+            <div id="sms-airlock-sub" style="font-size:10px; color:#94a3b8; font-family:monospace;">Inspects incoming links, marks scams with 🔴 RED &amp; safe with 🟢 GREEN</div>
+          </div>
+        </div>
+        <button id="btn-sms-airlock" onclick="requestSmsGuardianPermission()" class="btn-primary" style="width:auto; padding:7px 16px; font-size:11px; border-radius:20px; font-weight:800; cursor:pointer;">
+          Grant Access
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar & Live Simulator -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <div class="inbox-filter-bar" style="margin-bottom:0;">
+        <div class="inbox-filter-chip active" id="chip-all" onclick="filterMessages('all')">All Messages (6)</div>
+        <div class="inbox-filter-chip chip-scam" id="chip-scam" onclick="filterMessages('scam')">🚨 Scams / Fake (3)</div>
+        <div class="inbox-filter-chip chip-safe" id="chip-safe" onclick="filterMessages('safe')">🟢 Original / Safe (3)</div>
+      </div>
+      <button onclick="simulateNewIncomingSms()" class="msg-action-btn" style="color:#00f5c4; border-color:rgba(0,245,196,0.4); display:flex; align-items:center; gap:4px; padding:5px 10px;">
+        ⚡ Simulate SMS Arrival
+      </button>
+    </div>
+
+    <!-- Messages List -->
+    <div class="msg-list" id="inbox-msg-list">
+
+      <!-- Message 1: VA-PWAALA-P (SCAM: Predatory Loan) -->
+      <div class="msg-card fake" data-category="scam">
+        <div class="msg-corner-badge badge-fake">🚨 FAKE / SCAM</div>
+        <div class="msg-main-row">
+          <div class="msg-avatar" style="background:#ea580c;">P</div>
+          <div class="msg-content">
+            <div class="msg-sender-title">
+              <span>VA-PWAALA-P</span>
+              <span class="msg-time">1:39 PM</span>
+            </div>
+            <div class="msg-text-snippet">
+              Loan (Rs.5,000-10,00,000)* approved instantly without documents! Disburse to bank in 2 mins: 
+              <span class="scam-url-flagged">http://pwaala-instant.apk (NEUTRALIZED)</span>
+            </div>
+          </div>
+        </div>
+        <div class="msg-status-strip">
+          <span style="color:#fca5a5;">⚠️ Predatory Loan Trap • Fake RBI Entity</span>
+          <button class="msg-action-btn" onclick="inspectMessageThreat('pwaala')">🧠 Threat Breakdown</button>
+        </div>
+      </div>
+
+      <!-- Message 2: VA-KBLBNK-T (ORIGINAL: Verified Bank) -->
+      <div class="msg-card original" data-category="safe">
+        <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
+        <div class="msg-main-row">
+          <div class="msg-avatar" style="background:#16a34a;">🏦</div>
+          <div class="msg-content">
+            <div class="msg-sender-title">
+              <span>VA-KBLBNK-T</span>
+              <span class="msg-time">Sun 12</span>
+            </div>
+            <div class="msg-text-snippet">
+              Your a/c XX0468 debited for Rs.250.00 on 15-11-26 trf to SRI LAKSHMI VENKATES. UPI:557880789012. Call 18004251444 if not done by you.
+            </div>
+          </div>
+        </div>
+        <div class="msg-status-strip">
+          <span style="color:#6ee7b7;">🛡️ Authentic Bank Transaction • Signature Valid</span>
+          <span style="color:#64748b;">HASH: 0x8F92A</span>
+        </div>
+      </div>
+
+      <!-- Message 3: JM-JIOMRT-P (SCAM: Fake Reward Phish) -->
+      <div class="msg-card fake" data-category="scam">
+        <div class="msg-corner-badge badge-fake">🚨 FAKE REWARD LINK</div>
+        <div class="msg-main-row">
+          <div class="msg-avatar" style="background:#dc2626;">🎁</div>
+          <div class="msg-content">
+            <div class="msg-sender-title">
+              <span>JM-JIOMRT-P</span>
+              <span class="msg-time">2:12 PM</span>
+            </div>
+            <div class="msg-text-snippet">
+              Your Jio reward is here. Get Rs 300 reward in your JioMart Wallet, redeem before expiry: 
+              <span class="scam-url-flagged">http://jiomrt-claim.top/wallet (ISOLATED)</span>
+            </div>
+          </div>
+        </div>
+        <div class="msg-status-strip">
+          <span style="color:#fca5a5;">⚠️ Rogue Domain Spoof • Credential Harvester</span>
+          <button class="msg-action-btn" onclick="inspectMessageThreat('jiomrt')">🧠 Threat Breakdown</button>
+        </div>
+      </div>
+
+      <!-- Message 4: 59039465 (ORIGINAL: GitHub 2FA Code) -->
+      <div class="msg-card original" data-category="safe">
+        <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
+        <div class="msg-main-row">
+          <div class="msg-avatar" style="background:#9333ea;">🐙</div>
+          <div class="msg-content">
+            <div class="msg-sender-title">
+              <span>59039465 (GitHub 2FA)</span>
+              <span class="msg-time">Sat 18</span>
+            </div>
+            <div class="msg-text-snippet">
+              <span class="safe-otp-highlight">920376</span> is your GitHub authentication code. Never share this with anyone.
+            </div>
+          </div>
+        </div>
+        <div class="msg-status-strip">
+          <span style="color:#6ee7b7;">🔒 Valid Two-Factor Authentication Secret</span>
+          <button class="msg-action-btn" onclick="copyOtpCode('920376')">📋 Copy OTP (920376)</button>
+        </div>
+      </div>
+
+      <!-- Message 5: Jio BestPlan (ORIGINAL: Verified Brand) -->
+      <div class="msg-card original" data-category="safe">
+        <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
+        <div class="msg-main-row">
+          <div class="msg-avatar" style="background:#e11d48;">Jio</div>
+          <div class="msg-content">
+            <div class="msg-sender-title">
+              <span>Jio BestPlan <span style="color:#38bdf8;">✔️</span></span>
+              <span class="msg-time">2:48 PM</span>
+            </div>
+            <div class="msg-text-snippet">
+              ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ₹1,590 ಮೌಲ್ಯದ ಉಚಿತ 12 ತಿಂಗಳ Canva ವಾರ್ಷಿಕ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪಡೆಯಿರಿ.
+            </div>
+          </div>
+        </div>
+        <div class="msg-status-strip">
+          <span style="color:#6ee7b7;">🛡️ Verified Telecom Sender • TRAI Registered</span>
+          <span style="color:#64748b;">TRAI: RJIL-KA</span>
+        </div>
+      </div>
+
+      <!-- Message 6: TZ-FATAKM-P (SCAM: High-Interest Loan APK Dropper) -->
+      <div class="msg-card fake" data-category="scam">
+        <div class="msg-corner-badge badge-fake">🚨 FAKE / SCAM</div>
+        <div class="msg-main-row">
+          <div class="msg-avatar" style="background:#b91c1c;">💸</div>
+          <div class="msg-content">
+            <div class="msg-sender-title">
+              <span>TZ-FATAKM-P</span>
+              <span class="msg-time">Sat 11</span>
+            </div>
+            <div class="msg-text-snippet">
+              FATAKPAY: Tight days happen to everyone. Emergency cash loan approved! Download APK: 
+              <span class="scam-url-flagged">http://fatak-quick.in/app (BLOCKED)</span>
+            </div>
+          </div>
+        </div>
+        <div class="msg-status-strip">
+          <span style="color:#fca5a5;">⚠️ Off-market APK Dropper • Infostealer Risk</span>
+          <button class="msg-action-btn" onclick="inspectMessageThreat('fatak')">🧠 Threat Breakdown</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- System Push Notification Permission Card -->
   <div id="notif-perm-card" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 14px; padding: 11px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
     <div style="display: flex; align-items: center; gap: 10px;">
       <span style="font-size: 18px;">🔔</span>
@@ -2783,8 +3204,174 @@
       if (txt) txt.innerText = key;
     }
   
+    // ===================================================
+    // PHONE SMS & LINK SENTINEL LOGIC
+    // ===================================================
+    function checkSmsGuardianStatus() {
+      const isGranted = localStorage.getItem('cg_sms_perm') === 'granted';
+      const banner = document.getElementById('sms-airlock-banner');
+      const btn = document.getElementById('btn-sms-airlock');
+      const title = document.getElementById('sms-airlock-title');
+      const sub = document.getElementById('sms-airlock-sub');
+      if (isGranted && banner && btn) {
+        banner.style.borderColor = '#10b981';
+        banner.style.background = 'linear-gradient(135deg, rgba(6, 32, 24, 0.95), rgba(4, 16, 18, 0.98))';
+        if (title) title.innerText = '✅ SMS & Notification Airlock Active';
+        if (sub) sub.innerText = 'Monitoring incoming Google Messages & WhatsApp links in real time (Zero Leaks)';
+        btn.innerText = 'Airlock Active 🛡️';
+        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+        btn.style.border = '1px solid #10b981';
+        btn.style.color = '#10b981';
+      }
+    }
+
+    async function requestSmsGuardianPermission() {
+      if ('Notification' in window) {
+        try {
+          await Notification.requestPermission();
+        } catch(e) {}
+      }
+      localStorage.setItem('cg_sms_perm', 'granted');
+      checkSmsGuardianStatus();
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+      speak("SMS airlock permission granted. Incoming message links will be checked for scams.");
+      alert("🛡️ SMS & Notification Airlock Engaged!\n\nCogniGuard is now actively monitoring incoming SMS & WhatsApp links. Fake messages will be flagged with 🔴 RED badges, and verified bank/OTP messages with 🟢 GREEN badges.");
+    }
+
+    function filterMessages(type) {
+      ['chip-all', 'chip-scam', 'chip-safe'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      const activeEl = document.getElementById(`chip-${type}`);
+      if (activeEl) activeEl.classList.add('active');
+
+      const cards = document.querySelectorAll('#inbox-msg-list .msg-card');
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        if (type === 'all' || (type === 'scam' && cat === 'scam') || (type === 'safe' && cat === 'safe')) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function copyOtpCode(code) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code);
+      }
+      speak(`OTP code ${code} copied to clipboard.`);
+      alert(`✅ OTP Code ${code} copied to clipboard! Remember: Never share bank or 2FA codes with anyone.`);
+    }
+
+    const threatDetailsMap = {
+      'pwaala': {
+        title: 'Predatory Loan Extortion Trap (VA-PWAALA-P)',
+        lure: '🎭 Manufactured instant loan approval (Rs. 5,000 - 10,00,000) with zero documentation designed to target urgent cash needs.',
+        evasion: '🛡️ Off-market APK dropper link (pwaala-instant.apk). Bypasses Google Play Protect to harvest contacts, photos, and location permissions for blackmail extortion.',
+        action: '⚡ Link neutralized offline (0 Bytes Leaked). Block number and report predatory loan syndicate to 1930 / cybercrime.gov.in.'
+      },
+      'jiomrt': {
+        title: 'Fake JioMart Wallet Phishing (JM-JIOMRT-P)',
+        lure: '🎭 Manufactured Rs 300 free wallet reward to compel instant tap before claimed expiry.',
+        evasion: '🛡️ Rogue .xyz domain (jiomrt-claim.top) mimicking legitimate JioMart branding to capture UPI PIN and net banking credentials.',
+        action: '⚡ Link neutralized offline. Do not submit OTP or UPI PIN on unverified domains.'
+      },
+      'fatak': {
+        title: 'High-Interest Predatory Cash Dropper (TZ-FATAKM-P)',
+        lure: '🎭 Manufactured emergency loan disbursement claiming pre-approved credit lines.',
+        evasion: '🛡️ Unsigned APK payload hosting Trojan-Dropper.AndroidOS designed to exfiltrate SMS messages and contact lists.',
+        action: '⚡ Link neutralized offline (0 Bytes Leaked). Never install APKs sent via unsolicited SMS.'
+      }
+    };
+
+    function inspectMessageThreat(threatId) {
+      const data = threatDetailsMap[threatId];
+      if (!data) return;
+      const explainer = document.getElementById('ai-threat-explainer');
+      const lureEl = document.getElementById('ai-exp-lure');
+      const evasionEl = document.getElementById('ai-exp-evasion');
+      const actionEl = document.getElementById('ai-exp-action');
+
+      if (lureEl) lureEl.innerHTML = `<strong style="color:#f87171;">🎭 Psychological Lure:</strong> ${data.lure}`;
+      if (evasionEl) evasionEl.innerHTML = `<strong style="color:#fde047;">🛡️ Evasion Vector:</strong> ${data.evasion}`;
+      if (actionEl) actionEl.innerHTML = `<strong style="color:#6ee7b7;">⚡ Recommended Action:</strong> ${data.action}`;
+      if (explainer) {
+        explainer.style.display = 'block';
+        explainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      speak(`AI threat breakdown loaded for ${data.title}`);
+      if (typeof playAlertSiren === 'function') playAlertSiren();
+    }
+
+    let simulatedCount = 0;
+    function simulateNewIncomingSms() {
+      simulatedCount++;
+      const list = document.getElementById('inbox-msg-list');
+      if (!list) return;
+
+      const isScam = simulatedCount % 2 !== 0;
+      const newCard = document.createElement('div');
+      newCard.className = `msg-card ${isScam ? 'fake' : 'original'}`;
+      newCard.setAttribute('data-category', isScam ? 'scam' : 'safe');
+      newCard.style.animation = 'fadeIn 0.4s ease-out';
+
+      if (isScam) {
+        newCard.innerHTML = `
+          <div class="msg-corner-badge badge-fake">🚨 FAKE / SCAM</div>
+          <div class="msg-main-row">
+            <div class="msg-avatar" style="background:#dc2626;">⚠️</div>
+            <div class="msg-content">
+              <div class="msg-sender-title">
+                <span>AX-ICICIBNK-Alert</span>
+                <span class="msg-time">Just Now</span>
+              </div>
+              <div class="msg-text-snippet">
+                Dear Customer, your Bank PAN card is blocked! Update KYC immediately to prevent account suspension: 
+                <span class="scam-url-flagged">http://icici-pan-verify.cc/kyc (NEUTRALIZED)</span>
+              </div>
+            </div>
+          </div>
+          <div class="msg-status-strip">
+            <span style="color:#fca5a5;">⚠️ Banking Phishing Lure • Zero-Day Threat Intercepted</span>
+            <button class="msg-action-btn" onclick="inspectMessageThreat('pwaala')">🧠 Threat Breakdown</button>
+          </div>
+        `;
+        if (typeof playAlertSiren === 'function') playAlertSiren();
+        speak("Warning: Incoming predatory banking SMS intercepted. Link marked FAKE in red.");
+      } else {
+        newCard.innerHTML = `
+          <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
+          <div class="msg-main-row">
+            <div class="msg-avatar" style="background:#059669;">🏦</div>
+            <div class="msg-content">
+              <div class="msg-sender-title">
+                <span>AX-HDFCBK-N</span>
+                <span class="msg-time">Just Now</span>
+              </div>
+              <div class="msg-text-snippet">
+                Rs 1,200.00 debited from HDFC Bank A/c ending 4120 on 16-11-26 towards SWIGGY. Ref No: 432109876543.
+              </div>
+            </div>
+          </div>
+          <div class="msg-status-strip">
+            <span style="color:#6ee7b7;">🛡️ Authentic Bank Transaction • Verified Safe</span>
+            <span style="color:#64748b;">HASH: 0x4D21B</span>
+          </div>
+        `;
+        if (typeof playSuccessChime === 'function') playSuccessChime();
+        speak("Incoming bank alert verified authentic. Marked ORIGINAL in green.");
+      }
+
+      list.prepend(newCard);
+      const streamBadge = document.getElementById('sms-stream-badge');
+      if (streamBadge) streamBadge.innerText = `${list.children.length} MESSAGES GUARDED`;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       triggerJarvisOpening();
+      checkSmsGuardianStatus();
     });
 
   </script>
