@@ -96,6 +96,26 @@ def test_fastapi_email_and_otp_endpoints():
     assert s_data["is_spam"] is True
     assert s_data["threat_level"] == "CRITICAL_PHISHING"
 
+    # 4. API SMS Intercept (FastAPI Real-Time Endpoint)
+    req_fake_sms = api_bridge.SmsInterceptRequest(
+        sender="VA-PWAALA-P",
+        body="Loan approved without documents! Tap to disburse: http://pwaala-instant.apk"
+    )
+    res_fake = api_bridge.intercept_sms_endpoint(req_fake_sms)
+    assert res_fake["is_fake"] is True
+    assert res_fake["corner_mark"] == "RED"
+    assert "pwaala-instant.apk" in res_fake["neutralized_links"][0]
+    assert "Warning, Sir." in res_fake["ai_voice"]
+
+    req_safe_sms = api_bridge.SmsInterceptRequest(
+        sender="VA-KBLBNK-T",
+        body="Your a/c XX0468 debited for Rs.250.00 on 15-11-26 trf to SRI LAKSHMI VENKATES. UPI:557880789012"
+    )
+    res_safe = api_bridge.intercept_sms_endpoint(req_safe_sms)
+    assert res_safe["is_fake"] is False
+    assert res_safe["corner_mark"] == "GREEN"
+    assert res_safe["threat_score"] == 0.0
+
 
 def test_cli_email_commands(capsys):
     # CLI Send Code
