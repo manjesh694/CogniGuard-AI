@@ -569,9 +569,108 @@
       mix-blend-mode: screen;
       z-index: 10;
     }
+  
+    /* Interactive 60FPS Cyber Particle Canvas */
+    #cyber-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.75;
+    }
+
+    /* DEFCON & Global Threat Matrix Bar */
+    .defcon-bar {
+      background: rgba(3, 8, 18, 0.9);
+      border: 1px solid rgba(255, 51, 68, 0.4);
+      box-shadow: 0 0 20px rgba(255, 51, 68, 0.2), inset 0 0 15px rgba(255, 51, 68, 0.05);
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      font-family: monospace;
+    }
+    .defcon-pill {
+      background: rgba(255, 51, 68, 0.2);
+      border: 1px solid #ff3344;
+      color: #ff3344;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 10px rgba(255, 51, 68, 0.4);
+    }
+    .strobe-dot {
+      width: 6px;
+      height: 6px;
+      background: #ff3344;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ff3344;
+      animation: strobe 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes strobe {
+      from { opacity: 0.3; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* Real-Time Entropy Frequency Waveform Oscilloscope */
+    .waveform-visualizer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 3px;
+      height: 28px;
+      background: #030814;
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.08);
+    }
+    .wave-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #00f5ff, #0284c7);
+      border-radius: 2px;
+      height: 20%;
+      transition: height 0.08s ease, background 0.2s ease;
+      box-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+    }
+    .wave-bar.alert {
+      background: linear-gradient(180deg, #ff3344, #b91c1c);
+      box-shadow: 0 0 8px rgba(255, 51, 68, 0.7);
+    }
+
+    /* Tactical Node Inspector HUD Overlay on Radar Map */
+    .node-hud-box {
+      background: rgba(4, 12, 24, 0.95);
+      border: 1px solid #00f5ff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #00f5ff;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.25);
+    }
+
   </style>
 </head>
 <body>
+  <canvas id="cyber-canvas"></canvas>
 
   <!-- Pro Opening Splash Sequence Overlay (Iron Man Arc Reactor / Jarvis HUD) -->
   <div id="pro-boot-screen" class="ironman-overlay">
@@ -887,6 +986,104 @@
       animation: radar-sweep 5s linear infinite;
       mix-blend-mode: screen;
       z-index: 10;
+    }
+
+  
+    /* Interactive 60FPS Cyber Particle Canvas */
+    #cyber-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.75;
+    }
+
+    /* DEFCON & Global Threat Matrix Bar */
+    .defcon-bar {
+      background: rgba(3, 8, 18, 0.9);
+      border: 1px solid rgba(255, 51, 68, 0.4);
+      box-shadow: 0 0 20px rgba(255, 51, 68, 0.2), inset 0 0 15px rgba(255, 51, 68, 0.05);
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      font-family: monospace;
+    }
+    .defcon-pill {
+      background: rgba(255, 51, 68, 0.2);
+      border: 1px solid #ff3344;
+      color: #ff3344;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 10px rgba(255, 51, 68, 0.4);
+    }
+    .strobe-dot {
+      width: 6px;
+      height: 6px;
+      background: #ff3344;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ff3344;
+      animation: strobe 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes strobe {
+      from { opacity: 0.3; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* Real-Time Entropy Frequency Waveform Oscilloscope */
+    .waveform-visualizer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 3px;
+      height: 28px;
+      background: #030814;
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.08);
+    }
+    .wave-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #00f5ff, #0284c7);
+      border-radius: 2px;
+      height: 20%;
+      transition: height 0.08s ease, background 0.2s ease;
+      box-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+    }
+    .wave-bar.alert {
+      background: linear-gradient(180deg, #ff3344, #b91c1c);
+      box-shadow: 0 0 8px rgba(255, 51, 68, 0.7);
+    }
+
+    /* Tactical Node Inspector HUD Overlay on Radar Map */
+    .node-hud-box {
+      background: rgba(4, 12, 24, 0.95);
+      border: 1px solid #00f5ff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #00f5ff;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.25);
     }
 
   </style>
@@ -1331,6 +1528,126 @@
     let deferredInstallPrompt = null;
 
     
+    
+    // --- 60FPS Cyber Matrix Particle Engine ---
+    (function initCyberParticles() {
+      const canvas = document.getElementById('cyber-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w, h;
+      const particles = [];
+      const particleCount = 42;
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7,
+          radius: Math.random() * 2 + 1,
+          color: Math.random() > 0.4 ? 'rgba(0, 245, 255, 0.7)' : 'rgba(168, 85, 247, 0.7)'
+        });
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0) p.x = w;
+          if (p.x > w) p.x = 0;
+          if (p.y < 0) p.y = h;
+          if (p.y > h) p.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color;
+          ctx.fill();
+
+          // Connect adjacent nodes with energy vectors
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j];
+            const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+            if (dist < 110) {
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.strokeStyle = `rgba(0, 245, 255, ${0.2 * (1 - dist / 110)})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+
+    // --- Oscilloscope Entropy Waveform Engine ---
+    let waveInterval = null;
+    function startWaveform(isAlert = false) {
+      const bars = document.querySelectorAll('.wave-bar');
+      const status = document.getElementById('wave-status');
+      if (status) {
+        status.innerText = isAlert ? '⚠️ ANOMALOUS ENTROPY DETECTED' : '⚡ LIVE CARRIER SCANNING';
+        status.style.color = isAlert ? '#ff3344' : '#00f5ff';
+      }
+
+      if (waveInterval) clearInterval(waveInterval);
+      waveInterval = setInterval(() => {
+        bars.forEach((b) => {
+          const h = isAlert 
+            ? Math.floor(Math.random() * 85 + 15) 
+            : Math.floor(Math.random() * 45 + 15);
+          b.style.height = h + '%';
+          if (isAlert) {
+            b.classList.add('alert');
+          } else {
+            b.classList.remove('alert');
+          }
+        });
+      }, 70);
+    }
+    startWaveform(false);
+
+    // --- Dynamic Threats Blocked Odometer Counter ---
+    let blockedCount = 14892104;
+    setInterval(() => {
+      blockedCount += Math.floor(Math.random() * 4 + 1);
+      const el = document.getElementById('counter-blocked');
+      if (el) el.innerText = blockedCount.toLocaleString();
+    }, 2800);
+
+    // --- Interactive Radar Hub Cycling ---
+    const radarHubs = [
+      { name: "NODE #42 [BENGALURU, IN]", lat: "3.8ms" },
+      { name: "NODE #07 [FRANKFURT, DE]", lat: "12.4ms" },
+      { name: "NODE #23 [TOKYO, JP]", lat: "7.1ms" },
+      { name: "NODE #18 [SAN FRANCISCO, US]", lat: "18.2ms" },
+      { name: "NODE #31 [LONDON, UK]", lat: "11.0ms" },
+      { name: "NODE #55 [SYDNEY, AU]", lat: "22.5ms" }
+    ];
+    let currentHubIdx = 0;
+    setInterval(() => {
+      currentHubIdx = (currentHubIdx + 1) % radarHubs.length;
+      const hub = radarHubs[currentHubIdx];
+      const nameEl = document.getElementById('node-lock-name');
+      const latEl = document.getElementById('node-latency');
+      if (nameEl) nameEl.innerText = hub.name;
+      if (latEl) latEl.innerText = hub.lat;
+    }, 3500);
+
+
     // --- CogniGuard Iron Man / Jarvis Arc Reactor Audio & HUD Engine ---
     let isAudioEnabled = true;
     let audioCtx = null;
@@ -1786,6 +2103,7 @@
 
       resBox.style.display = 'block';
       if (matchedReasons.length > 0) {
+        startWaveform(true);
         const reasonList = matchedReasons.map(r => `• ${escapeHtml(r)}`).join('<br>');
         resBox.className = 'result-box result-danger';
         resBox.innerHTML = `
@@ -1798,6 +2116,7 @@
         shieldIcon.style.borderColor = '#ef4444';
         speak("Warning! CogniGuard Mobile detected a scam threat. Do not click the link or share OTP or PIN. Your phone is secure.");
       } else {
+        startWaveform(false);
         resBox.className = 'result-box result-safe';
         resBox.innerHTML = `
           <strong>✅ MESSAGE VERIFIED SAFE</strong><br>
