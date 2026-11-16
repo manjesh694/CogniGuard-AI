@@ -68,6 +68,16 @@ class NotificationGuardianService : NotificationListenerService() {
                     message = "Sender: $title\nThreat: ${evaluation.reason}\nLink neutralized offline (0 Bytes Leaked).",
                     isDangerous = true
                 )
+                // Truecaller-style floating popup box over screen
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || android.provider.Settings.canDrawOverlays(this)) {
+                    FloatingOverlayService.showOverlay(
+                        context = this,
+                        sender = title,
+                        body = text,
+                        isScam = true,
+                        threatReason = evaluation.reason
+                    )
+                }
             }
             Verdict.VERIFIED_AUTHENTIC -> {
                 // Verified Bank / 2FA Alert (GREEN)
@@ -76,6 +86,16 @@ class NotificationGuardianService : NotificationListenerService() {
                     message = "Sender: $title\nCategory: ${evaluation.reason}\nSafe to read.",
                     isDangerous = false
                 )
+                // Truecaller-style floating popup box over screen
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || android.provider.Settings.canDrawOverlays(this)) {
+                    FloatingOverlayService.showOverlay(
+                        context = this,
+                        sender = title,
+                        body = text,
+                        isScam = false,
+                        threatReason = evaluation.reason
+                    )
+                }
             }
             Verdict.NEUTRAL -> {
                 // Normal message, no active badge required

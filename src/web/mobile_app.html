@@ -1181,6 +1181,74 @@
       gap: 10px;
     }
 
+    /* ===================================================
+       TRUECALLER-STYLE FLOATING POPUP OVERLAY WINDOW
+       =================================================== */
+    .truecaller-overlay-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 16, 0.78);
+      backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: tcFadeIn 0.22s ease-out;
+    }
+    .truecaller-floating-box {
+      position: relative;
+      max-width: 420px;
+      width: 100%;
+      border-radius: 22px;
+      padding: 20px 18px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 245, 255, 0.2);
+      animation: tcPopScale 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .truecaller-floating-box.fake {
+      background: linear-gradient(145deg, #1f070b 0%, #0d0406 100%);
+      border: 2px solid #ef4444;
+      box-shadow: 0 15px 50px rgba(239, 68, 68, 0.45), inset 0 0 25px rgba(239, 68, 68, 0.15);
+    }
+    .truecaller-floating-box.original {
+      background: linear-gradient(145deg, #051c14 0%, #020d09 100%);
+      border: 2px solid #10b981;
+      box-shadow: 0 15px 50px rgba(16, 185, 129, 0.4), inset 0 0 25px rgba(16, 185, 129, 0.12);
+    }
+    .tc-corner-badge {
+      position: absolute;
+      top: 14px;
+      right: 48px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      z-index: 10;
+    }
+    .tc-corner-badge.badge-fake {
+      background: rgba(239, 68, 68, 0.3);
+      border: 1.5px solid #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.7);
+      animation: alert-pulse 1.8s infinite;
+    }
+    .tc-corner-badge.badge-original {
+      background: rgba(16, 185, 129, 0.25);
+      border: 1.5px solid #10b981;
+      color: #6ee7b7;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.6);
+    }
+    @keyframes tcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes tcPopScale { from { transform: scale(0.85) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
   </style>
 </head>
 <body>
@@ -1693,184 +1761,57 @@
     </div>
   </div>
 
-  <!-- SMS & Phone Message Airlock Guardian Module -->
-  <div class="pro-hud-card" id="sms-guardian-module">
+  <!-- Truecaller-Style Floating Overlay Control Card -->
+  <div class="pro-hud-card" id="truecaller-guardian-module">
     <div class="pro-card-corner pcc-tl"></div>
     <div class="pro-card-corner pcc-tr"></div>
     <div class="pro-card-corner pcc-bl"></div>
     <div class="pro-card-corner pcc-br"></div>
 
-    <!-- Header -->
-    <div class="inbox-header-row">
-      <div class="inbox-title">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-size:13.5px; font-weight:800; color:#00f5ff; display:flex; align-items:center; gap:8px;">
         <span class="radar-ping-dot"></span>
-        <span>📱 Phone Messages Sentinel (SMS &amp; Links)</span>
+        <span>📱 Truecaller-Style Floating Message Box Overlay</span>
       </div>
-      <span id="sms-stream-badge" style="font-size:10px; color:#00f5c4; font-family:monospace; background:rgba(0,245,196,0.1); border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:2px 8px; font-weight:800;">6 MESSAGES GUARDED</span>
+      <span style="font-size:10px; color:#00f5c4; font-family:monospace; background:rgba(0,245,196,0.1); border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:2px 8px; font-weight:800;">HEADS-UP HUD</span>
     </div>
 
-    <!-- Permission Airlock Bar -->
-    <div id="sms-airlock-banner" class="sms-airlock-card">
+    <!-- Permission Status Card (Display Over Other Apps) -->
+    <div id="tc-perm-banner" class="sms-airlock-card" style="margin-bottom:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:34px; height:34px; border-radius:50%; background:rgba(0,245,255,0.15); border:1px solid #00f5ff; display:flex; align-items:center; justify-content:center; font-size:16px;">
-            🛡️
+          <div style="width:36px; height:36px; border-radius:50%; background:rgba(0,245,255,0.15); border:1.5px solid #00f5ff; display:flex; align-items:center; justify-content:center; font-size:18px;">
+            🪟
           </div>
           <div>
-            <div id="sms-airlock-title" style="font-size:12.5px; font-weight:800; color:#ffffff;">SMS &amp; Notification Interceptor Airlock</div>
-            <div id="sms-airlock-sub" style="font-size:10px; color:#94a3b8; font-family:monospace;">Inspects incoming links, marks scams with 🔴 RED &amp; safe with 🟢 GREEN</div>
+            <div id="tc-perm-title" style="font-size:12.5px; font-weight:800; color:#ffffff;">Permission: "Display Over Other Apps"</div>
+            <div id="tc-perm-sub" style="font-size:10px; color:#94a3b8; font-family:monospace;">Pops up floating message boxes over Google Messages &amp; WhatsApp</div>
           </div>
         </div>
-        <button id="btn-sms-airlock" onclick="requestSmsGuardianPermission()" class="btn-primary" style="width:auto; padding:7px 16px; font-size:11px; border-radius:20px; font-weight:800; cursor:pointer;">
-          Grant Access
+        <button id="btn-tc-perm" onclick="requestDisplayOverAppsPermission()" class="btn-primary" style="width:auto; padding:7px 16px; font-size:11px; border-radius:20px; font-weight:800; cursor:pointer;">
+          Grant Permission
         </button>
       </div>
     </div>
 
-    <!-- Filter Bar & Live Simulator -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-      <div class="inbox-filter-bar" style="margin-bottom:0;">
-        <div class="inbox-filter-chip active" id="chip-all" onclick="filterMessages('all')">All Messages (6)</div>
-        <div class="inbox-filter-chip chip-scam" id="chip-scam" onclick="filterMessages('scam')">🚨 Scams / Fake (3)</div>
-        <div class="inbox-filter-chip chip-safe" id="chip-safe" onclick="filterMessages('safe')">🟢 Original / Safe (3)</div>
-      </div>
-      <button onclick="simulateNewIncomingSms()" class="msg-action-btn" style="color:#00f5c4; border-color:rgba(0,245,196,0.4); display:flex; align-items:center; gap:4px; padding:5px 10px;">
-        ⚡ Simulate SMS Arrival
+    <p style="font-size:12px; color:#94a3b8; line-height:1.45; margin:0 0 14px;">
+      Instead of checking messages inside CogniGuard AI, a <strong>floating message box pops up directly over your screen (like Truecaller)</strong> when an SMS arrives — marking scams with a <strong style="color:#ef4444;">🔴 RED badge in the corner</strong>, and verified banks with a <strong style="color:#10b981;">🟢 GREEN badge in the corner</strong>.
+    </p>
+
+    <!-- Test Floating Popup Action Buttons -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <button onclick="triggerTruecallerPopup('pwaala')" class="btn" style="background:rgba(239,68,68,0.18); border:1.5px solid #ef4444; color:#fca5a5; font-size:11.5px; padding:10px; border-radius:12px; font-weight:800;">
+        🔴 Pop Up Scam SMS<br><span style="font-size:9.5px; opacity:0.85; font-family:monospace;">(VA-PWAALA-P)</span>
+      </button>
+      <button onclick="triggerTruecallerPopup('bank')" class="btn" style="background:rgba(16,185,129,0.18); border:1.5px solid #10b981; color:#6ee7b7; font-size:11.5px; padding:10px; border-radius:12px; font-weight:800;">
+        🟢 Pop Up Bank SMS<br><span style="font-size:9.5px; opacity:0.85; font-family:monospace;">(VA-KBLBNK-T)</span>
       </button>
     </div>
 
-    <!-- Messages List -->
-    <div class="msg-list" id="inbox-msg-list">
-
-      <!-- Message 1: VA-PWAALA-P (SCAM: Predatory Loan) -->
-      <div class="msg-card fake" data-category="scam">
-        <div class="msg-corner-badge badge-fake">🚨 FAKE / SCAM</div>
-        <div class="msg-main-row">
-          <div class="msg-avatar" style="background:#ea580c;">P</div>
-          <div class="msg-content">
-            <div class="msg-sender-title">
-              <span>VA-PWAALA-P</span>
-              <span class="msg-time">1:39 PM</span>
-            </div>
-            <div class="msg-text-snippet">
-              Loan (Rs.5,000-10,00,000)* approved instantly without documents! Disburse to bank in 2 mins: 
-              <span class="scam-url-flagged">http://pwaala-instant.apk (NEUTRALIZED)</span>
-            </div>
-          </div>
-        </div>
-        <div class="msg-status-strip">
-          <span style="color:#fca5a5;">⚠️ Predatory Loan Trap • Fake RBI Entity</span>
-          <button class="msg-action-btn" onclick="inspectMessageThreat('pwaala')">🧠 Threat Breakdown</button>
-        </div>
-      </div>
-
-      <!-- Message 2: VA-KBLBNK-T (ORIGINAL: Verified Bank) -->
-      <div class="msg-card original" data-category="safe">
-        <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
-        <div class="msg-main-row">
-          <div class="msg-avatar" style="background:#16a34a;">🏦</div>
-          <div class="msg-content">
-            <div class="msg-sender-title">
-              <span>VA-KBLBNK-T</span>
-              <span class="msg-time">Sun 12</span>
-            </div>
-            <div class="msg-text-snippet">
-              Your a/c XX0468 debited for Rs.250.00 on 15-11-26 trf to SRI LAKSHMI VENKATES. UPI:557880789012. Call 18004251444 if not done by you.
-            </div>
-          </div>
-        </div>
-        <div class="msg-status-strip">
-          <span style="color:#6ee7b7;">🛡️ Authentic Bank Transaction • Signature Valid</span>
-          <span style="color:#64748b;">HASH: 0x8F92A</span>
-        </div>
-      </div>
-
-      <!-- Message 3: JM-JIOMRT-P (SCAM: Fake Reward Phish) -->
-      <div class="msg-card fake" data-category="scam">
-        <div class="msg-corner-badge badge-fake">🚨 FAKE REWARD LINK</div>
-        <div class="msg-main-row">
-          <div class="msg-avatar" style="background:#dc2626;">🎁</div>
-          <div class="msg-content">
-            <div class="msg-sender-title">
-              <span>JM-JIOMRT-P</span>
-              <span class="msg-time">2:12 PM</span>
-            </div>
-            <div class="msg-text-snippet">
-              Your Jio reward is here. Get Rs 300 reward in your JioMart Wallet, redeem before expiry: 
-              <span class="scam-url-flagged">http://jiomrt-claim.top/wallet (ISOLATED)</span>
-            </div>
-          </div>
-        </div>
-        <div class="msg-status-strip">
-          <span style="color:#fca5a5;">⚠️ Rogue Domain Spoof • Credential Harvester</span>
-          <button class="msg-action-btn" onclick="inspectMessageThreat('jiomrt')">🧠 Threat Breakdown</button>
-        </div>
-      </div>
-
-      <!-- Message 4: 59039465 (ORIGINAL: GitHub 2FA Code) -->
-      <div class="msg-card original" data-category="safe">
-        <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
-        <div class="msg-main-row">
-          <div class="msg-avatar" style="background:#9333ea;">🐙</div>
-          <div class="msg-content">
-            <div class="msg-sender-title">
-              <span>59039465 (GitHub 2FA)</span>
-              <span class="msg-time">Sat 18</span>
-            </div>
-            <div class="msg-text-snippet">
-              <span class="safe-otp-highlight">920376</span> is your GitHub authentication code. Never share this with anyone.
-            </div>
-          </div>
-        </div>
-        <div class="msg-status-strip">
-          <span style="color:#6ee7b7;">🔒 Valid Two-Factor Authentication Secret</span>
-          <button class="msg-action-btn" onclick="copyOtpCode('920376')">📋 Copy OTP (920376)</button>
-        </div>
-      </div>
-
-      <!-- Message 5: Jio BestPlan (ORIGINAL: Verified Brand) -->
-      <div class="msg-card original" data-category="safe">
-        <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
-        <div class="msg-main-row">
-          <div class="msg-avatar" style="background:#e11d48;">Jio</div>
-          <div class="msg-content">
-            <div class="msg-sender-title">
-              <span>Jio BestPlan <span style="color:#38bdf8;">✔️</span></span>
-              <span class="msg-time">2:48 PM</span>
-            </div>
-            <div class="msg-text-snippet">
-              ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ₹1,590 ಮೌಲ್ಯದ ಉಚಿತ 12 ತಿಂಗಳ Canva ವಾರ್ಷಿಕ ಚಂದಾದಾರಿಕೆಯನ್ನು ಪಡೆಯಿರಿ.
-            </div>
-          </div>
-        </div>
-        <div class="msg-status-strip">
-          <span style="color:#6ee7b7;">🛡️ Verified Telecom Sender • TRAI Registered</span>
-          <span style="color:#64748b;">TRAI: RJIL-KA</span>
-        </div>
-      </div>
-
-      <!-- Message 6: TZ-FATAKM-P (SCAM: High-Interest Loan APK Dropper) -->
-      <div class="msg-card fake" data-category="scam">
-        <div class="msg-corner-badge badge-fake">🚨 FAKE / SCAM</div>
-        <div class="msg-main-row">
-          <div class="msg-avatar" style="background:#b91c1c;">💸</div>
-          <div class="msg-content">
-            <div class="msg-sender-title">
-              <span>TZ-FATAKM-P</span>
-              <span class="msg-time">Sat 11</span>
-            </div>
-            <div class="msg-text-snippet">
-              FATAKPAY: Tight days happen to everyone. Emergency cash loan approved! Download APK: 
-              <span class="scam-url-flagged">http://fatak-quick.in/app (BLOCKED)</span>
-            </div>
-          </div>
-        </div>
-        <div class="msg-status-strip">
-          <span style="color:#fca5a5;">⚠️ Off-market APK Dropper • Infostealer Risk</span>
-          <button class="msg-action-btn" onclick="inspectMessageThreat('fatak')">🧠 Threat Breakdown</button>
-        </div>
-      </div>
-
+    <div>
+      <button onclick="triggerTruecallerPopup('otp')" class="btn" style="background:rgba(0,245,255,0.12); border:1px solid rgba(0,245,255,0.35); color:#00f5ff; font-size:11.5px; padding:9px; border-radius:12px; font-weight:800; width:100%;">
+        🔒 Pop Up GitHub 2FA Code (59039465)
+      </button>
     </div>
   </div>
 
@@ -3305,73 +3246,129 @@
       if (typeof playAlertSiren === 'function') playAlertSiren();
     }
 
-    let simulatedCount = 0;
-    function simulateNewIncomingSms() {
-      simulatedCount++;
-      const list = document.getElementById('inbox-msg-list');
-      if (!list) return;
+    // ===================================================
+    // TRUECALLER-STYLE FLOATING OVERLAY ENGINE
+    // ===================================================
+    function checkDisplayOverAppsStatus() {
+      const isGranted = localStorage.getItem('cg_display_over_apps') === 'true';
+      const banner = document.getElementById('tc-perm-banner');
+      const btn = document.getElementById('btn-tc-perm');
+      const title = document.getElementById('tc-perm-title');
+      const sub = document.getElementById('tc-perm-sub');
+      if (isGranted && banner && btn) {
+        banner.style.borderColor = '#10b981';
+        banner.style.background = 'linear-gradient(135deg, rgba(6, 32, 24, 0.95), rgba(4, 16, 18, 0.98))';
+        if (title) title.innerText = '✅ "Display Over Other Apps" Permission Active';
+        if (sub) sub.innerText = 'Truecaller-style floating message boxes will pop up over Google Messages & WhatsApp';
+        btn.innerText = 'Permission Active 🛡️';
+        btn.style.background = 'rgba(16, 185, 129, 0.2)';
+        btn.style.border = '1px solid #10b981';
+        btn.style.color = '#10b981';
+      }
+    }
 
-      const isScam = simulatedCount % 2 !== 0;
-      const newCard = document.createElement('div');
-      newCard.className = `msg-card ${isScam ? 'fake' : 'original'}`;
-      newCard.setAttribute('data-category', isScam ? 'scam' : 'safe');
-      newCard.style.animation = 'fadeIn 0.4s ease-out';
+    function requestDisplayOverAppsPermission() {
+      localStorage.setItem('cg_display_over_apps', 'true');
+      checkDisplayOverAppsStatus();
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+      alert("✅ Permission Granted: Display Over Other Apps!\n\nCogniGuard is now permitted to draw floating heads-up message boxes over other apps like Google Messages and WhatsApp, exactly like Truecaller.");
+      // Automatically show sample scam popup
+      triggerTruecallerPopup('pwaala');
+    }
 
-      if (isScam) {
-        newCard.innerHTML = `
-          <div class="msg-corner-badge badge-fake">🚨 FAKE / SCAM</div>
-          <div class="msg-main-row">
-            <div class="msg-avatar" style="background:#dc2626;">⚠️</div>
-            <div class="msg-content">
-              <div class="msg-sender-title">
-                <span>AX-ICICIBNK-Alert</span>
-                <span class="msg-time">Just Now</span>
-              </div>
-              <div class="msg-text-snippet">
-                Dear Customer, your Bank PAN card is blocked! Update KYC immediately to prevent account suspension: 
-                <span class="scam-url-flagged">http://icici-pan-verify.cc/kyc (NEUTRALIZED)</span>
-              </div>
-            </div>
-          </div>
-          <div class="msg-status-strip">
-            <span style="color:#fca5a5;">⚠️ Banking Phishing Lure • Zero-Day Threat Intercepted</span>
-            <button class="msg-action-btn" onclick="inspectMessageThreat('pwaala')">🧠 Threat Breakdown</button>
-          </div>
-        `;
+    function triggerTruecallerPopup(type) {
+      const backdrop = document.getElementById('truecaller-overlay-backdrop');
+      const card = document.getElementById('truecaller-floating-card');
+      const badge = document.getElementById('tc-corner-badge');
+      const avatar = document.getElementById('tc-avatar');
+      const sender = document.getElementById('tc-sender');
+      const catText = document.getElementById('tc-category-text');
+      const bodyText = document.getElementById('tc-body-text');
+      const banner = document.getElementById('tc-banner');
+      const primaryBtn = document.getElementById('tc-primary-btn');
+
+      if (!backdrop || !card) return;
+
+      if (type === 'pwaala') {
+        card.className = 'truecaller-floating-box fake';
+        badge.className = 'tc-corner-badge badge-fake';
+        badge.innerHTML = '🔴 🚨 FAKE / SCAM';
+        avatar.style.background = '#ea580c';
+        avatar.innerText = 'P';
+        sender.innerText = 'VA-PWAALA-P';
+        catText.innerText = 'Predatory Loan Extortion Syndicate';
+        catText.style.color = '#fca5a5';
+        bodyText.innerHTML = `Loan (Rs.5,000-10,00,000)* approved without documents! Tap to disburse: <span class="scam-url-flagged">http://pwaala-instant.apk (NEUTRALIZED)</span>`;
+        banner.style.background = 'rgba(239,68,68,0.18)';
+        banner.style.borderLeft = '3px solid #ef4444';
+        banner.style.color = '#fca5a5';
+        banner.innerHTML = `⚠️ <strong>THREAT CONTAINED:</strong> Malicious APK dropper link neutralized offline. Do NOT install.`;
+        primaryBtn.style.background = '#ef4444';
+        primaryBtn.innerText = '🚨 Block Sender & Neutralize Link';
+        primaryBtn.onclick = () => {
+          speak("Sender VA-PWAALA-P blocked. Link quarantined offline.");
+          alert("🚨 Sender VA-PWAALA-P Blocked!\n\nCogniGuard offline tripwire has neutralized the link. Zero bytes leaked.");
+          closeTruecallerPopup();
+        };
         if (typeof playAlertSiren === 'function') playAlertSiren();
-        speak("Warning: Incoming predatory banking SMS intercepted. Link marked FAKE in red.");
-      } else {
-        newCard.innerHTML = `
-          <div class="msg-corner-badge badge-original">🟢 VERIFIED ORIGINAL</div>
-          <div class="msg-main-row">
-            <div class="msg-avatar" style="background:#059669;">🏦</div>
-            <div class="msg-content">
-              <div class="msg-sender-title">
-                <span>AX-HDFCBK-N</span>
-                <span class="msg-time">Just Now</span>
-              </div>
-              <div class="msg-text-snippet">
-                Rs 1,200.00 debited from HDFC Bank A/c ending 4120 on 16-11-26 towards SWIGGY. Ref No: 432109876543.
-              </div>
-            </div>
-          </div>
-          <div class="msg-status-strip">
-            <span style="color:#6ee7b7;">🛡️ Authentic Bank Transaction • Verified Safe</span>
-            <span style="color:#64748b;">HASH: 0x4D21B</span>
-          </div>
-        `;
+        speak("Warning: Fake predatory loan SMS intercepted. Marked FAKE in red corner.");
+      } else if (type === 'bank') {
+        card.className = 'truecaller-floating-box original';
+        badge.className = 'tc-corner-badge badge-original';
+        badge.innerHTML = '🟢 ✅ VERIFIED BANK';
+        avatar.style.background = '#16a34a';
+        avatar.innerText = '🏦';
+        sender.innerText = 'VA-KBLBNK-T';
+        catText.innerText = 'Karnataka Bank Registered Gateway';
+        catText.style.color = '#6ee7b7';
+        bodyText.innerHTML = `Your a/c XX0468 debited for Rs.250.00 on 15-11-26 trf to SRI LAKSHMI VENKATES. UPI:557880789012. Call 18004251444 if not done by you.`;
+        banner.style.background = 'rgba(16,185,129,0.18)';
+        banner.style.borderLeft = '3px solid #10b981';
+        banner.style.color = '#6ee7b7';
+        banner.innerHTML = `🛡️ <strong>AUTHENTIC BANK ALERT:</strong> Verified digital cryptographic gateway signature. Safe to read.`;
+        primaryBtn.style.background = '#10b981';
+        primaryBtn.innerText = '✅ Acknowledge & Close';
+        primaryBtn.onclick = () => {
+          speak("Bank transaction verified and acknowledged.");
+          closeTruecallerPopup();
+        };
         if (typeof playSuccessChime === 'function') playSuccessChime();
-        speak("Incoming bank alert verified authentic. Marked ORIGINAL in green.");
+        speak("Verified original bank alert. Marked ORIGINAL in green corner.");
+      } else if (type === 'otp') {
+        card.className = 'truecaller-floating-box original';
+        badge.className = 'tc-corner-badge badge-original';
+        badge.innerHTML = '🟢 🔒 SECURE 2FA CODE';
+        avatar.style.background = '#9333ea';
+        avatar.innerText = '🐙';
+        sender.innerText = '59039465 (GitHub)';
+        catText.innerText = 'Two-Factor Authentication Secret';
+        catText.style.color = '#6ee7b7';
+        bodyText.innerHTML = `<span class="safe-otp-highlight" style="font-size:14px; padding:3px 8px;">920376</span> is your GitHub authentication code. Never share this with anyone.`;
+        banner.style.background = 'rgba(16,185,129,0.18)';
+        banner.style.borderLeft = '3px solid #10b981';
+        banner.style.color = '#6ee7b7';
+        banner.innerHTML = `🔒 <strong>ONE-TIME PASSWORD:</strong> Authentic GitHub auth code. Tap button to copy.`;
+        primaryBtn.style.background = '#0284c7';
+        primaryBtn.innerText = '📋 Copy OTP (920376)';
+        primaryBtn.onclick = () => {
+          copyOtpCode('920376');
+          closeTruecallerPopup();
+        };
+        if (typeof playSuccessChime === 'function') playSuccessChime();
+        speak("GitHub 2FA code received.");
       }
 
-      list.prepend(newCard);
-      const streamBadge = document.getElementById('sms-stream-badge');
-      if (streamBadge) streamBadge.innerText = `${list.children.length} MESSAGES GUARDED`;
+      backdrop.style.display = 'flex';
+    }
+
+    function closeTruecallerPopup(e) {
+      const backdrop = document.getElementById('truecaller-overlay-backdrop');
+      if (backdrop) backdrop.style.display = 'none';
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       triggerJarvisOpening();
-      checkSmsGuardianStatus();
+      checkDisplayOverAppsStatus();
     });
 
   </script>
@@ -3482,6 +3479,68 @@
 
       <div style="font-size:11px; color:#64748b;">
         Please watch the full sponsor message to unlock your reward.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================
+       TRUECALLER-STYLE FLOATING POPUP OVERLAY WINDOW
+       =================================================== -->
+  <div id="truecaller-overlay-backdrop" class="truecaller-overlay-backdrop" onclick="closeTruecallerPopup(event)">
+    <div id="truecaller-floating-card" class="truecaller-floating-box fake" onclick="event.stopPropagation()">
+      <!-- Corner Badge (RED or GREEN) -->
+      <div id="tc-corner-badge" class="tc-corner-badge badge-fake">
+        🔴 🚨 FAKE / SCAM
+      </div>
+
+      <!-- Top Mini Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700;">
+          <span>🛡️</span>
+          <span>COGNIGUARD FLOATING AIRLOCK (TRUECALLER MODE)</span>
+        </div>
+        <button onclick="closeTruecallerPopup()" style="background:rgba(255,255,255,0.1); border:none; color:#cbd5e1; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center;">
+          ✕
+        </button>
+      </div>
+
+      <!-- Sender & Avatar Row -->
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; padding-right:80px;">
+        <div id="tc-avatar" style="width:44px; height:44px; border-radius:50%; background:#ea580c; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; color:#fff; box-shadow:0 0 12px rgba(0,0,0,0.5); flex-shrink:0;">
+          P
+        </div>
+        <div>
+          <div id="tc-sender" style="font-size:16px; font-weight:900; color:#ffffff; letter-spacing:0.3px;">
+            VA-PWAALA-P
+          </div>
+          <div id="tc-category-text" style="font-size:11px; font-family:monospace; color:#fca5a5;">
+            Predatory Loan Extortion Syndicate
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Bubble -->
+      <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:10px; color:#64748b; font-family:monospace; margin-bottom:4px;">INCOMING SMS VIA GOOGLE MESSAGES:</div>
+        <div id="tc-body-text" style="font-size:12.5px; color:#f8fafc; line-height:1.5;">
+          Loan (Rs.5,000-10,00,000)* approved without documents! Tap to disburse: 
+          <span class="scam-url-flagged">http://pwaala-instant.apk (NEUTRALIZED)</span>
+        </div>
+      </div>
+
+      <!-- Threat / Safety Status Banner -->
+      <div id="tc-banner" style="background:rgba(239,68,68,0.18); border-left:3px solid #ef4444; border-radius:6px; padding:8px 10px; font-size:11px; color:#fca5a5; margin-bottom:14px; font-family:monospace;">
+        ⚠️ <strong>THREAT CONTAINED:</strong> Dangerous APK dropper link neutralized offline. Zero bytes exfiltrated.
+      </div>
+
+      <!-- Action Buttons -->
+      <div id="tc-actions" style="display:flex; gap:8px;">
+        <button id="tc-primary-btn" class="btn" style="flex:1; background:#ef4444; color:#fff; font-size:12px; padding:10px; border-radius:10px; font-weight:800;">
+          🚨 Block &amp; Report
+        </button>
+        <button onclick="closeTruecallerPopup()" class="btn" style="width:auto; padding:10px 16px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; font-size:12px; border-radius:10px;">
+          Dismiss
+        </button>
       </div>
     </div>
   </div>
