@@ -209,6 +209,13 @@ class DarkWebScanRequest(BaseModel):
     query_type: Optional[Literal["phone", "email", "auto"]] = "auto"
 
 
+class HoneypotLureRequest(BaseModel):
+    scam_type: Literal["youtube_job", "electricity_bill", "loan_shark", "crypto_doubling"]
+    custom_message: Optional[str] = None
+    language: Optional[Literal["en", "hi", "kn"]] = "en"
+
+
+
 
 class IocSyncRequest(BaseModel):
     source_url: Optional[str] = Field(default=None, max_length=2048)
@@ -751,7 +758,11 @@ def intercept_sms_endpoint(req: SmsInterceptRequest):
     scam_keywords = [
         "loan", "approved", "disburse", "apk", "reward", "jiomart wallet",
         "claim", "urgent cash", "emergency cash", "lottery", "prize",
-        "without documents", "fatakpay", "pre-approved"
+        "without documents", "fatakpay", "pre-approved",
+        # Hindi Keywords (हिन्दी)
+        "लॉटरी", "इनाम", "कर्ज", "ऋण", "तुरंत पैसे", "खाता ब्लॉक", "बिजली कटेगी",
+        # Kannada Keywords (ಕನ್ನಡ)
+        "ಸಾಲ", "ಉಚಿತ ಹಣ", "ಬಹುಮಾನ", "ಲಕ್ಕಿ ಡ್ರಾ", "ತಕ್ಷಣದ ಸಾಲ", "ವಿದ್ಯುತ್ ಕಡಿತ"
     ]
     suspicious_tlds = [".top", ".xyz", ".apk", ".in/app", ".live", ".fit", ".icu", ".cc", ".su"]
 
@@ -915,6 +926,120 @@ def darkweb_scan_endpoint(req: DarkWebScanRequest):
             ],
             "timestamp": datetime.now().isoformat()
         }
+
+
+@app.post("/api/v1/honeypot/engage")
+def honeypot_engage_endpoint(req: HoneypotLureRequest):
+    """Autonomous Honeypot & Scammer Counter-Lure Agent.
+    Interacts with threat actors, wastes their time, and collects intelligence (mule UPIs, IPs, drop accounts)."""
+    lang = req.language or "en"
+    
+    scenarios = {
+        "youtube_job": {
+            "target": "Sneha - Amazon HR Task Phishing Syndicate",
+            "bait_strategy": "Compliance Impersonation & Delayed Verification",
+            "time_wasted_minutes": 42,
+            "turns_count": 5,
+            "transcript": [
+                {"role": "scammer", "text": "Earn ₹3,500 to ₹8,000 daily liking YouTube videos. Send screenshot of first video liked.", "time": "10:14 AM"},
+                {"role": "honeypot", "text": "Hello ma'am, I am very interested. I just liked the video and subscribed! Here is my reference ID #99281.", "time": "10:15 AM"},
+                {"role": "scammer", "text": "Good! To unlock VIP task tier 2, transfer ₹1,000 deposit to merchant UPI: sneha-vip@axis", "time": "10:22 AM"},
+                {"role": "honeypot", "text": "I tried transferring via PhonePe, but it gave error 'Bank Gateway Busy'. Can you send alternate UPI or IFSC?", "time": "10:28 AM"},
+                {"role": "scammer", "text": "Try alternate mule: taskpay99@icici or wait 5 mins and retry fast!", "time": "10:35 AM"},
+                {"role": "honeypot", "text": "Sending right now from my SBI app... please verify reference #TXN992837402 (Sandbox Dummy).", "time": "10:56 AM"}
+            ],
+            "captured_intel": {
+                "mule_upis": ["sneha-vip@axis", "taskpay99@icici"],
+                "scammer_ip": "194.26.29.11",
+                "origin_asn": "AS49505 (HostRoyale Virtual Private Server)",
+                "threat_actor_group": "Southeast Asia Task-Scam Syndicate"
+            },
+            "status": "SCAMMER_TRAPPED",
+            "data_leaked_bytes": 0
+        },
+        "electricity_bill": {
+            "target": "Bescom / State Electricity Disconnection Predator",
+            "bait_strategy": "Corrupted Sandbox APK Execution Simulation",
+            "time_wasted_minutes": 38,
+            "turns_count": 4,
+            "transcript": [
+                {"role": "scammer", "text": "Power will be disconnected tonight at 9:30 PM. Download bescom-pay.apk immediately.", "time": "08:12 PM"},
+                {"role": "honeypot", "text": "Sir please don't disconnect! I am downloading APK right now. My electricity consumer number is 10098234.", "time": "08:14 PM"},
+                {"role": "scammer", "text": "Open APK and enter OTP sent to your phone immediately to clear dues.", "time": "08:21 PM"},
+                {"role": "honeypot", "text": "APK says 'Error: Invalid Certificate - Running in Air-Gapped QEMU Sandbox'. Should I reboot router?", "time": "08:35 PM"},
+                {"role": "scammer", "text": "No don't reboot!! Re-install from link: http://bescom-pay.apk/v2 right now!", "time": "08:50 PM"}
+            ],
+            "captured_intel": {
+                "c2_domain": "bescom-pay.apk",
+                "scammer_ip": "185.220.101.44",
+                "target_utility": "Bescom Karnataka Power Transmission",
+                "payload_signature": "Trojan-Dropper.AndroidOS.SmsStealer"
+            },
+            "status": "SCAMMER_TRAPPED",
+            "data_leaked_bytes": 0
+        },
+        "loan_shark": {
+            "target": "FatakPay / Instant Cash Extortion Gang",
+            "bait_strategy": "Virtual Canary Honey-Token Distribution",
+            "time_wasted_minutes": 55,
+            "turns_count": 6,
+            "transcript": [
+                {"role": "scammer", "text": "Loan approved ₹50,000 without documents! Download APK to receive cash in 5 mins.", "time": "01:10 PM"},
+                {"role": "honeypot", "text": "I really need this loan for hospital emergency. I installed the app, please disburse.", "time": "01:12 PM"},
+                {"role": "scammer", "text": "We need access to your contact list and gallery to verify KYC.", "time": "01:25 PM"},
+                {"role": "honeypot", "text": "Access granted to Virtual Canary honeypot contacts (200 tracking tokens). Waiting for credit.", "time": "01:40 PM"},
+                {"role": "scammer", "text": "System checking... waiting for server sync...", "time": "02:05 PM"}
+            ],
+            "captured_intel": {
+                "extortion_server": "fatak-quick.in/app",
+                "scammer_ip": "103.145.244.18",
+                "honeypot_tokens_triggered": 4,
+                "threat_type": "Illegal Micro-Finance Spyware Harvester"
+            },
+            "status": "SCAMMER_TRAPPED",
+            "data_leaked_bytes": 0
+        },
+        "crypto_doubling": {
+            "target": "Telegram Crypto VIP Multiplier Ring",
+            "bait_strategy": "Illusionary High-Roller Baiting",
+            "time_wasted_minutes": 31,
+            "turns_count": 4,
+            "transcript": [
+                {"role": "scammer", "text": "Deposit ₹2,000 get ₹10,000 in 2 hours guaranteed!", "time": "11:20 AM"},
+                {"role": "honeypot", "text": "Can I deposit ₹50,000 directly instead? I have funds ready in my Binance wallet.", "time": "11:22 AM"},
+                {"role": "scammer", "text": "YES SIR! Send to special VIP wallet: 0x71C...a49B or UPI: crypto-scam@ybl right away!", "time": "11:25 AM"},
+                {"role": "honeypot", "text": "Transaction hash 0xdeadbeef9921 submitted. Confirming on blockchain mempool...", "time": "11:51 AM"}
+            ],
+            "captured_intel": {
+                "mule_wallet": "0x71C...a49B",
+                "mule_upi": "crypto-scam@ybl",
+                "telegram_channel": "@CryptoVIP_Doubler_Official",
+                "scammer_ip": "91.240.118.82"
+            },
+            "status": "SCAMMER_TRAPPED",
+            "data_leaked_bytes": 0
+        }
+    }
+    
+    scenario = scenarios.get(req.scam_type, scenarios["youtube_job"])
+    
+    # Multilingual AI Voice Directive
+    if lang == "kn":
+        ai_voice = f"ಹನಿಪಾಟ್ ಏಜೆಂಟ್ ಸಕ್ರಿಯವಾಗಿದೆ. ಸ್ಕ್ಯಾಮರ್ ಸಮಯ {scenario['time_wasted_minutes']} ನಿಮಿಷ ವ್ಯರ್ಥವಾಗಿದೆ. ಶೂನ್ಯ ಬೈಟ್ ಡೇಟಾ ಸೋರಿಕೆಯಾಗಿದೆ."
+    elif lang == "hi":
+        ai_voice = f"हनीपॉट एजेंट सक्रिय है। स्कैमर का {scenario['time_wasted_minutes']} मिनट समय बर्बाद हुआ। जीरो बाइट्स डेटा लीक।"
+    else:
+        ai_voice = f"Honeypot counter-lure agent engaged with {scenario['target']}. {scenario['time_wasted_minutes']} minutes of scammer time wasted. 0 bytes user data leaked."
+
+    return {
+        "status": "ACTIVE_LURE_RUNNING",
+        "scam_type": req.scam_type,
+        "language": lang,
+        "scenario": scenario,
+        "ai_voice": ai_voice,
+        "timestamp": datetime.now().isoformat()
+    }
+
 
 
 

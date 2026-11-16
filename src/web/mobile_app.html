@@ -1707,6 +1707,9 @@
       <button id="sfx-toggle-btn" onclick="toggleSoundFx()" title="Toggle Cyber Audio Feedback" style="background:#091524; border:1px solid #1a3655; color:#38bdf8; border-radius:20px; padding:3px 9px; font-size:11px; cursor:pointer; font-weight:700;">
         🔊 SFX
       </button>
+      <button onclick="openJarvisSettingsModal()" title="Jarvis Language & HUD Controls" style="background:#091524; border:1px solid #1a3655; color:#f59e0b; border-radius:20px; padding:3px 9px; font-size:11px; cursor:pointer; font-weight:700;">
+        ⚙️ Settings
+      </button>
       <button onclick="triggerJarvisOpening()" title="Replay Pro Opening Sequence" style="background:#091524; border:1px solid #1a3655; color:#00f5c4; border-radius:20px; padding:3px 9px; font-size:11px; cursor:pointer; font-weight:700;">
         ⚡ Jarvis HUD
       </button>
@@ -2779,24 +2782,34 @@
 
     <!-- Sub-tab 3: Photo & Disguised File Deep-Scan Radar (New Feature) -->
     <div id="scan-view-photo" style="display:none;">
-      <h3>📸 Photo &amp; Disguised File Deep-Scan</h3>
-      <p style="margin:0 0 12px; font-size:12px; color:var(--muted);">Inspect photos, screenshots, and downloaded files for disguised malware (MZ headers), edited fake bank receipts, and steganography.</p>
+      <h3>📸 Screenshot Visual AI Highlighter &amp; File Deep-Scan</h3>
+      <p style="margin:0 0 12px; font-size:12px; color:var(--muted);">Visual OCR scans screenshots and draws <strong style="color:#ef4444;">🔴 Red bounding boxes</strong> over scam links/APKs and <strong style="color:#10b981;">🟢 Green boxes</strong> over verified bank alerts.</p>
 
-      <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
-        <button class="btn btn-sample" style="flex:1; min-width:130px; margin-bottom:0;" onclick="simulatePhotoScan('fake_receipt')">⚡ Fake Bank Receipt</button>
-        <button class="btn btn-sample" style="flex:1; min-width:130px; margin-bottom:0;" onclick="simulatePhotoScan('disguised_exe')">⚡ Disguised Malware Photo</button>
-        <button class="btn btn-sample" style="flex:1; min-width:130px; margin-bottom:0;" onclick="simulatePhotoScan('clean_photo')">⚡ Clean Photo</button>
+      <div style="display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;">
+        <button class="btn btn-sample" style="white-space:nowrap; margin-bottom:0; font-size:10.5px; padding:5px 10px;" onclick="loadScreenshotPreset('phone_messages')">⚡ Phone Messages Screenshot</button>
+        <button class="btn btn-sample" style="white-space:nowrap; margin-bottom:0; font-size:10.5px; padding:5px 10px;" onclick="loadScreenshotPreset('whatsapp_scam')">⚡ WhatsApp Job Scam Screenshot</button>
+        <button class="btn btn-sample" style="white-space:nowrap; margin-bottom:0; font-size:10.5px; padding:5px 10px;" onclick="loadScreenshotPreset('kannada_sms')">⚡ Kannada (ಕನ್ನಡ) SMS Screenshot</button>
+        <button class="btn btn-sample" style="white-space:nowrap; margin-bottom:0; font-size:10.5px; padding:5px 10px;" onclick="loadScreenshotPreset('fake_receipt')">⚡ Fake Bank Receipt</button>
       </div>
 
       <input type="file" id="real-file-input" accept="image/*,.pdf,.apk,.exe" style="display:none;" onchange="handleRealFileSelected(event)">
       
-      <div onclick="document.getElementById('real-file-input').click()" style="background:#071220; border:2px dashed #1a3655; border-radius:12px; padding:20px; text-align:center; cursor:pointer; margin-bottom:10px; transition:all 0.2s ease;">
-        <div style="font-size:30px; margin-bottom:6px;">📷</div>
-        <div style="font-size:13px; font-weight:700; color:#38bdf8;" id="photo-upload-label">Tap to Choose Photo or Document from Gallery</div>
-        <div style="font-size:11px; color:#64748b; margin-top:4px;">Supports JPG, PNG screenshots, PDF receipts &amp; APKs</div>
+      <div onclick="document.getElementById('real-file-input').click()" style="background:#071220; border:2px dashed #1a3655; border-radius:12px; padding:16px; text-align:center; cursor:pointer; margin-bottom:10px; transition:all 0.2s ease;">
+        <div style="font-size:28px; margin-bottom:4px;">📷</div>
+        <div style="font-size:12.5px; font-weight:700; color:#38bdf8;" id="photo-upload-label">Tap to Choose Screenshot or Photo from Gallery</div>
+        <div style="font-size:10.5px; color:#64748b; margin-top:2px;">Supports JPG, PNG screenshots, WhatsApp photos, PDF receipts &amp; APKs</div>
       </div>
 
-      <button class="btn btn-primary" style="background:#c084fc; color:#060911;" onclick="executePhotoDeepScan()">🔍 Scan File Integrity &amp; Authenticity</button>
+      <!-- Screenshot Visual AI Canvas Display -->
+      <div id="screenshot-canvas-wrap" style="display:none; position:relative; background:#030814; border:1px solid rgba(0,245,255,0.3); border-radius:12px; overflow:hidden; margin-bottom:12px; box-shadow:0 0 25px rgba(0,245,255,0.15);">
+        <canvas id="screenshot-highlight-canvas" style="width:100%; height:auto; display:block;"></canvas>
+        <div id="screenshot-scan-sweep" class="sms-modal-laser-sweep" style="display:none;"></div>
+        <div id="screenshot-canvas-badge" style="position:absolute; top:8px; right:8px; font-size:9.5px; color:#00f5c4; font-family:monospace; background:rgba(0,0,0,0.75); border:1px solid rgba(0,245,196,0.3); border-radius:6px; padding:3px 8px; pointer-events:none;">
+          VISUAL AI: SCANNING
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="background:#c084fc; color:#060911;" onclick="executePhotoDeepScan()">🔍 Visual AI OCR Deep Scan</button>
     </div>
 
     <div class="result-box" id="scan-result"></div>
@@ -2822,6 +2835,83 @@
         </div>
       </div>
 
+  </div>
+
+  <!-- ===================================================
+       TASK 3 UPGRADE: ACTIVE AI HONEYPOT & SCAMMER COUNTER-LURE AGENT
+       =================================================== -->
+  <div class="pro-hud-card" id="honeypot-agent-card" style="padding:16px; margin-bottom:16px; border-color:rgba(0,245,196,0.35); box-shadow:0 0 30px rgba(0,245,196,0.1), 0 10px 40px rgba(0,0,0,0.8);">
+    <div class="pro-card-corner top-left" style="border-color:#00f5c4;"></div>
+    <div class="pro-card-corner top-right" style="border-color:#00f5c4;"></div>
+    <div class="pro-card-corner bottom-left" style="border-color:#00f5c4;"></div>
+    <div class="pro-card-corner bottom-right" style="border-color:#00f5c4;"></div>
+
+    <!-- Header & Autonomous Status -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+      <span style="font-size:13px; font-weight:800; color:#00f5c4; display:flex; align-items:center; gap:7px; letter-spacing:0.5px;">
+        <span class="pulse" style="background:#00f5c4; box-shadow:0 0 10px #00f5c4;"></span> 🤖 Active AI Honeypot &amp; Counter-Lure Agent
+      </span>
+      <span style="font-size:10px; color:#00f5c4; font-family:monospace; font-weight:800; background:rgba(0,245,196,0.12); border:1px solid rgba(0,245,196,0.3); border-radius:10px; padding:2px 8px;">
+        AUTONOMOUS DECOY // ZERO USER DATA
+      </span>
+    </div>
+
+    <!-- Subheader description -->
+    <p style="font-size:11.5px; color:#94a3b8; margin:0 0 12px; line-height:1.4;">
+      Jarvis autonomously engages scammers with sandboxed dummy responses &mdash; wasting their time, capturing their mule UPI IDs and server IPs, and protecting real victims.
+    </p>
+
+    <!-- Bait Target Selector -->
+    <div style="display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;">
+      <button id="lure-tab-youtube" onclick="switchHoneypotTarget('youtube_job')" class="sms-filter-btn active" style="font-size:10.5px; padding:5px 12px;">
+        💼 YouTube Task Scam
+      </button>
+      <button id="lure-tab-electricity" onclick="switchHoneypotTarget('electricity_bill')" class="sms-filter-btn" style="font-size:10.5px; padding:5px 12px;">
+        ⚡ Bescom Power Trap
+      </button>
+      <button id="lure-tab-loan" onclick="switchHoneypotTarget('loan_shark')" class="sms-filter-btn" style="font-size:10.5px; padding:5px 12px;">
+        💸 Loan Shark Gang
+      </button>
+      <button id="lure-tab-crypto" onclick="switchHoneypotTarget('crypto_doubling')" class="sms-filter-btn" style="font-size:10.5px; padding:5px 12px;">
+        🚀 Crypto VIP Doubler
+      </button>
+    </div>
+
+    <!-- Live Honeypot Telemetry HUD Metrics -->
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px;">
+      <div style="background:#040914; border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:8px 10px; text-align:center;">
+        <div style="font-size:9px; color:#64748b; font-family:monospace; font-weight:700;">TIME WASTED</div>
+        <div id="honeypot-metric-time" style="font-size:16px; font-weight:900; color:#00f5c4; font-family:monospace;">42 MINS</div>
+      </div>
+      <div style="background:#040914; border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:8px 10px; text-align:center;">
+        <div style="font-size:9px; color:#64748b; font-family:monospace; font-weight:700;">MULES CAPTURED</div>
+        <div id="honeypot-metric-mules" style="font-size:16px; font-weight:900; color:#ef4444; font-family:monospace;">2 UPIs</div>
+      </div>
+      <div style="background:#040914; border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:8px 10px; text-align:center;">
+        <div style="font-size:9px; color:#64748b; font-family:monospace; font-weight:700;">DATA LEAKED</div>
+        <div style="font-size:16px; font-weight:900; color:#38bdf8; font-family:monospace;">0 BYTES</div>
+      </div>
+    </div>
+
+    <!-- Live Chat Terminal -->
+    <div style="background:#020712; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px; margin-bottom:12px; max-height:220px; overflow-y:auto;" id="honeypot-chat-console">
+      <!-- Dynamically filled via JS -->
+    </div>
+
+    <!-- Captured Intelligence Brief -->
+    <div id="honeypot-intel-box" style="background:#061324; border:1px solid rgba(0,245,255,0.25); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:11px; font-family:monospace;">
+      <!-- Dynamically filled via JS -->
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex; gap:8px;">
+      <button onclick="reportHoneypotToCybercrime()" class="btn" style="flex:1; background:linear-gradient(135deg, #ef4444, #b91c1c); color:#fff; font-size:11.5px; font-weight:800; padding:10px; border-radius:8px; margin-bottom:0;">
+        🚨 Report Intel to Cyber Crime 1930
+      </button>
+      <button onclick="triggerHoneypotNextTurn()" class="btn" style="width:auto; background:rgba(0,245,196,0.15); border:1px solid #00f5c4; color:#00f5c4; font-size:11.5px; font-weight:800; padding:10px 14px; border-radius:8px; margin-bottom:0;">
+        ⚡ Send Next Decoy Bait
+      </button>
+    </div>
   </div>
 
   <!-- Laptop Remote Sync -->
@@ -3384,11 +3474,23 @@
       }[ch]));
     }
 
-    function speak(text) {
+    let currentAppLanguage = localStorage.getItem('cg_lang') || 'en';
+    let isSpeechEnabled = localStorage.getItem('cg_speech_enabled') !== 'false';
+
+    function speak(text, forceLang) {
+      if (!isSpeechEnabled) return;
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
-        u.rate = 1.05;
+        const lang = forceLang || currentAppLanguage;
+        if (lang === 'kn') {
+          u.lang = 'kn-IN';
+        } else if (lang === 'hi') {
+          u.lang = 'hi-IN';
+        } else {
+          u.lang = 'en-US';
+        }
+        u.rate = 1.02;
         window.speechSynthesis.speak(u);
       }
     }
@@ -5432,11 +5534,366 @@
       }
     }
 
+    // ===================================================
+    // JARVIS SETTINGS & MULTILINGUAL SPEECH ENGINE (EN / KN / HI)
+    // ===================================================
+    function openJarvisSettingsModal() {
+      const modal = document.getElementById('jarvis-settings-modal');
+      if (modal) modal.style.display = 'flex';
+      updateLanguageButtons();
+      if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+    }
+
+    function closeJarvisSettingsModal(e) {
+      const modal = document.getElementById('jarvis-settings-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function setAppLanguage(lang) {
+      currentAppLanguage = lang;
+      localStorage.setItem('cg_lang', lang);
+      updateLanguageButtons();
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+
+      if (lang === 'kn') {
+        speak("ಕಾಗ್ನಿಗಾರ್ಡ್ ಭದ್ರತಾ ವ್ಯವಸ್ಥೆ ಈಗ ಕನ್ನಡದಲ್ಲಿದೆ. ನಿಮ್ಮ ಸಾಧನ ಸಂಪೂರ್ಣ ಸುರಕ್ಷಿತವಾಗಿದೆ.", 'kn');
+      } else if (lang === 'hi') {
+        speak("कॉग्नीगार्ड सुरक्षा प्रणाली अब हिन्दी में सक्रिय है। आपका डिवाइस पूरी तरह सुरक्षित है।", 'hi');
+      } else {
+        speak("CogniGuard security system is now operating in English. All shields active.", 'en');
+      }
+    }
+
+    function updateLanguageButtons() {
+      const btnEn = document.getElementById('lang-btn-en');
+      const btnKn = document.getElementById('lang-btn-kn');
+      const btnHi = document.getElementById('lang-btn-hi');
+      if (btnEn) btnEn.classList.toggle('active', currentAppLanguage === 'en');
+      if (btnKn) btnKn.classList.toggle('active', currentAppLanguage === 'kn');
+      if (btnHi) btnHi.classList.toggle('active', currentAppLanguage === 'hi');
+    }
+
+    function toggleConfigSpeech(val) {
+      isSpeechEnabled = val;
+      localStorage.setItem('cg_speech_enabled', val ? 'true' : 'false');
+    }
+
+    function toggleConfigHoneypot(val) {
+      localStorage.setItem('cg_honeypot_auto', val ? 'true' : 'false');
+    }
+
+    // ===================================================
+    // SCREENSHOT VISUAL AI BOUNDING BOX HIGHLIGHTER
+    // ===================================================
+    const SCREENSHOT_PRESETS = {
+      phone_messages: {
+        title: "Google Messages Android Screenshot",
+        width: 480,
+        height: 520,
+        items: [
+          { type: 'fake', label: '🔴 BLOCKED APK (99.8%)', text: 'http://fatak-quick.in/app', x: 20, y: 70, w: 440, h: 65, color: '#ef4444' },
+          { type: 'fake', label: '🔴 UNLICENSED LOAN (97.4%)', text: 'VA-PWAALA-P: Loan approved without docs', x: 20, y: 155, w: 440, h: 65, color: '#ef4444' },
+          { type: 'fake', label: '🔴 PHISHING URL (99.1%)', text: 'http://jiomrt-claim.top (Fake Wallet)', x: 20, y: 240, w: 440, h: 65, color: '#ef4444' },
+          { type: 'orig', label: '🟢 VERIFIED BANK (99.9%)', text: 'VA-KBLBNK-T: Rs 250 debited trf SRI LAKSHMI', x: 20, y: 325, w: 440, h: 65, color: '#10b981' },
+          { type: 'orig', label: '🟢 SECURE 2FA OTP (100%)', text: '59039465: 920376 is your GitHub code', x: 20, y: 410, w: 440, h: 65, color: '#10b981' }
+        ]
+      },
+      whatsapp_scam: {
+        title: "WhatsApp Task Job Phishing Screenshot",
+        width: 480,
+        height: 420,
+        items: [
+          { type: 'fake', label: '🔴 PRETEXTING TASK SCAM (99.5%)', text: 'Sneha Amazon HR: Earn Rs 3,500 daily', x: 20, y: 50, w: 440, h: 90, color: '#ef4444' },
+          { type: 'fake', label: '🔴 ROGUE TELEGRAM LURE (98.9%)', text: 'https://t.me/sneha_vip_earn', x: 40, y: 160, w: 400, h: 55, color: '#ef4444' },
+          { type: 'orig', label: '🟢 SAFE FAMILY CHAT (100%)', text: 'Papa: Good morning beta, reach office safe', x: 20, y: 245, w: 440, h: 80, color: '#10b981' }
+        ]
+      },
+      kannada_sms: {
+        title: "Kannada (ಕನ್ನಡ) & Multilingual Screenshot",
+        width: 480,
+        height: 440,
+        items: [
+          { type: 'orig', label: '🟢 VERIFIED KANNADA TELCO (100%)', text: 'Jio: ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ಉಚಿತ Canva Pro', x: 20, y: 50, w: 440, h: 85, color: '#10b981' },
+          { type: 'fake', label: '🔴 KANNADA LOAN TRAP (99.2%)', text: 'ಅಭಿನಂದನೆಗಳು! ₹5,00,000 ತಕ್ಷಣದ ಸಾಲ', x: 20, y: 155, w: 440, h: 85, color: '#ef4444' },
+          { type: 'fake', label: '🔴 HINDI LOTTERY FRAUD (98.7%)', text: 'बधाई हो! आपने 25 लाख की लॉटरी जीती है', x: 20, y: 260, w: 440, h: 85, color: '#ef4444' }
+        ]
+      },
+      fake_receipt: {
+        title: "Edited Digital Payment Receipt",
+        width: 480,
+        height: 380,
+        items: [
+          { type: 'fake', label: '🔴 FORGED FONT ALIGNMENT (96.5%)', text: 'Paid to: SRI LAKSHMI STORE (Edited Layer)', x: 30, y: 60, w: 420, h: 70, color: '#ef4444' },
+          { type: 'fake', label: '🔴 INVALID UPI REF (99.0%)', text: 'UPI Ref: 998822 (Non-Existent NPCI Sequence)', x: 30, y: 150, w: 420, h: 60, color: '#ef4444' },
+          { type: 'orig', label: '🟢 APP FOOTER STAMP (94.0%)', text: 'Official Payment Gateway Seal', x: 30, y: 230, w: 420, h: 60, color: '#10b981' }
+        ]
+      }
+    };
+
+    function loadScreenshotPreset(presetKey) {
+      const data = SCREENSHOT_PRESETS[presetKey];
+      if (!data) return;
+
+      const wrap = document.getElementById('screenshot-canvas-wrap');
+      const canvas = document.getElementById('screenshot-highlight-canvas');
+      const badge = document.getElementById('screenshot-canvas-badge');
+      const sweep = document.getElementById('screenshot-scan-sweep');
+      if (!wrap || !canvas) return;
+
+      wrap.style.display = 'block';
+      if (sweep) {
+        sweep.style.display = 'block';
+        sweep.classList.remove('scanning');
+        void sweep.offsetWidth;
+        sweep.classList.add('scanning');
+      }
+
+      if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+      if (typeof playLaserScanSound === 'function') playLaserScanSound();
+
+      canvas.width = data.width;
+      canvas.height = data.height;
+      const ctx = canvas.getContext('2d');
+
+      // Render dark phone screen background
+      ctx.fillStyle = '#060d1a';
+      ctx.fillRect(0, 0, data.width, data.height);
+
+      // Top Status Bar of Phone
+      ctx.fillStyle = '#0c1a2e';
+      ctx.fillRect(0, 0, data.width, 36);
+      ctx.font = '700 11px monospace';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('9:41 AM  ● 5G  98%', 20, 23);
+      ctx.fillStyle = '#00f5c4';
+      ctx.fillText('🛡️ COGNIGUARD VISUAL OCR', data.width - 180, 23);
+
+      // Draw each message simulated card
+      data.items.forEach(item => {
+        ctx.fillStyle = item.type === 'fake' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)';
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = 1.8;
+
+        // Bounding box with glow
+        ctx.shadowColor = item.color;
+        ctx.shadowBlur = 10;
+        ctx.strokeRect(item.x, item.y, item.w, item.h);
+        ctx.fillRect(item.x, item.y, item.w, item.h);
+        ctx.shadowBlur = 0;
+
+        // Corner Stark brackets
+        const bSize = 8;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        // Top-left
+        ctx.moveTo(item.x, item.y + bSize); ctx.lineTo(item.x, item.y); ctx.lineTo(item.x + bSize, item.y);
+        // Top-right
+        ctx.moveTo(item.x + item.w - bSize, item.y); ctx.lineTo(item.x + item.w); ctx.lineTo(item.x + item.w, item.y + bSize);
+        // Bottom-left
+        ctx.moveTo(item.x, item.y + item.h - bSize); ctx.lineTo(item.x, item.y + item.h); ctx.lineTo(item.x + bSize, item.y + item.h);
+        // Bottom-right
+        ctx.moveTo(item.x + item.w - bSize, item.y + item.h); ctx.lineTo(item.x + item.w, item.y + item.h); ctx.lineTo(item.x + item.w, item.y + item.h - bSize);
+        ctx.stroke();
+
+        // Label pill tag
+        ctx.fillStyle = item.color;
+        ctx.fillRect(item.x, item.y - 18, Math.min(220, item.w), 18);
+        ctx.font = '800 10px monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(item.label, item.x + 6, item.y - 5);
+
+        // Text preview inside box
+        ctx.font = '600 11.5px sans-serif';
+        ctx.fillStyle = item.type === 'fake' ? '#fca5a5' : '#a7f3d0';
+        ctx.fillText(item.text, item.x + 10, item.y + 26);
+      });
+
+      setTimeout(() => {
+        if (sweep) sweep.style.display = 'none';
+        if (badge) badge.innerText = `VISUAL OCR: ${data.items.filter(i => i.type === 'fake').length} THREATS BOXED`;
+      }, 1200);
+
+      // Multilingual Speech Feedback
+      const fakeCount = data.items.filter(i => i.type === 'fake').length;
+      if (currentAppLanguage === 'kn') {
+        speak(`ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಪರಿಶೀಲನೆ ಪೂರ್ಣಗೊಂಡಿದೆ. ${fakeCount} ಅಪಾಯಕಾರಿ ಅಂಶಗಳನ್ನು ಕೆಂಪು ಬಣ್ಣದಲ್ಲಿ ಗುರುತಿಸಲಾಗಿದೆ.`, 'kn');
+      } else if (currentAppLanguage === 'hi') {
+        speak(`स्क्रीनशॉट विश्लेषण पूरा हुआ। ${fakeCount} खतरनाक तत्वों पर लाल बॉक्स लगाया गया है।`, 'hi');
+      } else {
+        speak(`Visual OCR completed for ${data.title}. ${fakeCount} suspicious threat vectors highlighted with red bounding boxes.`, 'en');
+      }
+    }
+
+    // ===================================================
+    // ACTIVE AI HONEYPOT & COUNTER-LURE AGENT ENGINE
+    // ===================================================
+    let currentHoneypotTarget = 'youtube_job';
+
+    const HONEYPOT_DATA = {
+      youtube_job: {
+        target: "Sneha - Amazon HR Task Phishing Syndicate",
+        timeWasted: "42 MINS",
+        mules: "2 UPIs (sneha-vip@axis, taskpay99@icici)",
+        ip: "194.26.29.11 (HostRoyale VPS)",
+        leaks: "0 BYTES",
+        chat: [
+          { sender: "Scammer (Sneha HR)", text: "Earn ₹3,500 to ₹8,000 daily liking YouTube videos. Send screenshot of first video liked.", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "Hello ma'am, I am very interested. I just liked the video and subscribed! Reference #99281.", role: "decoy" },
+          { sender: "Scammer (Sneha HR)", text: "Good! To unlock VIP task tier 2, transfer ₹1,000 deposit to merchant UPI: sneha-vip@axis", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "I tried transferring via PhonePe, but got 'Gateway Busy'. Can you provide alternate UPI handle?", role: "decoy" },
+          { sender: "Scammer (Sneha HR)", text: "Try alternate mule: taskpay99@icici or wait 5 mins and retry fast!", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "Sending from SBI app now... Sandbox dummy reference #TXN992837402 issued.", role: "decoy" }
+        ]
+      },
+      electricity_bill: {
+        target: "Bescom Karnataka Power Disconnection Predator",
+        timeWasted: "38 MINS",
+        mules: "1 APK Dropper (bescom-pay.apk)",
+        ip: "185.220.101.44 (Tor Exit Node)",
+        leaks: "0 BYTES",
+        chat: [
+          { sender: "Scammer (Electricity Dept)", text: "Power will be disconnected tonight at 9:30 PM. Download bescom-pay.apk immediately.", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "Sir please don't disconnect power! I am downloading APK. My consumer #10098234.", role: "decoy" },
+          { sender: "Scammer (Electricity Dept)", text: "Open APK and enter OTP sent to your phone immediately to clear dues.", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "APK says 'Error: Running in Air-Gapped Sandbox'. Should I restart my WiFi router?", role: "decoy" },
+          { sender: "Scammer (Electricity Dept)", text: "No don't restart!! Re-install from link: http://bescom-pay.apk/v2 right now!", role: "scam" }
+        ]
+      },
+      loan_shark: {
+        target: "FatakPay / Instant Cash Extortion Gang",
+        timeWasted: "55 MINS",
+        mules: "4 Honeypot Contact Tokens Triggered",
+        ip: "103.145.244.18 (Mumbai Gateway)",
+        leaks: "0 BYTES",
+        chat: [
+          { sender: "Scammer (FatakPay)", text: "Loan approved ₹50,000 without documents! Download APK to receive cash in 5 mins.", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "I really need this for medical emergency. I installed the app, please disburse.", role: "decoy" },
+          { sender: "Scammer (FatakPay)", text: "We need access to your contact list and gallery to verify KYC.", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "Access granted to Virtual Canary contacts (200 tracking tokens). Waiting for credit.", role: "decoy" }
+        ]
+      },
+      crypto_doubling: {
+        target: "Telegram Crypto VIP Multiplier Ring",
+        timeWasted: "31 MINS",
+        mules: "crypto-scam@ybl // 0x71C...a49B",
+        ip: "91.240.118.82 (Frankfurt Relay)",
+        leaks: "0 BYTES",
+        chat: [
+          { sender: "Scammer (Crypto VIP)", text: "Deposit ₹2,000 get ₹10,000 in 2 hours guaranteed!", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "Can I deposit ₹50,000 directly instead? Funds ready in my Binance wallet.", role: "decoy" },
+          { sender: "Scammer (Crypto VIP)", text: "YES SIR! Send to VIP wallet: 0x71C...a49B or UPI: crypto-scam@ybl right away!", role: "scam" },
+          { sender: "CogniGuard Honeypot", text: "Submitting transaction hash 0xdeadbeef9921 to blockchain mempool...", role: "decoy" }
+        ]
+      }
+    };
+
+    function switchHoneypotTarget(target) {
+      currentHoneypotTarget = target;
+      const tabs = {
+        youtube_job: document.getElementById('lure-tab-youtube'),
+        electricity_bill: document.getElementById('lure-tab-electricity'),
+        loan_shark: document.getElementById('lure-tab-loan'),
+        crypto_doubling: document.getElementById('lure-tab-crypto')
+      };
+      Object.keys(tabs).forEach(k => {
+        if (tabs[k]) tabs[k].classList.toggle('active', k === target);
+      });
+
+      renderHoneypotChat();
+      if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+
+      if (currentAppLanguage === 'kn') {
+        speak("ಹನಿಪಾಟ್ ಏಜೆಂಟ್ ಗುರಿ ಬದಲಾಯಿಸಲಾಗಿದೆ. ಸ್ವಯಂಚಾಲಿತ ಬೆಟ್ ಸಕ್ರಿಯವಾಗಿದೆ.", 'kn');
+      } else if (currentAppLanguage === 'hi') {
+        speak("हनीपॉट एजेंट का लक्ष्य बदला गया। ऑटो-बेट सक्रिय है।", 'hi');
+      } else {
+        speak(`Honeypot counter-lure target updated. Autonomous decoy active.`);
+      }
+    }
+
+    function renderHoneypotChat() {
+      const data = HONEYPOT_DATA[currentHoneypotTarget];
+      if (!data) return;
+
+      const timeEl = document.getElementById('honeypot-metric-time');
+      const mulesEl = document.getElementById('honeypot-metric-mules');
+      const consoleEl = document.getElementById('honeypot-chat-console');
+      const intelEl = document.getElementById('honeypot-intel-box');
+
+      if (timeEl) timeEl.innerText = data.timeWasted;
+      if (mulesEl) mulesEl.innerText = data.mules.split(' ')[0] + ' ' + (data.mules.includes('UPI') ? 'UPIs' : 'Tokens');
+
+      if (consoleEl) {
+        consoleEl.innerHTML = '';
+        data.chat.forEach(msg => {
+          const div = document.createElement('div');
+          div.style.cssText = msg.role === 'scam' 
+            ? 'background:rgba(239,68,68,0.12); border-left:3px solid #ef4444; padding:8px 10px; border-radius:6px; margin-bottom:8px; font-size:11.5px;'
+            : 'background:rgba(0,245,196,0.12); border-left:3px solid #00f5c4; padding:8px 10px; border-radius:6px; margin-bottom:8px; font-size:11.5px;';
+          div.innerHTML = `
+            <div style="font-size:10px; font-weight:800; color:${msg.role === 'scam' ? '#f87171' : '#00f5c4'}; margin-bottom:2px; font-family:monospace;">
+              ${msg.sender}
+            </div>
+            <div style="color:#e2e8f0; line-height:1.4;">${msg.text}</div>
+          `;
+          consoleEl.appendChild(div);
+        });
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      }
+
+      if (intelEl) {
+        intelEl.innerHTML = `
+          <div style="color:#00f5ff; font-weight:800; margin-bottom:4px;">🎯 EXTRACTED THREAT INTEL:</div>
+          <div>&bull; <strong>Target Syndicate:</strong> ${data.target}</div>
+          <div>&bull; <strong>Captured Mules:</strong> <span style="color:#ef4444;">${data.mules}</span></div>
+          <div>&bull; <strong>Scammer Server IP:</strong> <span style="color:#38bdf8;">${data.ip}</span></div>
+          <div>&bull; <strong>Victim Leakage:</strong> <span style="color:#00f5c4;">0 BYTES (Sandboxed Simulation)</span></div>
+        `;
+      }
+    }
+
+    function triggerHoneypotNextTurn() {
+      const consoleEl = document.getElementById('honeypot-chat-console');
+      if (!consoleEl) return;
+
+      if (typeof playLaserScanSound === 'function') playLaserScanSound();
+
+      const turnEl = document.createElement('div');
+      turnEl.style.cssText = 'background:rgba(0,245,196,0.15); border-left:3px solid #00f5c4; padding:8px 10px; border-radius:6px; margin-bottom:8px; font-size:11.5px;';
+      turnEl.innerHTML = `
+        <div style="font-size:10px; font-weight:800; color:#00f5c4; margin-bottom:2px; font-family:monospace;">
+          CogniGuard Honeypot (Autonomous Turn #${Math.floor(Math.random() * 90 + 10)})
+        </div>
+        <div style="color:#e2e8f0; line-height:1.4;">
+          "Verifying cryptographic hash with dummy bank gateway... Keeping threat session alive (+12 mins wasted)."
+        </div>
+      `;
+      consoleEl.appendChild(turnEl);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+      if (currentAppLanguage === 'kn') {
+        speak("ಹೊಸ ಬೆಟ್ ಕಳುಹಿಸಲಾಗಿದೆ. ಸ್ಕ್ಯಾಮರ್ ಅಧಿವೇಶನ ಸಿಕ್ಕಿಬಿದ್ದಿದೆ.", 'kn');
+      } else if (currentAppLanguage === 'hi') {
+        speak("नया डेकोय भेजा गया। स्कैमर सेशन ट्रैप हो गया है।", 'hi');
+      } else {
+        speak("Next decoy bait dispatched. Threat actor kept occupied in sandbox.");
+      }
+    }
+
+    function reportHoneypotToCybercrime() {
+      if (typeof playSuccessChime === 'function') playSuccessChime();
+      speak("Intelligence dossier compiled and formatted for National Cyber Crime Reporting Portal (1930).");
+      alert("🚨 I4C NATIONAL CYBER CRIME DOSSIER COMPILED:\n\n• Offense: Task Phishing & Micro-Loan Extortion\n• Extracted Mule UPIs: sneha-vip@axis, taskpay99@icici, crypto-scam@ybl\n• Scammer IPs: 194.26.29.11, 185.220.101.44\n• User Victims Saved: 1\n• Forwarding to Helpline: 1930 / cybercrime.gov.in");
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       triggerJarvisOpening();
       checkSmsAppPermissionStatus();
       initCyberGlobe();
       applySmsInboxFilters();
+      updateLanguageButtons();
+      renderHoneypotChat();
     });
 
   </script>
@@ -5622,6 +6079,69 @@
           Close
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===================================================
+       JARVIS COCKPIT SETTINGS MODAL (MULTILINGUAL + HUD)
+       =================================================== -->
+  <div id="jarvis-settings-modal" class="sms-modal-backdrop" onclick="closeJarvisSettingsModal(event)" style="display:none;">
+    <div class="sms-detail-box" onclick="event.stopPropagation()" style="max-width:440px; border-color:#f59e0b; box-shadow:0 0 35px rgba(245,158,11,0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; color:#fbbf24; font-family:monospace;">
+          <span>⚙️</span> <span>JARVIS COCKPIT CONFIGURATION</span>
+        </div>
+        <button onclick="closeJarvisSettingsModal()" style="background:rgba(255,255,255,0.1); border:none; color:#cbd5e1; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center;">✕</button>
+      </div>
+
+      <!-- Language Selector -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11.5px; font-weight:800; color:#f8fafc; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+          <span>🌐</span> <span>AI Voice &amp; Threat Detection Language:</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+          <button id="lang-btn-en" onclick="setAppLanguage('en')" class="sms-filter-btn active" style="font-size:11px; padding:8px 6px; text-align:center; justify-content:center;">
+            English (Global)
+          </button>
+          <button id="lang-btn-kn" onclick="setAppLanguage('kn')" class="sms-filter-btn" style="font-size:11px; padding:8px 6px; text-align:center; justify-content:center; border-color:rgba(245,158,11,0.4); color:#fde68a;">
+            ಕನ್ನಡ (Kannada)
+          </button>
+          <button id="lang-btn-hi" onclick="setAppLanguage('hi')" class="sms-filter-btn" style="font-size:11px; padding:8px 6px; text-align:center; justify-content:center; border-color:rgba(245,158,11,0.4); color:#fde68a;">
+            हिन्दी (Hindi)
+          </button>
+        </div>
+      </div>
+
+      <!-- Settings Switches -->
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#040914; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px;">
+          <div>
+            <div style="font-size:12px; font-weight:700; color:#fff;">🔊 Jarvis AI Speech Voice</div>
+            <div style="font-size:10px; color:#64748b;">Read verdicts aloud in chosen language</div>
+          </div>
+          <input type="checkbox" id="cfg-speech-enabled" checked onchange="toggleConfigSpeech(this.checked)" style="transform:scale(1.3); cursor:pointer;">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#040914; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px;">
+          <div>
+            <div style="font-weight:700; font-size:12px; color:#fff;">🤖 Auto-Engage Honeypot Agent</div>
+            <div style="font-size:10px; color:#64748b;">Trap predatory SMS &amp; WhatsApp scammers</div>
+          </div>
+          <input type="checkbox" id="cfg-honeypot-auto" checked onchange="toggleConfigHoneypot(this.checked)" style="transform:scale(1.3); cursor:pointer;">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#040914; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px;">
+          <div>
+            <div style="font-weight:700; font-size:12px; color:#fff;">📐 Screenshot Visual Bounding Boxes</div>
+            <div style="font-size:10px; color:#64748b;">Draw Iron Man HUD boxes on scam images</div>
+          </div>
+          <input type="checkbox" id="cfg-bounding-boxes" checked style="transform:scale(1.3); cursor:pointer;">
+        </div>
+      </div>
+
+      <button onclick="closeJarvisSettingsModal()" style="width:100%; background:linear-gradient(135deg, #f59e0b, #d97706); color:#040914; border:none; border-radius:10px; padding:12px; font-weight:800; font-size:13px; cursor:pointer;">
+        Save &amp; Apply Settings
+      </button>
     </div>
   </div>
 </body>

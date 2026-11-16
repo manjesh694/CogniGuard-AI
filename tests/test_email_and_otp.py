@@ -170,3 +170,39 @@ def test_darkweb_scan_endpoint():
     assert res_email["status"] == "COMPROMISED"
     assert res_email["breaches_count"] == 3
 
+
+def test_honeypot_agent_endpoint():
+    # YouTube job lure
+    req = api_bridge.HoneypotLureRequest(scam_type="youtube_job", language="en")
+    res = api_bridge.honeypot_engage_endpoint(req)
+    assert res["status"] == "ACTIVE_LURE_RUNNING"
+    assert res["scenario"]["time_wasted_minutes"] > 0
+    assert "sneha-vip@axis" in res["scenario"]["captured_intel"]["mule_upis"]
+    assert res["scenario"]["data_leaked_bytes"] == 0
+
+    # Kannada language directive
+    req_kn = api_bridge.HoneypotLureRequest(scam_type="electricity_bill", language="kn")
+    res_kn = api_bridge.honeypot_engage_endpoint(req_kn)
+    assert "ಹನಿಪಾಟ್" in res_kn["ai_voice"]
+
+
+def test_multilingual_sms_detection():
+    # Kannada Scam SMS
+    req_kn_scam = api_bridge.SmsInterceptRequest(
+        sender="VA-LOANKN-T",
+        body="ಅಭಿನಂದನೆಗಳು! ನಿಮಗೆ ₹5,00,000 ತಕ್ಷಣದ ಸಾಲ ಅನುಮೋದಿಸಲಾಗಿದೆ. ಪಡೆಯಲು ಲಿಂಕ್ ಒತ್ತಿ: http://kannada-loan.apk"
+    )
+    res_kn = api_bridge.intercept_sms_endpoint(req_kn_scam)
+    assert res_kn["is_fake"] is True
+    assert res_kn["corner_mark"] == "RED"
+
+    # Hindi Scam SMS
+    req_hi_scam = api_bridge.SmsInterceptRequest(
+        sender="TM-LOTTRY-P",
+        body="बधाई हो! आपने 25 लाख की लॉटरी जीती है। तुरंत पैसे क्लेम करने के लिए APK डाउनलोड करें: http://lottery-cash.top"
+    )
+    res_hi = api_bridge.intercept_sms_endpoint(req_hi_scam)
+    assert res_hi["is_fake"] is True
+    assert res_hi["corner_mark"] == "RED"
+
+
