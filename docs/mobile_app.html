@@ -12,61 +12,319 @@
   <link rel="apple-touch-icon" href="icons/icon192.png">
   <style>
     :root {
-      --bg: #060911;
-      --card: #0d1527;
-      --border: #1e293b;
-      --accent: #38bdf8;
-      --green: #10b981;
-      --red: #ef4444;
+      --bg: #030712;
+      --card: #081224;
+      --border: #132a48;
+      --accent: #00f5ff;
+      --purple: #a855f7;
+      --green: #00ff88;
+      --red: #ff3344;
       --text: #f8fafc;
-      --muted: #94a3b8;
+      --muted: #8ba0b8;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); padding: 16px; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace, sans-serif; -webkit-tap-highlight-color: transparent; }
     
-    /* Mobile App Header */
-    .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 20px; }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
-    .brand img { width: 32px; height: 32px; border-radius: 8px; }
-    .status-pill { display: flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .pulse { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+    body {
+      background: radial-gradient(circle at 50% 15%, #081a33 0%, #030712 60%, #010307 100%);
+      color: var(--text);
+      padding: 14px 14px 80px;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Ambient Cyber Matrix Background Pattern */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: 
+        radial-gradient(rgba(0, 245, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(0, 245, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 245, 255, 0.02) 1px, transparent 1px);
+      background-size: 24px 24px, 24px 24px, 24px 24px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glassmorphism Tactical Cards */
+    .tactical-card {
+      background: rgba(8, 18, 36, 0.88);
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      position: relative;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 245, 255, 0.03);
+      z-index: 1;
+      overflow: hidden;
+    }
+    .tactical-card::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.8), rgba(168, 85, 247, 0.8), transparent);
+    }
+
+    /* HUD Corner Tick Marks */
+    .corner-tick {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-color: #00f5ff;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .c-tl { top: 6px; left: 6px; border-width: 1.5px 0 0 1.5px; }
+    .c-tr { top: 6px; right: 6px; border-width: 1.5px 1.5px 0 0; }
+    .c-bl { bottom: 6px; left: 6px; border-width: 0 0 1.5px 1.5px; }
+    .c-br { bottom: 6px; right: 6px; border-width: 0 1.5px 1.5px 0; }
+
+    /* App Header */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0 12px;
+      position: relative;
+      z-index: 2;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+    }
+    .brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      box-shadow: 0 0 16px rgba(0, 245, 255, 0.5);
+      border: 1px solid rgba(0, 245, 255, 0.4);
+    }
+
+    /* 4-Gauge Tactical Vitals HUD */
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+    .vital-box {
+      background: rgba(6, 15, 28, 0.9);
+      border: 1px solid rgba(0, 245, 255, 0.2);
+      border-radius: 12px;
+      padding: 10px 4px;
+      text-align: center;
+      box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.05);
+      position: relative;
+    }
+    .vital-ring {
+      width: 38px;
+      height: 38px;
+      margin: 0 auto 4px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      position: relative;
+    }
+    .vital-label {
+      font-size: 9px;
+      font-family: monospace;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .vital-val {
+      font-size: 11px;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-top: 2px;
+      font-family: monospace;
+    }
 
     /* Hero Shield Card */
-    .shield-hero { background: linear-gradient(145deg, #0f172a, #090d16); border: 1px solid var(--border); border-radius: 18px; padding: 24px 20px; text-align: center; margin-bottom: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-    .shield-circle { width: 72px; height: 72px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); border: 2px solid var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 32px; box-shadow: 0 0 24px rgba(16, 185, 129, 0.25); }
-    .shield-hero h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
-    .shield-hero p { font-size: 13px; color: var(--muted); }
+    .shield-hero {
+      background: radial-gradient(circle at 50% 30%, #0d264a 0%, #061122 75%);
+      border: 1px solid rgba(0, 245, 255, 0.35);
+      border-radius: 20px;
+      padding: 22px 18px;
+      text-align: center;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 245, 255, 0.15);
+      position: relative;
+      z-index: 1;
+    }
+    .shield-circle-wrap {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .shield-pulse-ring {
+      position: absolute;
+      inset: -6px;
+      border: 1.5px dashed rgba(0, 245, 255, 0.6);
+      border-radius: 50%;
+      animation: spin-clockwise 8s linear infinite;
+    }
+    .shield-circle {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 245, 255, 0.25), rgba(168, 85, 247, 0.15));
+      border: 2px solid #00f5ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.6);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      position: relative;
+      z-index: 2;
+    }
+    .shield-circle:hover { transform: scale(1.08); }
 
-    /* SMS / WhatsApp Link Scanner */
-    .scanner-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
-    .scanner-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-    .scanner-card p { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
-    textarea { width: 100%; background: #060911; border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font-size: 13px; resize: none; height: 75px; margin-bottom: 10px; outline: none; }
-    textarea:focus { border-color: var(--accent); }
-    
-    .btn { width: 100%; padding: 13px; border-radius: 10px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; }
-    .btn-danger { background: #dc2626; color: white; margin-top: 8px; }
-    .btn-sample { background: rgba(56, 189, 248, 0.1); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.25); font-size: 12px; padding: 8px; margin-bottom: 10px; }
+    /* Inputs, Buttons, & Textareas */
+    textarea {
+      width: 100%;
+      background: #040913;
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #f8fafc;
+      font-size: 13px;
+      resize: none;
+      height: 75px;
+      margin-bottom: 10px;
+      outline: none;
+      font-family: monospace;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    textarea:focus {
+      border-color: #00f5ff;
+      box-shadow: 0 0 16px rgba(0, 245, 255, 0.35);
+    }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00f5ff 0%, #0284c7 100%);
+      color: #020813;
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.65);
+    }
+
+    /* Attack Vector Quick Simulation Chips */
+    .chip-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .chip-btn {
+      background: rgba(0, 245, 255, 0.08);
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      color: #38bdf8;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip-btn:hover {
+      background: rgba(0, 245, 255, 0.2);
+      border-color: #00f5ff;
+      color: #ffffff;
+    }
+
+    /* Floating Cockpit Bottom Navigation Bar */
+    .cockpit-dock {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 440px;
+      background: rgba(6, 14, 26, 0.92);
+      border: 1px solid rgba(0, 245, 255, 0.35);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 245, 255, 0.2);
+      border-radius: 20px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(16px);
+    }
+    .dock-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      font-family: monospace;
+      font-weight: 700;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    .dock-btn span:first-child { font-size: 16px; }
+    .dock-btn:hover, .dock-btn.active {
+      color: #00f5ff;
+      transform: translateY(-2px);
+    }
 
     /* Result Box */
-    .result-box { display: none; border-radius: 10px; padding: 14px; margin-top: 12px; font-size: 13px; line-height: 1.5; }
-    .result-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); color: #fca5a5; }
-    .result-safe { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--green); color: #6ee7b7; }
+    .result-box { display: none; border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 13px; line-height: 1.5; font-family: monospace; }
+    .result-danger { background: rgba(255, 51, 68, 0.15); border: 1px solid var(--red); color: #fca5a5; box-shadow: 0 0 20px rgba(255, 51, 68, 0.25); }
+    .result-safe { background: rgba(0, 255, 136, 0.15); border: 1px solid var(--green); color: #6ee7b7; box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
 
-    /* Remote Laptop Card */
-    .remote-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .remote-info h4 { font-size: 14px; font-weight: 700; }
-    .remote-info span { font-size: 12px; color: var(--green); }
-    .lock-btn { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-  
     /* ===================================================
-       IRON MAN / JARVIS ARC REACTOR HUD OPENING INTERFACE
+       IRON MAN / JARVIS ARC REACTOR HUD OPENING
        =================================================== */
     .ironman-overlay {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at 50% 40%, #061528 0%, #030a14 50%, #010408 100%);
+      background: radial-gradient(circle at 50% 36%, #07172e 0%, #030a16 55%, #010408 100%);
       z-index: 999999;
       display: flex;
       align-items: center;
@@ -81,20 +339,18 @@
       pointer-events: none;
     }
     .ironman-hud-modal {
-      background: rgba(4, 12, 24, 0.94);
-      border: 1px solid rgba(0, 245, 255, 0.5);
-      box-shadow: 0 0 100px rgba(0, 245, 255, 0.3), 0 0 40px rgba(59, 130, 246, 0.25), inset 0 0 35px rgba(0, 245, 255, 0.08);
+      background: rgba(4, 12, 24, 0.95);
+      border: 1px solid rgba(0, 245, 255, 0.55);
+      box-shadow: 0 0 100px rgba(0, 245, 255, 0.35), 0 0 45px rgba(59, 130, 246, 0.25), inset 0 0 35px rgba(0, 245, 255, 0.08);
       border-radius: 28px;
       max-width: 440px;
       width: 100%;
-      padding: 30px 22px 24px;
+      padding: 28px 22px 24px;
       text-align: center;
       position: relative;
       backdrop-filter: blur(16px);
       overflow: hidden;
     }
-
-    /* Iron Man HUD Reticle & Corner Brackets */
     .hud-corner {
       position: absolute;
       width: 16px;
@@ -108,7 +364,6 @@
     .hud-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
     .hud-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
 
-    /* Animated Iron Man Arc Reactor */
     .arc-reactor-wrap {
       position: relative;
       width: 140px;
@@ -122,14 +377,14 @@
     .arc-outer-hud {
       position: absolute;
       inset: 0;
-      border: 2px dashed rgba(0, 245, 255, 0.8);
+      border: 2px dashed rgba(0, 245, 255, 0.85);
       border-radius: 50%;
       animation: spin-clockwise 10s linear infinite;
     }
     .arc-turbine-ring {
       position: absolute;
       inset: 12px;
-      border: 2px dotted rgba(59, 130, 246, 0.9);
+      border: 2px dotted rgba(59, 130, 246, 0.95);
       border-radius: 50%;
       animation: spin-counter 5s linear infinite;
     }
@@ -150,26 +405,21 @@
       align-items: center;
       justify-content: center;
       font-size: 40px;
-      box-shadow: 0 0 45px rgba(0, 245, 255, 0.8), 0 0 80px rgba(0, 245, 255, 0.4), inset 0 0 20px #ffffff;
+      box-shadow: 0 0 45px rgba(0, 245, 255, 0.85), 0 0 85px rgba(0, 245, 255, 0.45), inset 0 0 20px #ffffff;
       transition: transform 0.25s ease, box-shadow 0.25s ease;
       position: relative;
       z-index: 5;
     }
     .arc-reactor-wrap:hover .arc-core-triangle {
       transform: scale(1.08);
-      box-shadow: 0 0 60px rgba(0, 245, 255, 1), 0 0 110px rgba(0, 245, 255, 0.6);
+      box-shadow: 0 0 65px rgba(0, 245, 255, 1);
     }
     .arc-core-triangle.charging {
       animation: core-overdrive 0.3s ease-in-out infinite alternate;
     }
-
-    /* Iron Man Helmet HUD Laser Sweep */
     .hud-vertical-laser {
       position: absolute;
-      left: 6%;
-      right: 6%;
-      top: 0;
-      height: 2px;
+      left: 6%; right: 6%; top: 0; height: 2px;
       background: linear-gradient(90deg, transparent, #00f5ff, #ffffff, #00f5ff, transparent);
       box-shadow: 0 0 16px #00f5ff;
       opacity: 0;
@@ -180,8 +430,6 @@
       opacity: 1;
       animation: ironman-laser-sweep 1.4s ease-in-out infinite;
     }
-
-    /* Iron Man Typography & Badges */
     .jarvis-badge {
       display: inline-flex;
       align-items: center;
@@ -194,7 +442,7 @@
       letter-spacing: 1px;
       border-radius: 20px;
       padding: 4px 14px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       text-transform: uppercase;
       font-family: monospace;
     }
@@ -206,17 +454,15 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .ironman-sub {
       font-size: 11px;
       color: #94a3b8;
       font-family: monospace;
       letter-spacing: 0.5px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-
-    /* Iron Man / Jarvis Terminal HUD Readout */
     .jarvis-terminal-box {
       background: #020914;
       border: 1px solid #102d4d;
@@ -226,49 +472,31 @@
       font-family: 'Courier New', Courier, monospace;
       font-size: 11px;
       color: #64748b;
-      margin-bottom: 16px;
-      min-height: 102px;
+      margin-bottom: 14px;
+      min-height: 98px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 5px;
       box-shadow: inset 0 0 15px rgba(0, 245, 255, 0.05);
     }
-    .j-line {
-      opacity: 0.3;
-      transition: all 0.25s ease;
-    }
-    .j-line.active {
-      opacity: 1;
-      color: #00f5ff;
-      font-weight: 700;
-      text-shadow: 0 0 8px rgba(0, 245, 255, 0.6);
-    }
-    .j-line.complete {
-      opacity: 1;
-      color: #10b981;
-    }
-
-    /* Arc Reactor Power Bar */
+    .j-line { opacity: 0.3; transition: all 0.25s ease; }
+    .j-line.active { opacity: 1; color: #00f5ff; font-weight: 700; text-shadow: 0 0 8px rgba(0, 245, 255, 0.6); }
+    .j-line.complete { opacity: 1; color: #00ff88; }
     .arc-power-bar-wrap {
-      width: 100%;
-      height: 7px;
+      width: 100%; height: 7px;
       background: #06182c;
       border: 1px solid #14385f;
       border-radius: 4px;
       overflow: hidden;
       margin-bottom: 14px;
-      box-shadow: inset 0 0 6px rgba(0,0,0,0.8);
     }
     .arc-power-bar-fill {
-      width: 0%;
-      height: 100%;
+      width: 0%; height: 100%;
       background: linear-gradient(90deg, #3b82f6, #00f5ff, #ffffff);
       box-shadow: 0 0 14px #00f5ff;
       transition: width 0.3s ease;
     }
-
-    /* Arc Reactor Power-Up Action Button */
     .btn-arc-trigger {
       width: 100%;
       background: linear-gradient(135deg, #00f5ff 0%, #0284c7 100%);
@@ -280,7 +508,7 @@
       border-radius: 12px;
       padding: 14px 20px;
       cursor: pointer;
-      box-shadow: 0 0 30px rgba(0, 245, 255, 0.55), inset 0 0 10px rgba(255,255,255,0.4);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.55);
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
@@ -289,47 +517,23 @@
       font-family: monospace;
       text-transform: uppercase;
     }
-    .btn-arc-trigger:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 45px rgba(0, 245, 255, 0.8);
-    }
     .btn-arc-trigger.powered {
-      background: linear-gradient(135deg, #10b981 0%, #00f5ff 100%);
+      background: linear-gradient(135deg, #00ff88 0%, #00f5ff 100%);
       color: #ffffff;
-      box-shadow: 0 0 40px rgba(0, 245, 255, 0.8);
+      box-shadow: 0 0 40px rgba(0, 245, 255, 0.85);
     }
 
-    @keyframes spin-clockwise {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes spin-counter {
-      from { transform: rotate(360deg); }
-      to { transform: rotate(0deg); }
-    }
-    @keyframes reactor-pulse {
-      0% { transform: scale(0.92); opacity: 0.8; }
-      100% { transform: scale(1.35); opacity: 0; }
-    }
-    @keyframes core-overdrive {
-      from { transform: scale(1); filter: brightness(1); }
-      to { transform: scale(1.12); filter: brightness(1.4); }
-    }
-    @keyframes ironman-laser-sweep {
-      0% { top: 2%; opacity: 0; }
-      15% { opacity: 1; }
-      85% { opacity: 1; }
-      100% { top: 96%; opacity: 0; }
-    }
-    @keyframes radar-sweep {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin-clockwise { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes spin-counter { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    @keyframes reactor-pulse { 0% { transform: scale(0.92); opacity: 0.8; } 100% { transform: scale(1.35); opacity: 0; } }
+    @keyframes core-overdrive { from { transform: scale(1); filter: brightness(1); } to { transform: scale(1.12); filter: brightness(1.4); } }
+    @keyframes ironman-laser-sweep { 0% { top: 2%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 96%; opacity: 0; } }
+    @keyframes radar-sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* Live Animated Cockpit Ticker */
     .pro-live-ticker {
-      background: #050e1a;
-      border: 1px solid #142a42;
+      background: rgba(5, 14, 26, 0.9);
+      border: 1px solid rgba(0, 245, 255, 0.25);
       border-radius: 10px;
       padding: 6px 12px;
       margin-bottom: 12px;
@@ -338,6 +542,7 @@
       position: relative;
       font-family: monospace;
       font-size: 11px;
+      z-index: 1;
     }
     .pro-ticker-track {
       display: inline-block;
@@ -357,17 +562,13 @@
     }
     .radar-sweep-beam {
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      top: -50%; left: -50%; width: 200%; height: 200%;
       background: conic-gradient(from 0deg at 50% 50%, rgba(0, 245, 196, 0.25) 0deg, rgba(0, 245, 196, 0.04) 30deg, transparent 60deg);
       pointer-events: none;
       animation: radar-sweep 5s linear infinite;
       mix-blend-mode: screen;
       z-index: 10;
     }
-
   </style>
 </head>
 <body>
@@ -1484,6 +1685,40 @@
         const u = new SpeechSynthesisUtterance(text);
         u.rate = 1.05;
         window.speechSynthesis.speak(u);
+      }
+    }
+
+    
+    function fillAttackChip(type) {
+      playLaserScanSound();
+      const input = document.getElementById('msg-input');
+      if (!input) return;
+
+      switch(type) {
+        case 'loan':
+          input.value = "Get up to Rs 98989 instantly. Fast approval & quick disbursal. Apply: https://apply.loanzap.in/ UNIC";
+          break;
+        case 'kyc':
+          input.value = "URGENT: Your SBI net-banking access is suspended due to pending KYC update. Complete verification immediately at https://sbi-kyc-verify.top/login";
+          break;
+        case 'photo':
+          input.value = "Incoming attachment: wedding_ceremony_photos_hd.jpg.exe (Executable payload disguised as image)";
+          break;
+        case 'upi':
+          input.value = "Congratulations! You won Rs 4,999 cashback reward on Google Pay / PhonePe. Click to collect directly to UPI: https://cashback-reward.xyz/claim";
+          break;
+        case 'clean':
+          input.value = "https://manjesh694.github.io/CogniGuard-AI/mobile_app.html";
+          break;
+      }
+      scanMobileMessage();
+    }
+
+    function scrollToCard(cardId) {
+      playLaserScanSound();
+      const el = document.getElementById(cardId) || document.querySelector('.' + cardId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
 
