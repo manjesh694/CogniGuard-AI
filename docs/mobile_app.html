@@ -1633,9 +1633,9 @@
 <body>
   <canvas id="cyber-canvas"></canvas>
 
-  <!-- Pro Opening Splash Sequence Overlay (Iron Man Arc Reactor / Jarvis HUD) -->
-  <div id="pro-boot-screen" class="ironman-overlay">
-    <div class="ironman-hud-modal">
+  <!-- Pro Opening Splash Sequence Overlay (Iron Man Arc Reactor / Jarvis HUD - Available via header button) -->
+  <div id="pro-boot-screen" class="ironman-overlay" style="display:none;" onclick="dismissProBoot(true)">
+    <div class="ironman-hud-modal" onclick="event.stopPropagation()">
       <!-- HUD Corner Targeting Brackets -->
       <div class="hud-corner hud-tl"></div>
       <div class="hud-corner hud-tr"></div>
@@ -1646,8 +1646,8 @@
       <!-- Quick skip link in corner -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; position:relative; z-index:5;">
         <span style="font-size:10px; color:#00f5ff; font-family:monospace; font-weight:700;">STARK OS v10.4 // MARK-LXXXV</span>
-        <button onclick="dismissProBoot(true)" style="background:none; border:none; color:#64748b; font-size:11px; font-weight:700; cursor:pointer; font-family:monospace;">
-          BYPASS HUD ✕
+        <button onclick="dismissProBoot(true)" style="background:rgba(255,255,255,0.1); border:none; color:#00f5ff; font-size:11px; font-weight:800; cursor:pointer; font-family:monospace; padding:4px 8px; border-radius:8px;">
+          ENTER DASHBOARD ✕
         </button>
       </div>
 
@@ -2231,6 +2231,70 @@
         <button id="btn-sms-app-perm" onclick="grantSmsAppPermission()" class="btn-primary" style="width:auto; padding:8px 18px; font-size:11.5px; border-radius:20px; font-weight:800; cursor:pointer; background:linear-gradient(135deg, #00f5ff 0%, #00a8ff 100%); color:#031321; border:none; box-shadow:0 0 15px rgba(0,245,255,0.4);">
           Grant SMS Permission
         </button>
+      </div>
+    </div>
+
+    <!-- Guided Onboarding / How It Works Banner (Bilingual: Kannada & English) -->
+    <div class="pro-hud-card" style="padding:14px 16px; margin-bottom:14px; border-color:rgba(0,245,196,0.35); background:linear-gradient(180deg, rgba(6,18,34,0.95), rgba(4,12,24,0.95));">
+      <div class="pro-card-corner pcc-tl"></div>
+      <div class="pro-card-corner pcc-tr"></div>
+      <div class="pro-card-corner pcc-bl"></div>
+      <div class="pro-card-corner pcc-br"></div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:13px; font-weight:800; color:#00f5c4; display:flex; align-items:center; gap:6px;">
+          <span>💡</span> <span id="guide-title">ಕಾಗ್ನಿಗಾರ್ಡ್ ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ? (How it works)</span>
+        </span>
+        <div style="display:flex; gap:4px;">
+          <button id="guide-lang-kn" onclick="setGuideLang('kn')" class="sms-filter-btn active" style="font-size:10px; padding:2px 8px; border-radius:8px;">ಕನ್ನಡ</button>
+          <button id="guide-lang-en" onclick="setGuideLang('en')" class="sms-filter-btn" style="font-size:10px; padding:2px 8px; border-radius:8px;">English</button>
+        </div>
+      </div>
+
+      <div id="guide-body-kn" style="font-size:12px; color:#cbd5e1; line-height:1.5;">
+        <p style="margin:0 0 8px;">
+          ನಿಮ್ಮ ಮೊಬೈಲ್‌ಗೆ ಬರುವ <strong>ನಕಲಿ ಬ್ಯಾಂಕ್ ಮೆಸೇಜ್</strong>, <strong>ಮೋಸದ ಸಾಲದ ಆ್ಯಪ್</strong> ಮತ್ತು <strong>ವಾಟ್ಸಾಪ್ ಜಾಬ್ ಸ್ಕ್ಯಾಮ್</strong>‌ಗಳನ್ನು ಕಾಗ್ನಿಗಾರ್ಡ್ ಆಫ್‌ಲೈನ್‌ನಲ್ಲೇ ಪತ್ತೆಹಚ್ಚಿ ಲೈವ್ ಧ್ವನಿಯಲ್ಲಿ ಎಚ್ಚರಿಸುತ್ತದೆ:
+        </p>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:8px;">
+          <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:8px; text-align:center;">
+            <div style="font-size:16px; margin-bottom:2px;">1️⃣</div>
+            <div style="font-weight:800; color:#38bdf8; font-size:11px;">ಮೆಸೇಜ್ ಮುಟ್ಟಿ</div>
+            <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">ಕೆಳಗಿನ ಮೆಸೇಜ್ ಕಾರ್ಡ್ ಪರಿಶೀಲಿಸಿ</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:8px; text-align:center;">
+            <div style="font-size:16px; margin-bottom:2px;">2️⃣</div>
+            <div style="font-weight:800; color:#ef4444; font-size:11px;">🔴 ನಕಲಿ ಗುರುತಿಸಿ</div>
+            <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">ಸ್ಕ್ಯಾಮ್ ಲಿಂಕ್ ಬ್ಲಾಕ್ ಆಗುತ್ತದೆ</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:8px; text-align:center;">
+            <div style="font-size:16px; margin-bottom:2px;">3️⃣</div>
+            <div style="font-weight:800; color:#00f5c4; font-size:11px;">🔊 ಲೈವ್ ಆಲಿಸಿ</div>
+            <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">'🔊 Read' ಒತ್ತಿ ಲೈವ್ ಧ್ವನಿ ಕೇಳಿ</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="guide-body-en" style="display:none; font-size:12px; color:#cbd5e1; line-height:1.5;">
+        <p style="margin:0 0 8px;">
+          CogniGuard AI intercepts <strong>fake bank SMS alerts</strong>, <strong>predatory loan APKs</strong>, and <strong>WhatsApp job phishing traps</strong> completely offline on your device with zero data leaks:
+        </p>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:8px;">
+          <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:8px; text-align:center;">
+            <div style="font-size:16px; margin-bottom:2px;">1️⃣</div>
+            <div style="font-weight:800; color:#38bdf8; font-size:11px;">Inspect Any SMS</div>
+            <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">Tap any message card below</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:8px; text-align:center;">
+            <div style="font-size:16px; margin-bottom:2px;">2️⃣</div>
+            <div style="font-weight:800; color:#ef4444; font-size:11px;">🔴 Fake vs 🟢 Safe</div>
+            <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">Rogue links blocked offline</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.45); border:1px solid rgba(0,245,196,0.25); border-radius:10px; padding:8px; text-align:center;">
+            <div style="font-size:16px; margin-bottom:2px;">3️⃣</div>
+            <div style="font-weight:800; color:#00f5c4; font-size:11px;">🔊 Live Voice</div>
+            <div style="font-size:9.5px; color:#94a3b8; margin-top:2px;">Tap '🔊 Read' for audio alert</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3389,111 +3453,26 @@
     // Trigger Jarvis Arc Reactor Initiation
     function triggerJarvisOpening() {
       const overlay = document.getElementById('pro-boot-screen');
-      const bar = document.getElementById('arc-power-bar');
-      const laser = document.getElementById('hud-laser-line');
-      const core = document.getElementById('arc-core-glyph');
-      const btn = document.getElementById('btn-jarvis-trigger');
-      const eyeL = document.getElementById('eye-left');
-      const eyeR = document.getElementById('eye-right');
-      const teleTxt = document.getElementById('helmet-telemetry-txt');
       if (!overlay) return;
-
       overlay.classList.remove('dismissed');
       overlay.style.display = 'flex';
-      if (bar) bar.style.width = '0%';
-      if (laser) laser.classList.remove('scanning');
-      if (core) core.classList.remove('charging');
-      if (eyeL) eyeL.classList.add('active-glow');
-      if (eyeR) eyeR.classList.add('active-glow');
-      if (teleTxt) teleTxt.innerText = 'PILOT: MANJESH // NEURAL SYNC: 100%';
-      if (btn) {
-        btn.classList.remove('powered');
-        btn.innerHTML = '⚡ INITIATE JARVIS PROTOCOL';
-      }
-
-      for (let i = 1; i <= 4; i++) {
-        const line = document.getElementById('j-line-' + i);
-        if (line) {
-          line.className = 'j-line' + (i === 1 ? ' active' : '');
-        }
-      }
-      isJarvisEngaged = false;
+      if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
     }
 
     function initiateJarvisProtocol() {
-      if (isJarvisEngaged) {
-        dismissProBoot(true);
-        return;
-      }
-
-      const bar = document.getElementById('arc-power-bar');
-      const laser = document.getElementById('hud-laser-line');
-      const core = document.getElementById('arc-core-glyph');
-      const btn = document.getElementById('btn-jarvis-trigger');
-      const eyeL = document.getElementById('eye-left');
-      const eyeR = document.getElementById('eye-right');
-      const teleTxt = document.getElementById('helmet-telemetry-txt');
-
-      if (laser) laser.classList.add('scanning');
-      if (core) core.classList.add('charging');
-      if (eyeL) eyeL.classList.add('active-glow');
-      if (eyeR) eyeR.classList.add('active-glow');
-      if (teleTxt) teleTxt.innerText = 'MARK-LXXXV VISOR LOCKED // OVERDRIVE';
-      if (btn) btn.innerHTML = '⚡ CHARGING ARC CAPACITORS...';
-
-      playHydraulicServoLockSound();
-      playRepulsorChargeSound();
-      speak("Good day, Sir. Iron Man Mark eighty-five armor system online. Zero-entry defense standing by.");
-
-      setTimeout(() => {
-        if (bar) bar.style.width = '35%';
-        const l1 = document.getElementById('j-line-1');
-        const l2 = document.getElementById('j-line-2');
-        if (l1) l1.className = 'j-line complete';
-        if (l2) l2.className = 'j-line active';
-      }, 350);
-
-      setTimeout(() => {
-        if (bar) bar.style.width = '70%';
-        const l2 = document.getElementById('j-line-2');
-        const l3 = document.getElementById('j-line-3');
-        if (l2) l2.className = 'j-line complete';
-        if (l3) l3.className = 'j-line active';
-      }, 750);
-
-      setTimeout(() => {
-        if (bar) bar.style.width = '100%';
-        const l3 = document.getElementById('j-line-3');
-        const l4 = document.getElementById('j-line-4');
-        if (l3) l3.className = 'j-line complete';
-        if (l4) l4.className = 'j-line active complete';
-
-        if (laser) laser.classList.remove('scanning');
-        if (core) core.classList.remove('charging');
-        if (btn) {
-          btn.classList.add('powered');
-          btn.innerHTML = '🚀 SUIT ARMED — DEPLOY COCKPIT →';
-        }
-        isJarvisEngaged = true;
-
-        playRepulsorBlastSound();
-
-        // Visor deployment into dashboard
-        setTimeout(() => {
-          dismissProBoot(false);
-        }, 1200);
-      }, 1250);
+      if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+      if (typeof playRepulsorBlastSound === 'function') playRepulsorBlastSound();
+      speak("Jarvis zero-entry defense standing by.");
+      dismissProBoot(true);
     }
 
     function dismissProBoot(manual = false) {
       const overlay = document.getElementById('pro-boot-screen');
       if (overlay) {
         overlay.classList.add('dismissed');
-        setTimeout(() => {
-          overlay.style.display = 'none';
-        }, 650);
+        overlay.style.display = 'none';
       }
-      if (manual) {
+      if (manual && typeof playRepulsorBlastSound === 'function') {
         playRepulsorBlastSound();
       }
     }
@@ -5235,6 +5214,27 @@
     let currentModalMessageId = null;
     let currentModalLang = 'en';
 
+    function setGuideLang(lang) {
+      const knBody = document.getElementById('guide-body-kn');
+      const enBody = document.getElementById('guide-body-en');
+      const knBtn = document.getElementById('guide-lang-kn');
+      const enBtn = document.getElementById('guide-lang-en');
+      const title = document.getElementById('guide-title');
+      if (lang === 'en') {
+        if (knBody) knBody.style.display = 'none';
+        if (enBody) enBody.style.display = 'block';
+        if (knBtn) knBtn.className = 'sms-filter-btn';
+        if (enBtn) enBtn.className = 'sms-filter-btn active';
+        if (title) title.innerText = 'How CogniGuard Protects You';
+      } else {
+        if (knBody) knBody.style.display = 'block';
+        if (enBody) enBody.style.display = 'none';
+        if (knBtn) knBtn.className = 'sms-filter-btn active';
+        if (enBtn) enBtn.className = 'sms-filter-btn';
+        if (title) title.innerText = 'ಕಾಗ್ನಿಗಾರ್ಡ್ ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ? (How it works)';
+      }
+    }
+
     function setInboxSpeechLang(lang, shouldSpeakAnnouncement = true) {
       currentInboxSpeechLang = lang;
       localStorage.setItem('cg_inbox_speech_lang', lang);
@@ -6287,7 +6287,6 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      triggerJarvisOpening();
       checkSmsAppPermissionStatus();
       initCyberGlobe();
       applySmsInboxFilters();
