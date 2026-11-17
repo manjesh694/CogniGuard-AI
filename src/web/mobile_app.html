@@ -1374,6 +1374,35 @@
       display: inline-block;
       margin-left: 4px;
     }
+    .sms-listen-btn {
+      background: rgba(0, 245, 255, 0.12);
+      border: 1px solid rgba(0, 245, 255, 0.35);
+      color: #00f5ff;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 9.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s ease;
+      font-family: monospace;
+    }
+    .sms-listen-btn:hover {
+      background: rgba(0, 245, 255, 0.28);
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+      transform: scale(1.04);
+    }
+    .sms-inbox-card.reading-now {
+      border-color: #00f5ff !important;
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.6) !important;
+      animation: pulseReading 1.2s infinite alternate ease-in-out;
+    }
+    @keyframes pulseReading {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.02); filter: brightness(1.3); }
+    }
     .sms-modal-backdrop {
       position: fixed;
       inset: 0;
@@ -2259,6 +2288,24 @@
       </div>
     </div>
 
+    <!-- Live AI Voice Reader & Multilingual Training Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(15,23,42,0.85); border:1px solid rgba(0,245,255,0.25); border-radius:12px; padding:8px 12px; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="btn-read-all-live" onclick="readAllMessagesLive()" class="sms-filter-btn" style="background:linear-gradient(135deg, #00f5ff, #0284c7); color:#000; font-weight:800; border:none; padding:5px 12px; border-radius:14px; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:5px; box-shadow:0 0 12px rgba(0,245,255,0.4);">
+          <span style="font-size:13px;">▶️</span> ಲೈವ್ ಆಲಿಸಿ (Read All Live)
+        </button>
+        <button id="btn-stop-speech" onclick="stopLiveSpeech()" class="sms-filter-btn" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#ef4444; font-weight:700; padding:5px 10px; border-radius:14px; font-size:11px; cursor:pointer; display:none;">
+          ⏹️ Stop
+        </button>
+      </div>
+      <div style="display:flex; align-items:center; gap:4px;">
+        <span style="font-size:10px; color:#94a3b8; font-family:monospace;">VOICE:</span>
+        <button id="inbox-lang-en" onclick="setInboxSpeechLang('en')" class="sms-filter-btn active" style="font-size:10px; padding:3px 8px; border-radius:10px;">EN</button>
+        <button id="inbox-lang-kn" onclick="setInboxSpeechLang('kn')" class="sms-filter-btn" style="font-size:10px; padding:3px 8px; border-radius:10px;">ಕನ್ನಡ</button>
+        <button id="inbox-lang-hi" onclick="setInboxSpeechLang('hi')" class="sms-filter-btn" style="font-size:10px; padding:3px 8px; border-radius:10px;">हिन्दी</button>
+      </div>
+    </div>
+
     <!-- Interactive Phone SMS List directly in CogniGuard App -->
     <div id="sms-inbox-list" class="sms-inbox-container">
 
@@ -2269,7 +2316,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">Mangaluru 🐟</span>
-            <span class="sms-msg-time">34 min</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">34 min</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('mangaluru')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Dear Customer, +919108481365 is now available to take calls.
@@ -2285,7 +2335,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">Shantavva. G</span>
-            <span class="sms-msg-time">7:48 PM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">7:48 PM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('shantavva')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Dear Customer, +919141505762 is now available to take calls.
@@ -2301,7 +2354,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">Jio BestPlan <span style="color:#38bdf8; font-size:12px;">✔️</span></span>
-            <span class="sms-msg-time">2:48 PM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">2:48 PM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('jio_bestplan')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ₹1,590 ಮೌಲ್ಯದ ಉಚಿತ 12 ತಿಂಗಳ Canva ...
@@ -2317,7 +2373,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">JM-JIOMRT-P</span>
-            <span class="sms-msg-time">2:12 PM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">2:12 PM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('jiomrt')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Your Jio reward is here. Get Rs 300 reward in your JioMart Wallet, red...
@@ -2337,7 +2396,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">VA-PWAALA-P</span>
-            <span class="sms-msg-time">1:39 PM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">1:39 PM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('pwaala')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Loan (Rs.5,000-10,00,000)* approved without documents! Tap to disburse:
@@ -2357,7 +2419,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">VA-KBLBNK-T</span>
-            <span class="sms-msg-time">Sun 12</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Sun 12</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('kblbank_1')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Your a/c XX0468 debited for Rs.250.00 on 15-11-26 trf to SRI LAKSHMI VENKATES. UPI:557880789012
@@ -2373,7 +2438,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">AD-KBLBNK-T</span>
-            <span class="sms-msg-time">Sat 23</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Sat 23</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('kblbank_2')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Your a/c XX0468 debited for Rs.800.00 on 14-11-26 trf to NAGAMMA. UPI:5578807...
@@ -2389,7 +2457,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">56767952 (GitHub)</span>
-            <span class="sms-msg-time">Sat 1</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Sat 1</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('github_config')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             You have successfully configured GitHub two-factor authentication. You will receive security alerts...
@@ -2405,7 +2476,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">59039465 (GitHub 2FA)</span>
-            <span class="sms-msg-time">Sat 19</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Sat 19</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('github_otp')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             <span style="color:#00f5ff; font-weight:800; font-family:monospace; background:rgba(0,245,255,0.15); padding:1px 6px; border-radius:4px;">920376</span> is your GitHub authentication code.
@@ -2421,7 +2495,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">TZ-FATAKM-P</span>
-            <span class="sms-msg-time">Sat</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Sat</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('fatakm')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             FATAKPAY: Tight days happen to everyone... Download APK:
@@ -2444,7 +2521,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">+91 98234 11209 (Electricity Dept ⚡)</span>
-            <span class="sms-msg-time">10:15 AM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">10:15 AM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('wa_electricity')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Dear Consumer, power will be disconnected tonight at 9:30 PM. Update bill via APK:
@@ -2464,7 +2544,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">Sneha - Amazon HR (Part-Time Job 💼)</span>
-            <span class="sms-msg-time">9:42 AM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">9:42 AM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('wa_job_sneha')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Earn ₹3,500 to ₹8,000 daily liking YouTube videos. Work from home:
@@ -2484,7 +2567,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">Family Group (Papa 👨‍💼)</span>
-            <span class="sms-msg-time">8:30 AM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">8:30 AM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('wa_family')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Good morning beta! Reached office safely. Have a productive and great day ahead.
@@ -2500,7 +2586,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">Wedding Invitation (Unknown)</span>
-            <span class="sms-msg-time">Yesterday</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Yesterday</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('wa_wedding')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Dear friend, please come to my sister wedding on 24th Nov. Digital wedding card:
@@ -2523,7 +2612,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">Crypto VIP Signals 500% 🚀</span>
-            <span class="sms-msg-time">11:20 AM</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">11:20 AM</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('tg_crypto')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Guaranteed 500% profit in 2 hours! Deposit ₹2,000 get ₹10,000:
@@ -2543,7 +2635,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name">Official Python Broadcast 🐍</span>
-            <span class="sms-msg-time">Yesterday</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">Yesterday</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('tg_python')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Python 3.13 is now available with experimental free-threaded mode and JIT compiler preview.
@@ -2559,7 +2654,10 @@
         <div class="sms-msg-content">
           <div class="sms-msg-header">
             <span class="sms-sender-name" style="color:#fca5a5;">Fast Cash Instant Approval 💸</span>
-            <span class="sms-msg-time">2 days ago</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="sms-msg-time">2 days ago</span>
+              <button class="sms-listen-btn" title="Live Voice Audio" onclick="event.stopPropagation(); readSmsCardLive('tg_loan')">🔊 Read</button>
+            </div>
           </div>
           <div class="sms-body-snippet">
             Get ₹5,00,000 instant cash loan in 5 minutes! No CIBIL check:
@@ -3477,21 +3575,45 @@
     let currentAppLanguage = localStorage.getItem('cg_lang') || 'en';
     let isSpeechEnabled = localStorage.getItem('cg_speech_enabled') !== 'false';
 
-    function speak(text, forceLang) {
-      if (!isSpeechEnabled) return;
+    function speak(text, forceLang, onEndCallback) {
+      if (!isSpeechEnabled) {
+        if (typeof onEndCallback === 'function') onEndCallback();
+        return;
+      }
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
+        } catch(e) {}
+
         const u = new SpeechSynthesisUtterance(text);
-        const lang = forceLang || currentAppLanguage;
+        const lang = forceLang || localStorage.getItem('cg_inbox_speech_lang') || currentAppLanguage || 'en';
         if (lang === 'kn') {
           u.lang = 'kn-IN';
+          u.rate = 0.95;
         } else if (lang === 'hi') {
           u.lang = 'hi-IN';
+          u.rate = 0.95;
         } else {
           u.lang = 'en-US';
+          u.rate = 1.0;
         }
-        u.rate = 1.02;
+
+        // Select native voice if available
+        const voices = (window.speechSynthesis.getVoices && typeof window.speechSynthesis.getVoices === 'function') ? window.speechSynthesis.getVoices() : [];
+        if (voices && voices.length > 0) {
+          const matched = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(u.lang.slice(0, 2).toLowerCase()));
+          if (matched) u.voice = matched;
+        }
+
+        if (typeof onEndCallback === 'function') {
+          u.onend = () => onEndCallback();
+          u.onerror = () => onEndCallback();
+        }
+
         window.speechSynthesis.speak(u);
+      } else {
+        if (typeof onEndCallback === 'function') setTimeout(onEndCallback, 1500);
       }
     }
 
@@ -4314,8 +4436,15 @@
         time: "34 min",
         unread: "14",
         body: "Dear Customer, +919108481365 is now available to take calls.",
+        body_kn: "ಆತ್ಮೀಯ ಗ್ರಾಹಕರೇ, +919108481365 ಈಗ ಕರೆಗಳನ್ನು ಸ್ವೀಕರಿಸಲು ಲಭ್ಯವಿದ್ದಾರೆ.",
+        body_hi: "प्रिय ग्राहक, +919108481365 अब कॉल लेने के लिए उपलब्ध हैं।",
         badgeText: "🟢 ORIGINAL / SAFE",
         statusText: "🛡️ <strong>AUTHENTIC NOTIFICATION:</strong> Legitimate missed call alert from registered telecom gateway.",
+        status_kn: "🛡️ <strong>ಅಧಿಕೃತ ಅಧಿಸೂಚನೆ:</strong> ನೋಂದಾಯಿತ ಟೆಲಿಕಾಂ ಗೇಟ್‌ವೇಯಿಂದ ಬಂದ ಅಧಿಕೃತ ಮಿಸ್ಡ್ ಕಾಲ್ ಅಲರ್ಟ್.",
+        status_hi: "🛡️ <strong>प्रमाणित सूचना:</strong> पंजीकृत टेलीकॉम गेटवे से वैध मिस्ड कॉल अलर्ट।",
+        voice_en: "Legitimate alert from Mangaluru: Customer 9108481365 is now available to take calls. Verified authentic and safe.",
+        voice_kn: "ಮಂಗಳೂರು ಅಧಿಕೃತ ಕರೆ ಎಚ್ಚರಿಕೆ: ಗ್ರಾಹಕರು 9108481365 ಈಗ ಲಭ್ಯವಿದ್ದಾರೆ. ಪರಿಶೀಲಿಸಲಾಗಿದೆ ಮತ್ತು ಸಂಪೂರ್ಣ ಸುರಕ್ಷಿತ.",
+        voice_hi: "मंगलुरु से प्रमाणित कॉल अलर्ट: ग्राहक 9108481365 अब उपलब्ध हैं। संदेश सुरक्षित है।",
         isFake: false
       },
       shantavva: {
@@ -4327,8 +4456,15 @@
         time: "7:48 PM",
         unread: "2",
         body: "Dear Customer, +919141505762 is now available to take calls.",
+        body_kn: "ಆತ್ಮೀಯ ಗ್ರಾಹಕರೇ, +919141505762 ಈಗ ಕರೆಗಳನ್ನು ಸ್ವೀಕರಿಸಲು ಲಭ್ಯವಿದ್ದಾರೆ.",
+        body_hi: "प्रिय ग्राहक, +919141505762 अब कॉल लेने के लिए उपलब्ध हैं।",
         badgeText: "🟢 ORIGINAL / SAFE",
         statusText: "🛡️ <strong>AUTHENTIC NOTIFICATION:</strong> Safe telecom alert. No malicious links or phishing detected.",
+        status_kn: "🛡️ <strong>ಅಧಿಕೃತ ಅಧಿಸೂಚನೆ:</strong> ಸುರಕ್ಷಿತ ಟೆಲಿಕಾಂ ಎಚ್ಚರಿಕೆ. ಯಾವುದೇ ಅಪಾಯಕಾರಿ ಲಿಂಕ್ ಕಂಡುಬಂದಿಲ್ಲ.",
+        status_hi: "🛡️ <strong>प्रमाणित सूचना:</strong> सुरक्षित टेलीकॉम अलर्ट। कोई फर्जी लिंक नहीं मिला।",
+        voice_en: "Safe telecom alert from Shantavva G: Customer 9141505762 is available to take calls.",
+        voice_kn: "ಶಾಂತವ್ವ ಜಿ ಸುರಕ್ಷಿತ ಎಚ್ಚರಿಕೆ: ಗ್ರಾಹಕರು 9141505762 ಈಗ ಕರೆಗಳನ್ನು ಸ್ವೀಕರಿಸಲು ಲಭ್ಯವಿದ್ದಾರೆ.",
+        voice_hi: "शांतव्वा जी से सुरक्षित अलर्ट: ग्राहक 9141505762 अब उपलब्ध हैं। संदेश सुरक्षित है।",
         isFake: false
       },
       jio_bestplan: {
@@ -4340,8 +4476,15 @@
         time: "2:48 PM",
         unread: "14",
         body: "ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ₹1,590 ಮೌಲ್ಯದ ಉಚಿತ 12 ತಿಂಗಳ Canva Pro ಸದಸ್ಯತ್ವ ನಿಮ್ಮ ಜಿಯೋ ಪ್ಲಾನ್ ನೊಂದಿಗೆ ಲಭ್ಯವಿದೆ.",
+        body_kn: "ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ₹1,590 ಮೌಲ್ಯದ ಉಚಿತ 12 ತಿಂಗಳ Canva Pro ಸದಸ್ಯತ್ವ ನಿಮ್ಮ ಜಿಯೋ ಪ್ಲಾನ್ ನೊಂದಿಗೆ ಲಭ್ಯವಿದೆ.",
+        body_hi: "सोशल मीडिया में चमकें! ₹1,590 मूल्य की 12 महीने की मुफ्त Canva Pro सदस्यता आपके जियो प्लान के साथ उपलब्ध है।",
         badgeText: "🟢 ORIGINAL / VERIFIED",
         statusText: "🛡️ <strong>VERIFIED TELECOM:</strong> Official promotional offer from Reliance Jio. Verified DLT header signature.",
+        status_kn: "🛡️ <strong>ದೃಢೀಕೃತ ಟೆಲಿಕಾಂ:</strong> ರಿಲಯನ್ಸ್ ಜಿಯೋದಿಂದ ಅಧಿಕೃತ ಪ್ರಚಾರ ಕೊಡುಗೆ. ಪರಿಶೀಲಿಸಿದ ಡಿಎಲ್‌ಟಿ ಹೆಡರ್ ಸಹಿ.",
+        status_hi: "🛡️ <strong>सत्यापित टेलीकॉम:</strong> रिलायंस जियो से आधिकारिक ऑफर। सत्यापित डीएलटी हस्ताक्षर।",
+        voice_en: "Official Reliance Jio Promotional Message: 12 months free Canva Pro membership on your Jio plan. Verified authentic.",
+        voice_kn: "ರಿಲಯನ್ಸ್ ಜಿಯೋ ಅಧಿಕೃತ ಸಂದೇಶ: ಸೋಶಿಯಲ್ ಮೀಡಿಯಾದಲ್ಲಿ ಮಿಂಚಿ! ಉಚಿತ 12 ತಿಂಗಳ ಕ್ಯಾನ್ವಾ ಪ್ರೊ ಸದಸ್ಯತ್ವ. ಪರಿಶೀಲಿಸಲಾಗಿದೆ ಮತ್ತು ಅಧಿಕೃತ.",
+        voice_hi: "रिलायंस जियो आधिकारिक संदेश: सोशल मीडिया में चमकें! 12 महीने का फ्री कैनवा प्रो। प्रमाणित संदेश।",
         isFake: false
       },
       jiomrt: {
@@ -4353,8 +4496,15 @@
         time: "2:12 PM",
         unread: "2",
         body: "Your Jio reward is here. Get Rs 300 reward in your JioMart Wallet, redeem instantly: <span class='sms-neutralized-url'>http://jiomrt-claim.top</span> <span class='sms-neutralized-tag'>BLOCKED LINK</span>",
+        body_kn: "ನಿಮ್ಮ ಜಿಯೋ ರಿವಾರ್ಡ್ ಇಲ್ಲಿದೆ. ಜಿಯೋಮಾರ್ಟ್ ವ್ಯಾಲೆಟ್‌ನಲ್ಲಿ ರೂ 300 ಪಡೆಯಿರಿ: <span class='sms-neutralized-url'>http://jiomrt-claim.top</span> <span class='sms-neutralized-tag'>ನಿರ್ಬಂಧಿತ ಲಿಂಕ್</span>",
+        body_hi: "आपका जियो रिवॉर्ड आ गया है। जियोमार्ट वॉलेट में 300 रुपये पाएं: <span class='sms-neutralized-url'>http://jiomrt-claim.top</span> <span class='sms-neutralized-tag'>ब्लॉक लिंक</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>CRITICAL PHISHING THREAT:</strong> Fake JioMart domain (.top) impersonating official reward gateway to steal payment credentials. Link neutralized offline.",
+        status_kn: "⚠️ <strong>ಅಪಾಯಕಾರಿ ಫಿಶಿಂಗ್ ವಂಚನೆ:</strong> ಜಿಯೋಮಾರ್ಟ್ ಹೆಸರಿನಲ್ಲಿ ಬಂದ ನಕಲಿ ಡೊಮೇನ್ (.top) ಲಿಂಕ್ ಹಣ ಕದಿಯುವ ಉದ್ದೇಶ ಹೊಂದಿದೆ. ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>गंभीर फ़िशिंग खतरा:</strong> फर्जी जियोमार्ट डोमेन (.top) पेमेंट जानकारी चुराने के लिए बनाया गया है। लिंक ब्लॉक किया गया।",
+        voice_en: "CRITICAL ALERT! Fake JioMart reward scam: Rogue link jiomrt-claim.top is an unlicensed phishing trap. Blocked in red.",
+        voice_kn: "ಅಪಾಯಕಾರಿ ಎಚ್ಚರಿಕೆ! ನಕಲಿ ಜಿಯೋಮಾರ್ಟ್ ವಂಚನೆ: ಜಿಯೋಮಾರ್ಟ್-ಕ್ಲೈಮ್.ಟಾಪ್ ನಿಮ್ಮ ಹಣ ಕದಿಯುವ ಫಿಶಿಂಗ್ ಲಿಂಕ್. ಕೆಂಪು ಮಾರ್ಕ್ ಹಾಕಲಾಗಿದೆ.",
+        voice_hi: "गंभीर चेतावनी! फर्जी जियोमार्ट रिवॉर्ड स्कैम: दिया गया लिंक आपके पैसे चुराने का प्रयास है। लाल रंग से ब्लॉक किया गया।",
         isFake: true,
         threatReason: "Rogue domain 'jiomrt-claim.top' not owned by Reliance Retail. Phishing signature match."
       },
@@ -4367,8 +4517,15 @@
         time: "1:39 PM",
         unread: "4",
         body: "Loan (Rs.5,000-10,00,000)* approved without documents! Tap to disburse immediately: <span class='sms-neutralized-url'>http://pwaala-instant.apk</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        body_kn: "ದಾಖಲೆಗಳಿಲ್ಲದೆ ಸಾಲ (ರೂ. 5,000-10,00,000)* ಮಂಜೂರಾಗಿದೆ! ತಕ್ಷಣ ಪಡೆಯಲು ಎಪಿಕೆ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ: <span class='sms-neutralized-url'>http://pwaala-instant.apk</span> <span class='sms-neutralized-tag'>ನಿರ್ಬಂಧಿತ ಎಪಿಕೆ</span>",
+        body_hi: "बिना दस्तावेजों के ऋण (5,000-10,00,000 रुपये)* स्वीकृत! तुरंत ट्रांसफर के लिए एपीके डाउनलोड करें: <span class='sms-neutralized-url'>http://pwaala-instant.apk</span> <span class='sms-neutralized-tag'>ब्लॉक एपीके</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>CRITICAL TROJAN DROPPER:</strong> Predatory loan syndicate distributing unauthorized APK dropper designed to steal contacts and private gallery photos. Quarantined offline.",
+        status_kn: "⚠️ <strong>ಅಪಾಯಕಾರಿ ಸಾಲ ಟ್ರೋಜನ್:</strong> ನಿಮ್ಮ ಫೋನ್ ಸಂಪರ್ಕಗಳು ಮತ್ತು ಫೋಟೋಗಳನ್ನು ಕದಿಯುವ ಅಕ್ರಮ ಸಾಲದ ಎಪಿಕೆ. ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ತಡೆಯಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>गंभीर ट्रोजन ड्रॉपर:</strong> अवैध लोन सिंडिकेट अनधिकृत एपीके के जरिए आपके फोन कॉन्टैक्ट्स और तस्वीरें चुराने का प्रयास कर रहा है। ब्लॉक किया गया।",
+        voice_en: "CRITICAL THREAT! Predatory loan trap from VA-PWAALA: Unauthorized APK designed to steal phone contacts and photos. Quarantined in red.",
+        voice_kn: "ಅಪಾಯಕಾರಿ ಸಾಲ ವಂಚನೆ! ಪಿವಾಲಾ ಅಕ್ರಮ ಎಪಿಕೆ ನಿಮ್ಮ ಫೋನ್ ಕಾಂಟ್ಯಾಕ್ಟ್ ಮತ್ತು ಫೋಟೋಗಳನ್ನು ಕದಿಯುವ ಸ್ಪೈವೇರ್. ಕೆಂಪು ಮಾರ್ಕ್ ಹಾಕಲಾಗಿದೆ.",
+        voice_hi: "गंभीर खतरा! अवैध लोन जाल: अनधिकृत एपीके फोन संपर्कों और तस्वीरों को चुराने का प्रयास कर रहा है। ब्लॉक किया गया।",
         isFake: true,
         threatReason: "Non-RBI compliant loan shark syndicate attempting to side-load malicious spyware APK."
       },
@@ -4381,8 +4538,15 @@
         time: "Sun 12",
         unread: "12",
         body: "Your a/c XX0468 debited for Rs.250.00 on 15-11-26 trf to SRI LAKSHMI VENKATES. UPI:557880789012. Call 18004251444 if not done by you.",
+        body_kn: "ನಿಮ್ಮ ಖಾತೆ XX0468 ರಿಂದ ರೂ.250.00 ಶ್ರೀ ಲಕ್ಷ್ಮಿ ವೆಂಕಟೇಶ್ ಅವರಿಗೆ ವರ್ಗಾವಣೆಯಾಗಿದೆ. ಯುಪಿಐ: 557880789012.",
+        body_hi: "आपके खाते XX0468 से 15-11-26 को 250.00 रुपये डेबिट हुए। यूपीआई: 557880789012.",
         badgeText: "🟢 VERIFIED BANK",
         statusText: "🛡️ <strong>AUTHENTIC BANK ALERT:</strong> Genuine transactional alert from Karnataka Bank with verified cryptographic DLT gateway signature.",
+        status_kn: "🛡️ <strong>ಅಧಿಕೃತ ಬ್ಯಾಂಕ್ ಎಚ್ಚರಿಕೆ:</strong> ಕರ್ನಾಟಕ ಬ್ಯಾಂಕ್‌ನಿಂದ ಬಂದ ಅಧಿಕೃತ ವಹಿವಾಟು ಸಂದೇಶ. ಕ್ರಿಪ್ಟೋಗ್ರಾಫಿಕ್ ಸಹಿ ದೃಢೀಕರಿಸಲಾಗಿದೆ.",
+        status_hi: "🛡️ <strong>प्रमाणित बैंक अलर्ट:</strong> कर्नाटक बैंक से वैध लेनदेन संदेश। क्रिप्टोग्राफिक रूप से सत्यापित।",
+        voice_en: "Karnataka Bank Official Alert: Account XX0468 debited 250 rupees transfer to Sri Lakshmi Venkates. Verified authentic.",
+        voice_kn: "ಕರ್ನಾಟಕ ಬ್ಯಾಂಕ್ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ: ಖಾತೆ XX0468 ರಿಂದ 250 ರೂಪಾಯಿ ಡೆಬಿಟ್ ಆಗಿದೆ. ದೃಢೀಕೃತ ಸುರಕ್ಷಿತ ಬ್ಯಾಂಕ್ ಸಂದೇಶ.",
+        voice_hi: "कर्नाटक बैंक आधिकारिक अलर्ट: खाते से 250 रुपये डेबिट हुए। प्रमाणित और सुरक्षित बैंक मैसेज।",
         isFake: false
       },
       kblbank_2: {
@@ -4394,8 +4558,15 @@
         time: "Sat 23",
         unread: "23",
         body: "Your a/c XX0468 debited for Rs.800.00 on 14-11-26 trf to NAGAMMA. UPI:557880789013. Call 18004251444 if not done by you.",
+        body_kn: "ನಿಮ್ಮ ಖಾತೆ XX0468 ರಿಂದ ರೂ.800.00 ನಾಗಮ್ಮ ಅವರಿಗೆ ವರ್ಗಾವಣೆಯಾಗಿದೆ. ಯುಪಿಐ: 557880789013.",
+        body_hi: "आपके खाते XX0468 से 14-11-26 को 800.00 रुपये डेबिट हुए। यूपीआई: 557880789013.",
         badgeText: "🟢 VERIFIED BANK",
         statusText: "🛡️ <strong>AUTHENTIC BANK ALERT:</strong> Genuine transactional alert from Karnataka Bank with verified cryptographic DLT gateway signature.",
+        status_kn: "🛡️ <strong>ಅಧಿಕೃತ ಬ್ಯಾಂಕ್ ಎಚ್ಚರಿಕೆ:</strong> ಕರ್ನಾಟಕ ಬ್ಯಾಂಕ್‌ನಿಂದ ಬಂದ ಅಧಿಕೃತ ವಹಿವಾಟು ಸಂದೇಶ. ಕ್ರಿಪ್ಟೋಗ್ರಾಫಿಕ್ ಸಹಿ ದೃಢೀಕರಿಸಲಾಗಿದೆ.",
+        status_hi: "🛡️ <strong>प्रमाणित बैंक अलर्ट:</strong> कर्नाटक बैंक से वैध लेनदेन संदेश। क्रिप्टोग्राफिक रूप से सत्यापित।",
+        voice_en: "Karnataka Bank Official Alert: Account XX0468 debited 800 rupees transfer to Nagamma. Verified authentic.",
+        voice_kn: "ಕರ್ನಾಟಕ ಬ್ಯಾಂಕ್ ಅಧಿಕೃತ ಎಚ್ಚರಿಕೆ: ಖಾತೆ XX0468 ರಿಂದ 800 ರೂಪಾಯಿ ಡೆಬಿಟ್ ಆಗಿದೆ. ದೃಢೀಕೃತ ಸುರಕ್ಷಿತ ಬ್ಯಾಂಕ್ ಸಂದೇಶ.",
+        voice_hi: "कर्नाटक बैंक आधिकारिक अलर्ट: खाते से 800 रुपये डेबिट हुए। प्रमाणित और सुरक्षित बैंक मैसेज।",
         isFake: false
       },
       github_config: {
@@ -4407,8 +4578,15 @@
         time: "Sat 1",
         unread: "1",
         body: "You have successfully configured GitHub two-factor authentication. You will receive security alerts on this device.",
+        body_kn: "ನೀವು ಗಿಟ್‌ಹಬ್ ಟೂ-ಫ್ಯಾಕ್ಟರ್ ದೃಢೀಕರಣವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಕಾನ್ಫಿಗರ್ ಮಾಡಿದ್ದೀರಿ. ಈ ಸಾಧನದಲ್ಲಿ ಭದ್ರತಾ ಎಚ್ಚರಿಕೆಗಳು ಲಭಿಸುತ್ತವೆ.",
+        body_hi: "आपने सफलतापूर्वक गिटहब टू-फैक्टर प्रमाणीकरण सेट कर लिया है। सुरक्षा अलर्ट इस डिवाइस पर प्राप्त होंगे।",
         badgeText: "🟢 SECURE 2FA",
         statusText: "🔒 <strong>SECURITY CONFIRMATION:</strong> Legitimate GitHub infrastructure notification. Account protected.",
+        status_kn: "🔒 <strong>ಭದ್ರತಾ ದೃಢೀಕರಣ:</strong> ಗಿಟ್‌ಹಬ್‌ನಿಂದ ಅಧಿಕೃತ ಭದ್ರತಾ ಅಧಿಸೂಚನೆ. ಖಾತೆ ಸುರಕ್ಷಿತವಾಗಿದೆ.",
+        status_hi: "🔒 <strong>सुरक्षा पुष्टि:</strong> गिटहब से वैध सुरक्षा सूचना। खाता सुरक्षित है।",
+        voice_en: "GitHub Security Alert: Two-factor authentication configured successfully. Account protected.",
+        voice_kn: "ಗಿಟ್‌ಹಬ್ ಅಧಿಕೃತ ಭದ್ರತೆ: ಟೂ-ಫ್ಯಾಕ್ಟರ್ ದೃಢೀಕರಣ ಯಶಸ್ವಿಯಾಗಿದೆ. ಖಾತೆ ಸುರಕ್ಷಿತವಾಗಿದೆ.",
+        voice_hi: "गिटहब आधिकारिक सुरक्षा: टू-फैक्टर ऑथेंटिकेशन सफलतापूर्वक सक्रिय। खाता सुरक्षित है।",
         isFake: false
       },
       github_otp: {
@@ -4420,8 +4598,15 @@
         time: "Sat 19",
         unread: "19",
         body: "<span style='color:#00f5ff; font-weight:800; font-family:monospace; background:rgba(0,245,255,0.15); padding:2px 8px; border-radius:4px; font-size:14px;'>920376</span> is your GitHub authentication code. Never share this code with anyone.",
+        body_kn: "<span style='color:#00f5ff; font-weight:800; font-family:monospace;'>920376</span> ನಿಮ್ಮ ಗಿಟ್‌ಹಬ್ ದೃಢೀಕರಣ ಕೋಡ್. ಇದನ್ನು ಯಾರೊಂದಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.",
+        body_hi: "<span style='color:#00f5ff; font-weight:800; font-family:monospace;'>920376</span> आपका गिटहब प्रमाणीकरण कोड है। इसे कभी किसी के साथ साझा न करें।",
         badgeText: "🟢 SECURE 2FA",
         statusText: "🔒 <strong>CONFIDENTIAL OTP:</strong> Genuine GitHub 2FA code. Tap button below to copy code.",
+        status_kn: "🔒 <strong>ಗೌಪ್ಯ ಓಟಿಪಿ:</strong> ನಿಜವಾದ ಗಿಟ್‌ಹಬ್ 2FA ಕೋಡ್. ಕೋಡ್ ನಕಲಿಸಲು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ.",
+        status_hi: "🔒 <strong>गोपनीय ओटीपी:</strong> असली गिटहब 2FA कोड। कॉपी करने के लिए नीचे टैप करें।",
+        voice_en: "GitHub Confidential OTP: 920376 is your authentication code. Never share this code.",
+        voice_kn: "ಗಿಟ್‌ಹಬ್ ಗೌಪ್ಯ ಓಟಿಪಿ: 920376 ನಿಮ್ಮ ದೃಢೀಕರಣ ಕೋಡ್. ಇದನ್ನು ಯಾರಿಗೂ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.",
+        voice_hi: "गिटहब गोपनीय ओटीपी: 920376 आपका प्रमाणीकरण कोड है। इसे किसी के साथ साझा न करें।",
         isFake: false,
         otpCode: "920376"
       },
@@ -4434,8 +4619,15 @@
         time: "Sat",
         unread: "1",
         body: "FATAKPAY: Emergency cash loan approved! Download APK: <span class='sms-neutralized-url'>http://fatak-quick.in/app</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        body_kn: "ಫಟಾಕ್‌ಪೇ: ತುರ್ತು ನಗದು ಸಾಲ ಮಂಜೂರಾಗಿದೆ! ಎಪಿಕೆ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ: <span class='sms-neutralized-url'>http://fatak-quick.in/app</span> <span class='sms-neutralized-tag'>ನಿರ್ಬಂಧಿತ ಎಪಿಕೆ</span>",
+        body_hi: "फटकपे: इमरजेंसी कैश लोन स्वीकृत! एपीके डाउनलोड करें: <span class='sms-neutralized-url'>http://fatak-quick.in/app</span> <span class='sms-neutralized-tag'>ब्लॉक एपीके</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>UNTRUSTED LOAN APK:</strong> Dangerous predatory loan APK with excessive permission demands. Neutralized offline.",
+        status_kn: "⚠️ <strong>ಅನಧಿಕೃತ ಸಾಲ ಎಪಿಕೆ:</strong> ಅತಿಯಾದ ಅನುಮತಿಗಳನ್ನು ಕೇಳುವ ಅಪಾಯಕಾರಿ ಸಾಲದ ಎಪಿಕೆ. ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>अविश्वसनीय लोन एपीके:</strong> अत्यधिक अनुमतियां मांगने वाला खतरनाक लोन एपीके। ब्लॉक किया गया।",
+        voice_en: "CRITICAL THREAT! Fake loan scam FatakPay: Rogue APK link fatak-quick.in blocked offline.",
+        voice_kn: "ಅಪಾಯಕಾರಿ ಎಚ್ಚರಿಕೆ! ನಕಲಿ ಸಾಲದ ಎಪಿಕೆ: ಫಟಾಕ್‌ಪೇ ಅಕ್ರಮ ಲಿಂಕ್ ಅನ್ನು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        voice_hi: "सावधान! फर्जी लोन एपीके: फटकपे का अवैध लिंक ब्लॉक कर दिया गया है।",
         isFake: true,
         threatReason: "Untrusted side-load APK masquerading as micro-finance app."
       },
@@ -4449,8 +4641,15 @@
         time: "10:15 AM",
         unread: "1",
         body: "Dear Consumer, power will be disconnected tonight at 9:30 PM. Update bill via APK: <span class='sms-neutralized-url'>http://bescom-pay.apk</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        body_kn: "ಆತ್ಮೀಯ ಗ್ರಾಹಕರೇ, ಇಂದು ರಾತ್ರಿ 9:30ಕ್ಕೆ ವಿದ್ಯುತ್ ಕಡಿತಗೊಳ್ಳಲಿದೆ. ಎಪಿಕೆ ಮೂಲಕ ಬಿಲ್ ಪಾವತಿಸಿ: <span class='sms-neutralized-url'>http://bescom-pay.apk</span>",
+        body_hi: "प्रिय उपभोक्ता, आज रात 9:30 बजे बिजली काट दी जाएगी। बिल अपडेट करें: <span class='sms-neutralized-url'>http://bescom-pay.apk</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>CRITICAL TROJAN ATTACHMENT:</strong> Malicious APK side-loader impersonating electricity authority. Offline airlock quarantined the package.",
+        status_kn: "⚠️ <strong>ಅಪಾಯಕಾರಿ ವಿದ್ಯುತ್ ವಂಚನೆ:</strong> ಬೆಸ್ಕಾಂ ಹೆಸರಿನಲ್ಲಿ ಬಂದ ನಕಲಿ ಎಪಿಕೆ ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ವಿವರ ಕದಿಯಲು ಬಂದಿದೆ. ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>गंभीर ट्रोजन खतरा:</strong> बिजली विभाग के नाम पर फर्जी एपीके अटैचमेंट। ब्लॉक किया गया।",
+        voice_en: "WhatsApp Critical Threat: Fake electricity bill disconnection APK bescom-pay.apk neutralized.",
+        voice_kn: "ವಾಟ್ಸಾಪ್ ಅಪಾಯಕಾರಿ ಎಚ್ಚರಿಕೆ: ವಿದ್ಯುತ್ ಬಿಲ್ ಕಡಿತದ ನಕಲಿ ಎಪಿಕೆ ಬೆಸ್ಕಾಂ-ಪೇ ಅನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        voice_hi: "व्हाट्सएप गंभीर चेतावनी: बिजली बिल काटने का फर्जी एपीके ब्लॉक किया गया है।",
         isFake: true,
         threatReason: "Unauthorized APK payload side-loading threat disguised as municipal bill payment."
       },
@@ -4463,8 +4662,15 @@
         time: "9:42 AM",
         unread: "3",
         body: "Earn ₹3,500 to ₹8,000 daily liking YouTube videos. Work from home: <span class='sms-neutralized-url'>https://t.me/sneha_vip_earn</span> <span class='sms-neutralized-tag'>BLOCKED LINK</span>",
+        body_kn: "ಯೂಟ್ಯೂಬ್ ವೀಡಿಯೊಗಳನ್ನು ಲೈಕ್ ಮಾಡುವ ಮೂಲಕ ಪ್ರತಿದಿನ ₹3,500 ರಿಂದ ₹8,000 ಗಳಿಸಿ: <span class='sms-neutralized-url'>https://t.me/sneha_vip_earn</span>",
+        body_hi: "यूट्यूब वीडियो लाइक करके रोज 3,500 से 8,000 रुपये कमाएं: <span class='sms-neutralized-url'>https://t.me/sneha_vip_earn</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>CRITICAL TELEGRAM PRETEXTING:</strong> Classic task-scam phishing lure steering victims to untrusted crypto telegram channels. Neutralized offline.",
+        status_kn: "⚠️ <strong>ಟಾಸ್ಕ್ ಸ್ಕ್ಯಾಮ್ ವಂಚನೆ:</strong> ಯೂಟ್ಯೂಬ್ ಲೈಕ್ ಹೆಸರಿನಲ್ಲಿ ಟೆಲಿಗ್ರಾಮ್‌ಗೆ ಕರೆದೊಯ್ದು ಹಣ ಕದಿಯುವ ಜಾಲ. ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>टास्क स्कैम फ्रॉड:</strong> टेलीग्राम पर ले जाकर पैसे हड़पने का क्लासिक घोटाला। ब्लॉक किया गया।",
+        voice_en: "Warning: YouTube video task job scam from Sneha HR. Rogue telegram link blocked.",
+        voice_kn: "ಎಚ್ಚರಿಕೆ: ಸ್ನೇಹಾ ಅಮೆಜಾನ್ ಹೆಸರಿನಲ್ಲಿ ಬಂದ ಯೂಟ್ಯೂಬ್ ಲೈಕ್ ಜಾಬ್ ಸ್ಕ್ಯಾಮ್. ಲಿಂಕ್ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        voice_hi: "चेतावनी: स्नेहा एचआर द्वारा यूट्यूब लाइक पार्ट-टाइम जॉब का फ्रॉड। लिंक ब्लॉक किया गया।",
         isFake: true,
         threatReason: "Unsolicited recruiter pretexting leading to illicit Telegram money mules."
       },
@@ -4477,8 +4683,15 @@
         time: "8:30 AM",
         unread: "1",
         body: "Good morning beta! Reached office safely. Have a productive and great day ahead.",
+        body_kn: "ಶುಭೋದಯ ಮಗನೇ! ಆಫೀಸ್‌ಗೆ ಸುರಕ್ಷಿತವಾಗಿ ತಲುಪಿದೆ. ದಿನವು ಶುಭವಾಗಿರಲಿ.",
+        body_hi: "सुप्रभात बेटा! ऑफिस सुरक्षित पहुंच गया हूं। आपका दिन शुभ हो।",
         badgeText: "🟢 100% SAFE",
         statusText: "🛡️ <strong>AUTHENTIC CONVERSATION:</strong> Verified contact. No links, trackers, or malicious payloads detected.",
+        status_kn: "🛡️ <strong>ಅಧಿಕೃತ ಸಂಭಾಷಣೆ:</strong> ಪರಿಶೀಲಿಸಿದ ಕುಟುಂಬ ಸಂಪರ್ಕ. ಯಾವುದೇ ಅಪಾಯಕಾರಿ ಅಂಶಗಳಿಲ್ಲ.",
+        status_hi: "🛡️ <strong>प्रमाणित बातचीत:</strong> सत्यापित संपर्क। कोई खतरा नहीं।",
+        voice_en: "WhatsApp safe family message from Papa. Verified 100% safe.",
+        voice_kn: "ವಾಟ್ಸಾಪ್ ಕುಟುಂಬದ ಸಂದೇಶ: ತಂದೆಯವರಿಂದ ಶುಭೋದಯ ಸಂದೇಶ. ನೂರಕ್ಕೆ ನೂರು ಸುರಕ್ಷಿತ.",
+        voice_hi: "व्हाट्सएप पारिवारिक संदेश: पापा का संदेश। पूरी तरह सुरक्षित।",
         isFake: false
       },
       wa_wedding: {
@@ -4490,8 +4703,15 @@
         time: "Yesterday",
         unread: "1",
         body: "Dear friend, please come to my sister wedding on 24th Nov. Digital wedding card: <span class='sms-neutralized-url'>wedding_card.apk</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        body_kn: "ಆತ್ಮೀಯ ಗೆಳೆಯಾ, ನವೆಂಬರ್ 24ರಂದು ನನ್ನ ಸಹೋದರಿಯ ಮದುವೆಗೆ ಬನ್ನಿ. ಡಿಜಿಟಲ್ ಮದುವೆ ಕಾರ್ಡ್: <span class='sms-neutralized-url'>wedding_card.apk</span>",
+        body_hi: "प्रिय मित्र, मेरी बहन की शादी में जरूर आएं। डिजिटल शादी का कार्ड: <span class='sms-neutralized-url'>wedding_card.apk</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>BANKING TROJAN DROPPER:</strong> Weaponized wedding invitation APK designed to install SMS-stealing spyware and intercept bank OTPs. Neutralized.",
+        status_kn: "⚠️ <strong>ಬ್ಯಾಂಕಿಂಗ್ ಟ್ರೋಜನ್ ಎಪಿಕೆ:</strong> ಮದುವೆ ಆಮಂತ್ರಣದ ಹೆಸರಿನಲ್ಲಿ ಓಟಿಪಿ ಕದಿಯುವ ಅಪಾಯಕಾರಿ ಎಪಿಕೆ. ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>बैंकिंग ट्रोजन ड्रॉपर:</strong> शादी के कार्ड के नाम पर बैंक ओटीपी चुराने वाला वायरस। ब्लॉक किया गया।",
+        voice_en: "Critical Trojan: Wedding invitation wedding_card.apk blocked offline.",
+        voice_kn: "ಅಪಾಯಕಾರಿ ಟ್ರೋಜನ್: ಮದುವೆ ಕಾರ್ಡ್ ಹೆಸರಿನಲ್ಲಿ ಬಂದ ನಕಲಿ ಎಪಿಕೆ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        voice_hi: "खतरनाक ट्रोजन: शादी के कार्ड के नाम पर आया एपीके ब्लॉक किया गया।",
         isFake: true,
         threatReason: "Dangerous .apk file payload disguised as wedding invitation card."
       },
@@ -4504,9 +4724,16 @@
         avatarText: "🚀",
         time: "11:20 AM",
         unread: "12",
-        body: "Guaranteed 500% profit in 2 hours! Deposit ₹2,000 get ₹10,000: <span class='sms-neutralized-url'>crypto-scam@ybl</span> <span class='sms-neutralized-tag'>FLAGGED UPI</span>",
+        body: "Guaranteed 500% profit in 2 hours! Deposit ₹2,00,0 get ₹10,000: <span class='sms-neutralized-url'>crypto-scam@ybl</span> <span class='sms-neutralized-tag'>FLAGGED UPI</span>",
+        body_kn: "2 ಗಂಟೆಗಳಲ್ಲಿ ಖಚಿತ 500% ಲಾಭ! ₹2,000 ಠೇವಣಿ ಇರಿಸಿ ₹10,000 ಪಡೆಯಿರಿ: <span class='sms-neutralized-url'>crypto-scam@ybl</span>",
+        body_hi: "2 घंटे में 500% गारंटीड मुनाफा! 2,000 जमा करें 10,000 पाएं: <span class='sms-neutralized-url'>crypto-scam@ybl</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>FRAUDULENT UPI ADDRESS:</strong> Flagged money laundering UPI address on National Cyber Crime Reporting Portal registry. Blocked.",
+        status_kn: "⚠️ <strong>ವಂಚನೆಯ ಯುಪಿಐ:</strong> ರಾಷ್ಟ್ರೀಯ ಸೈಬರ್ ಕ್ರೈಮ್ ಪೋರ್ಟಲ್‌ನಲ್ಲಿ ಕಪ್ಪುಪಟ್ಟಿಗೆ ಸೇರಿಸಲಾದ ನಕಲಿ ಯುಪಿಐ. ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>धोखाधड़ी वाली यूपीआई:</strong> नेशनल साइबर क्राइम पोर्टल पर ब्लैकलिस्टेड यूपीआई। ब्लॉक की गई।",
+        voice_en: "Telegram 500% crypto multiplier fraud. Rogue UPI blacklisted.",
+        voice_kn: "ಟೆಲಿಗ್ರಾಮ್ 500% ಕ್ರಿಪ್ಟೋ ವಂಚನೆ. ಯುಪಿಐ ವಿಳಾಸವನ್ನು ಕಪ್ಪುಪಟ್ಟಿಗೆ ಸೇರಿಸಲಾಗಿದೆ.",
+        voice_hi: "टेलीग्राम 500% क्रिप्टो फ्रॉड। फर्जी यूपीआई को ब्लैकलिस्ट किया गया।",
         isFake: true,
         threatReason: "Flagged illicit UPI payment handle associated with crypto doubling scam."
       },
@@ -4519,8 +4746,15 @@
         time: "Yesterday",
         unread: "5",
         body: "Python 3.13 is now available with experimental free-threaded mode and JIT compiler preview.",
+        body_kn: "ಪೈಥಾನ್ 3.13 ಈಗ ಲಭ್ಯವಿದೆ - ಜೆಐಟಿ ಕಂಪೈಲರ್ ಮತ್ತು ಪ್ರಾಯೋಗಿಕ ಫ್ರೀ-ಥ್ರೆಡ್ ಮೋಡ್ ನೊಂದಿಗೆ.",
+        body_hi: "पायथन 3.13 अब फ्री-थ्रेडेड मोड और जेआईटी कंपाइलर के साथ उपलब्ध है।",
         badgeText: "🟢 VERIFIED",
         statusText: "🛡️ <strong>VERIFIED OFFICIAL CHANNEL:</strong> Official developer release bulletin from Python Software Foundation.",
+        status_kn: "🛡️ <strong>ದೃಢೀಕೃತ ಅಧಿಕೃತ ಚಾನೆಲ್:</strong> ಪೈಥಾನ್ ಸಾಫ್ಟ್‌ವೇರ್ ಫೌಂಡೇಶನ್‌ನಿಂದ ಅಧಿಕೃತ ಬಿಡುಗಡೆ ಬುಲೆಟಿನ್.",
+        status_hi: "🛡️ <strong>सत्यापित आधिकारिक चैनल:</strong> पायथन सॉफ्टवेयर फाउंडेशन से आधिकारिक रिलीज।",
+        voice_en: "Official Python Software Foundation broadcast: Python 3.13 released.",
+        voice_kn: "ಪೈಥಾನ್ ಸಾಫ್ಟ್‌ವೇರ್ ಫೌಂಡೇಶನ್ ಅಧಿಕೃತ ಸಂದೇಶ: ಪೈಥಾನ್ 3.13 ಬಿಡುಗಡೆಯಾಗಿದೆ.",
+        voice_hi: "पायथन सॉफ्टवेयर फाउंडेशन आधिकारिक संदेश: पायथन 3.13 जारी हुआ।",
         isFake: false
       },
       tg_loan: {
@@ -4532,8 +4766,15 @@
         time: "2 days ago",
         unread: "2",
         body: "Get ₹5,00,000 instant cash loan in 5 minutes! No CIBIL check: <span class='sms-neutralized-url'>http://cash-instant.live/app</span> <span class='sms-neutralized-tag'>BLOCKED APK</span>",
+        body_kn: "5 ನಿಮಿಷಗಳಲ್ಲಿ ₹5,00,000 ತಕ್ಷಣದ ನಗದು ಸಾಲ ಪಡೆಯಿರಿ! ಸಿಬಿಲ್ ಪರಿಶೀಲನೆ ಇಲ್ಲ: <span class='sms-neutralized-url'>http://cash-instant.live/app</span>",
+        body_hi: "5 मिनट में 5,00,000 रुपये का तत्काल नकद ऋण! कोई सिबिल चेक नहीं: <span class='sms-neutralized-url'>http://cash-instant.live/app</span>",
         badgeText: "🔴 FAKE / SCAM",
         statusText: "⚠️ <strong>EXTORTION SPYWARE:</strong> Blacklisted loan shark application demanding full gallery, SMS, and contact access for extortion. Neutralized.",
+        status_kn: "⚠️ <strong>ಸುಲಿಗೆ ಸ್ಪೈವೇರ್ ಎಪಿಕೆ:</strong> ನಿಮ್ಮ ಗ್ಯಾಲರಿ ಮತ್ತು ಸಂಪರ್ಕಗಳನ್ನು ಕದಿಯುವ ಕಪ್ಪುಪಟ್ಟಿಯ ಸಾಲದ ಎಪಿಕೆ. ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        status_hi: "⚠️ <strong>जबरन वसूली स्पाइवेयर:</strong> फोन गैलरी और संपर्क चुराने वाला ब्लैकलिस्टेड लोन ऐप। ब्लॉक किया गया।",
+        voice_en: "Predatory loan APK from Fast Cash blocked offline.",
+        voice_kn: "ಫಾಸ್ಟ್ ಕ್ಯಾಶ್ ಅಕ್ರಮ ಸಾಲದ ಎಪಿಕೆ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
+        voice_hi: "फास्ट कैश का अवैध लोन एपीके ब्लॉक किया गया है।",
         isFake: true,
         threatReason: "Unregistered rogue finance APK containing intrusive spyware payloads."
       }
@@ -4987,9 +5228,163 @@
       render();
     }
 
+    let currentInboxSpeechLang = localStorage.getItem('cg_inbox_speech_lang') || 'kn';
+    let isReadingSequence = false;
+    let sequenceIndex = 0;
+    let sequenceIds = [];
+    let currentModalMessageId = null;
+    let currentModalLang = 'en';
+
+    function setInboxSpeechLang(lang, shouldSpeakAnnouncement = true) {
+      currentInboxSpeechLang = lang;
+      localStorage.setItem('cg_inbox_speech_lang', lang);
+      
+      const enBtn = document.getElementById('inbox-lang-en');
+      const knBtn = document.getElementById('inbox-lang-kn');
+      const hiBtn = document.getElementById('inbox-lang-hi');
+      if (enBtn) enBtn.className = lang === 'en' ? 'sms-filter-btn active' : 'sms-filter-btn';
+      if (knBtn) knBtn.className = lang === 'kn' ? 'sms-filter-btn active' : 'sms-filter-btn';
+      if (hiBtn) hiBtn.className = lang === 'hi' ? 'sms-filter-btn active' : 'sms-filter-btn';
+
+      if (shouldSpeakAnnouncement) {
+        if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+        if (lang === 'kn') speak("ಕನ್ನಡ ಧ್ವನಿ ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.", "kn");
+        else if (lang === 'hi') speak("हिन्दी आवाज सक्रिय की गई।", "hi");
+        else speak("English voice activated.", "en");
+      }
+    }
+
+    function readSmsCardLive(id, onFinished) {
+      const data = SMS_DATABASE[id];
+      if (!data) return;
+
+      // Stop previous sequence if reading
+      document.querySelectorAll('.sms-inbox-card').forEach(c => c.classList.remove('reading-now'));
+      const card = document.querySelector(`.sms-inbox-card[data-id="${id}"]`);
+      if (card) {
+        card.classList.add('reading-now');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      const lang = currentInboxSpeechLang;
+      let textToSpeak = '';
+      if (lang === 'kn') {
+        textToSpeak = data.voice_kn || data.voice_en;
+      } else if (lang === 'hi') {
+        textToSpeak = data.voice_hi || data.voice_en;
+      } else {
+        textToSpeak = data.voice_en;
+      }
+
+      if (data.isFake) {
+        if (typeof playAlertSiren === 'function') playAlertSiren();
+      } else {
+        if (typeof playSuccessChime === 'function') playSuccessChime();
+      }
+
+      speak(textToSpeak, lang, () => {
+        if (card) card.classList.remove('reading-now');
+        if (typeof onFinished === 'function') onFinished();
+      });
+    }
+
+    function readAllMessagesLive() {
+      // Find all currently displayed cards
+      const allCards = Array.from(document.querySelectorAll('.sms-inbox-card'));
+      const visibleCards = allCards.filter(c => c.style.display !== 'none' && window.getComputedStyle(c).display !== 'none');
+      if (visibleCards.length === 0) return;
+
+      sequenceIds = visibleCards.map(c => c.getAttribute('data-id')).filter(Boolean);
+      if (sequenceIds.length === 0) return;
+
+      isReadingSequence = true;
+      sequenceIndex = 0;
+
+      const stopBtn = document.getElementById('btn-stop-speech');
+      const readAllBtn = document.getElementById('btn-read-all-live');
+      if (stopBtn) stopBtn.style.display = 'inline-flex';
+      if (readAllBtn) readAllBtn.style.opacity = '0.6';
+
+      if (typeof playHydraulicServoLockSound === 'function') playHydraulicServoLockSound();
+      playNextMessageInSequence();
+    }
+
+    function playNextMessageInSequence() {
+      if (!isReadingSequence || sequenceIndex >= sequenceIds.length) {
+        stopLiveSpeech();
+        return;
+      }
+      const nextId = sequenceIds[sequenceIndex];
+      sequenceIndex++;
+      readSmsCardLive(nextId, () => {
+        if (isReadingSequence) {
+          setTimeout(playNextMessageInSequence, 650);
+        }
+      });
+    }
+
+    function stopLiveSpeech() {
+      isReadingSequence = false;
+      sequenceIndex = 0;
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch(e) {}
+      }
+      document.querySelectorAll('.sms-inbox-card').forEach(c => c.classList.remove('reading-now'));
+      const stopBtn = document.getElementById('btn-stop-speech');
+      const readAllBtn = document.getElementById('btn-read-all-live');
+      if (stopBtn) stopBtn.style.display = 'none';
+      if (readAllBtn) readAllBtn.style.opacity = '1';
+    }
+
+    function translateModalContent(lang, playAudio = true) {
+      if (!currentModalMessageId) return;
+      const data = SMS_DATABASE[currentModalMessageId];
+      if (!data) return;
+
+      currentModalLang = lang;
+
+      const enBtn = document.getElementById('modal-lang-en');
+      const knBtn = document.getElementById('modal-lang-kn');
+      const hiBtn = document.getElementById('modal-lang-hi');
+      if (enBtn) enBtn.className = lang === 'en' ? 'sms-filter-btn active' : 'sms-filter-btn';
+      if (knBtn) knBtn.className = lang === 'kn' ? 'sms-filter-btn active' : 'sms-filter-btn';
+      if (hiBtn) hiBtn.className = lang === 'hi' ? 'sms-filter-btn active' : 'sms-filter-btn';
+
+      const body = document.getElementById('sms-modal-body');
+      const statusBanner = document.getElementById('sms-modal-status-banner');
+
+      if (lang === 'kn') {
+        if (body) body.innerHTML = data.body_kn || data.body;
+        if (statusBanner) statusBanner.innerHTML = data.status_kn || data.statusText;
+        if (playAudio) speak(data.voice_kn || data.voice_en, 'kn');
+      } else if (lang === 'hi') {
+        if (body) body.innerHTML = data.body_hi || data.body;
+        if (statusBanner) statusBanner.innerHTML = data.status_hi || data.statusText;
+        if (playAudio) speak(data.voice_hi || data.voice_en, 'hi');
+      } else {
+        if (body) body.innerHTML = data.body;
+        if (statusBanner) statusBanner.innerHTML = data.statusText;
+        if (playAudio) speak(data.voice_en, 'en');
+      }
+    }
+
+    function readModalMessageLive() {
+      if (!currentModalMessageId) return;
+      const data = SMS_DATABASE[currentModalMessageId];
+      if (!data) return;
+
+      if (typeof playLaserScanSound === 'function') playLaserScanSound();
+      const lang = currentModalLang || 'en';
+      const text = lang === 'kn' ? (data.voice_kn || data.voice_en) : (lang === 'hi' ? (data.voice_hi || data.voice_en) : data.voice_en);
+      speak(text, lang);
+    }
+
     function inspectSmsItem(id) {
       const data = SMS_DATABASE[id];
       if (!data) return;
+
+      currentModalMessageId = id;
+      currentModalLang = currentInboxSpeechLang || 'kn';
 
       // Visual engineering card entry scan flash
       const targetCard = document.querySelector(`.sms-inbox-card[data-id="${id}"]`);
@@ -5029,7 +5424,6 @@
         sender.innerText = data.sender;
         category.innerText = data.header;
         category.style.color = '#fca5a5';
-        body.innerHTML = data.body;
         if (dltTag) {
           dltTag.innerText = 'TRAI DLT: FORGED SENDER';
           dltTag.style.color = '#ef4444';
@@ -5044,7 +5438,6 @@
           closeSmsDetailModal();
         };
         if (typeof playAlertSiren === 'function') playAlertSiren();
-        speak(`Warning: ${data.sender} is a fake scam message. Marked FAKE in red corner.`);
       } else {
         box.className = 'sms-detail-box original';
         badge.className = 'sms-corner-tag tag-orig';
@@ -5054,7 +5447,6 @@
         sender.innerText = data.sender;
         category.innerText = data.header;
         category.style.color = '#6ee7b7';
-        body.innerHTML = data.body;
         if (dltTag) {
           dltTag.innerText = 'TRAI DLT: VERIFIED GATEWAY';
           dltTag.style.color = '#00f5c4';
@@ -5078,8 +5470,15 @@
           };
         }
         if (typeof playSuccessChime === 'function') playSuccessChime();
-        speak(`Verified original message from ${data.sender}. Marked ORIGINAL in green corner.`);
       }
+
+      // Populate text according to selected language & speak
+      translateModalContent(currentModalLang, false);
+      const textToSpeak = currentModalLang === 'kn' ? (data.voice_kn || data.voice_en) : (currentModalLang === 'hi' ? (data.voice_hi || data.voice_en) : data.voice_en);
+      speak(textToSpeak, currentModalLang);
+
+      modal.style.display = 'flex';
+    }
 
       modal.style.display = 'flex';
     }
@@ -5894,6 +6293,7 @@
       applySmsInboxFilters();
       updateLanguageButtons();
       renderHoneypotChat();
+      setInboxSpeechLang(currentInboxSpeechLang, false);
     });
 
   </script>
@@ -6052,6 +6452,19 @@
             Predatory Loan Extortion Syndicate
           </div>
         </div>
+      </div>
+
+      <!-- Live Multilingual Translation & Speech Control -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:10px; color:#94a3b8; font-family:monospace;">TRANSLATE:</span>
+          <button id="modal-lang-en" onclick="translateModalContent('en')" class="sms-filter-btn active" style="font-size:10px; padding:3px 8px; border-radius:10px;">EN</button>
+          <button id="modal-lang-kn" onclick="translateModalContent('kn')" class="sms-filter-btn" style="font-size:10px; padding:3px 8px; border-radius:10px;">ಕನ್ನಡ</button>
+          <button id="modal-lang-hi" onclick="translateModalContent('hi')" class="sms-filter-btn" style="font-size:10px; padding:3px 8px; border-radius:10px;">हिन्दी</button>
+        </div>
+        <button id="modal-speak-btn" onclick="readModalMessageLive()" class="sms-listen-btn" style="padding:4px 10px; font-size:11px; background:rgba(0,245,255,0.2);">
+          🔊 ಲೈವ್ ಆಲಿಸಿ
+        </button>
       </div>
 
       <!-- Full Message Text Bubble -->
