@@ -14,7 +14,11 @@ import webbrowser
 from datetime import datetime
 from typing import Optional
 
-from PIL import Image, ImageDraw
+try:
+    from PIL import Image, ImageDraw
+except ImportError:
+    Image = None
+    ImageDraw = None
 
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 _SRC_DIR = os.path.dirname(_AGENT_DIR)
@@ -31,8 +35,14 @@ except ImportError:
     pystray = None
 
 
-def generate_shield_icon(size: int = 64, active: bool = True) -> Image.Image:
+def generate_shield_icon(size: int = 64, active: bool = True):
     """Generate a clean cyber shield icon for the Windows taskbar."""
+    if Image is None or ImageDraw is None:
+        class _HeadlessFallbackIcon:
+            def __init__(self, s):
+                self.size = (s, s)
+        return _HeadlessFallbackIcon(size)
+
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
