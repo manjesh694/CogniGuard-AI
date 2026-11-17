@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cogniguard-mobile-v1.2.8';
+const CACHE_NAME = 'cogniguard-mobile-v1.2.9';
 const OFFLINE_ASSETS = [
   './mobile_app.html',
   './index.html',

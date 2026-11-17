@@ -2231,7 +2231,7 @@
     <!-- Channel Tabs: SMS vs WhatsApp vs Telegram -->
     <div style="display:flex; gap:8px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;">
       <button id="channel-tab-sms" onclick="switchChannel('sms')" class="sms-filter-btn active" style="font-size:11.5px; padding:6px 14px; font-weight:800;">
-        📱 SMS Messages (10)
+        📱 SMS Messages (13)
       </button>
       <button id="channel-tab-whatsapp" onclick="switchChannel('whatsapp')" class="sms-filter-btn" style="font-size:11.5px; padding:6px 14px; font-weight:800; border-color:rgba(37,211,102,0.4); color:#a7f3d0;">
         💬 WhatsApp Airlock (4)
@@ -2262,7 +2262,55 @@
     <!-- Interactive Phone SMS List directly in CogniGuard App -->
     <div id="sms-inbox-list" class="sms-inbox-container">
 
-      <!-- 1. Mangaluru (ORIGINAL - GREEN) -->
+      <!-- 1. VA-KBLBNK-S (ORIGINAL - GREEN) -->
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="kblbank_strike" onclick="inspectSmsItem('kblbank_strike')">
+        <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
+        <div class="sms-avatar-circle" style="background:#ea580c;">K</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name">VA-KBLBNK-S</span>
+            <span class="sms-msg-time">10:00 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            Dear Customer, in view of the proposed strike called by Bank Union...
+          </div>
+        </div>
+        <div class="sms-unread-pill">90</div>
+      </div>
+
+      <!-- 2. Kotak811 (ORIGINAL - GREEN) -->
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="kotak811" onclick="inspectSmsItem('kotak811')">
+        <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
+        <div class="sms-avatar-circle" style="background:#dc2626; font-size:11px; font-weight:900;">811</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name">Kotak811 <span style="color:#38bdf8; font-size:12px;">✔️</span></span>
+            <span class="sms-msg-time">9:52 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            No CIBIL, No problem! Get Kotak FD-backed Credit Card with...
+          </div>
+        </div>
+        <div class="sms-unread-pill">43</div>
+      </div>
+
+      <!-- 3. AX-PORTER-T (ORIGINAL - GREEN) -->
+      <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="porter_otp" onclick="inspectSmsItem('porter_otp')">
+        <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
+        <div class="sms-avatar-circle" style="background:#0284c7;">👤</div>
+        <div class="sms-msg-content">
+          <div class="sms-msg-header">
+            <span class="sms-sender-name">AX-PORTER-T</span>
+            <span class="sms-msg-time">9:05 AM</span>
+          </div>
+          <div class="sms-body-snippet">
+            &lt;#&gt; Your Porter app verification code is <span style="color:#00f5ff; font-weight:800; font-family:monospace; background:rgba(0,245,255,0.15); padding:1px 6px; border-radius:4px;">386077</span>. Never share this code with ...
+          </div>
+        </div>
+        <div class="sms-unread-pill">3</div>
+      </div>
+
+      <!-- 4. Mangaluru (ORIGINAL - GREEN) -->
       <div class="sms-inbox-card sms-orig" data-channel="sms" data-category="original" data-id="mangaluru" onclick="inspectSmsItem('mangaluru')">
         <div class="sms-corner-tag tag-orig">🟢 ORIGINAL</div>
         <div class="sms-avatar-circle" style="background:#9333ea;">M</div>
@@ -4311,6 +4359,46 @@
     // PHONE SMS AIRLOCK & REAL-TIME MESSAGE INBOX ENGINE
     // ===================================================
     const SMS_DATABASE = {
+      kblbank_strike: {
+        sender: "VA-KBLBNK-S",
+        category: "original",
+        header: "Karnataka Bank Ltd — Registered DLT Header",
+        avatarBg: "#ea580c",
+        avatarText: "K",
+        time: "10:00 AM",
+        unread: "90",
+        body: "Dear Customer, in view of the proposed strike called by Bank Union on 19-11-2026, banking services may be impacted. Please use Mobile Banking/Net Banking for urgent transactions.",
+        badgeText: "🟢 ORIGINAL / SAFE",
+        statusText: "🛡️ <strong>AUTHENTIC BANK ADVISORY:</strong> Verified legitimate advisory from Karnataka Bank Ltd. No external payment links or credential requests detected.",
+        isFake: false
+      },
+      kotak811: {
+        sender: "Kotak811 ✔️",
+        category: "original",
+        header: "Kotak Mahindra Bank — Verified DLT Sender",
+        avatarBg: "#dc2626",
+        avatarText: "811",
+        time: "9:52 AM",
+        unread: "43",
+        body: "No CIBIL, No problem! Get Kotak FD-backed Credit Card with 100% credit limit against FD and earn up to 7.4% p.a. on FD. Apply via official Kotak Mobile Banking app.",
+        badgeText: "🟢 ORIGINAL / SAFE",
+        statusText: "🛡️ <strong>VERIFIED OFFICIAL BANK OFFER:</strong> Official credit card promotion from Kotak Mahindra Bank. Legitimate banking channel.",
+        isFake: false
+      },
+      porter_otp: {
+        sender: "AX-PORTER-T",
+        category: "original",
+        header: "Porter Logistics — 2FA Security Gateway",
+        avatarBg: "#0284c7",
+        avatarText: "👤",
+        time: "9:05 AM",
+        unread: "3",
+        body: "<#> Your Porter app verification code is <span style='color:#00f5ff; font-weight:800; font-family:monospace; background:rgba(0,245,255,0.15); padding:1px 6px; border-radius:4px;'>386077</span>. Never share this code with anyone including Porter staff.",
+        otpCode: "386077",
+        badgeText: "🟢 ORIGINAL / SAFE",
+        statusText: "🛡️ <strong>AUTHENTIC TRANSACTION OTP:</strong> Genuine two-factor authentication code from Porter Logistics registered DLT header AX-PORTER-T.",
+        isFake: false
+      },
       mangaluru: {
         sender: "Mangaluru 🐟",
         category: "original",
